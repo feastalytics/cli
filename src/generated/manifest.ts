@@ -610,6 +610,43 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getCampaignKpis",
+      "domain": "campaigns",
+      "description": "Get the key performance metrics (KPIs) for an acquisition campaign. campaignId is the Feast campaign's id — the `id` field from listCampaigns (a UUID), NOT the nested Meta/ad campaignId. Returns a list of metrics, each { id, type, value, unit } — unit is COUNT, PERCENTAGE (0-1), or CURRENCY (cents). Covers the funnel (unique visitors, signup rate, reservations), automations (signups, pass registrations, referrals), and results (guests visited, orders, revenue, subscriptions, average order value). Optionally pass ISO-8601 date strings start and end to scope date-aware metrics to a range, and isPrimaryOnly=true to return only the headline KPIs.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "campaigns",
+        "app",
+        "kpis"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isPrimaryOnly": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaignId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "listAutomationFlows",
       "domain": "automations",
       "description": "List automation flows for the organization. Pass campaignId to get only that campaign's flows, or scope 'membersProgram' to get only members program flows (flows with no campaign). With no input, returns all flows.",
