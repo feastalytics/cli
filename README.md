@@ -69,6 +69,7 @@ It works across Claude Code, Codex, Cursor, and the other agents the `skills` to
 ```bash
 npm install
 npm run dev -- tools          # run from source via tsx
+pnpm feast tools              # same thing via pnpm (no `--` needed)
 npm run build                 # bundle to dist/cli.js
 npm run typecheck
 ```

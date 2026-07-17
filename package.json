@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/cli.ts",
+    "feast": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
