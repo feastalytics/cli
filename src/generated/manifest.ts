@@ -131,7 +131,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createAutomationFlow",
       "domain": "automations",
-      "description": "Create a new automation flow. Requires user approval before execution. In local mode, navigate to the campaign's automations tab (campaigns with campaignId and tab AUTOMATIONS) BEFORE calling this, so the user sees the flow in the UI.",
+      "description": "Create a new automation flow — the container that groups automations by a shared trigger (visit, signUp, checkout, textBlast, etc.). Automations always live inside a flow, so before adding automations you must either find an existing flow with listAutomationFlows or create one here. Requires user approval before execution. In local mode, navigate to the campaign's automations tab (campaigns with campaignId and tab AUTOMATIONS) BEFORE calling this, so the user sees the flow in the UI.",
       "needsApproval": true,
       "type": "mutation",
       "path": [
@@ -610,6 +610,32 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getCampaign",
+      "domain": "campaigns",
+      "description": "Get the full configuration for a single acquisition campaign by id. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta/ad campaignId. Returns the complete campaign object — name, status, funnel/landing-page config, associated ad config, offers, and settings. Use this to read a campaign's current state before editing it, or to inspect what listCampaigns summarized. For performance metrics, use getCampaignKpis instead.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "campaigns",
+        "app",
+        "get"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaignId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "getCampaignKpis",
       "domain": "campaigns",
       "description": "Get the key performance metrics (KPIs) for an acquisition campaign. campaignId is the Feast campaign's id — the `id` field from listCampaigns (a UUID), NOT the nested Meta/ad campaignId. Returns a list of metrics, each { id, type, value, unit } — unit is COUNT, PERCENTAGE (0-1), or CURRENCY (cents). Covers the funnel (unique visitors, signup rate, reservations), automations (signups, pass registrations, referrals), and results (guests visited, orders, revenue, subscriptions, average order value). Optionally pass ISO-8601 date strings start and end to scope date-aware metrics to a range, and isPrimaryOnly=true to return only the headline KPIs.",
@@ -649,7 +675,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAutomationFlows",
       "domain": "automations",
-      "description": "List automation flows for the organization. Pass campaignId to get only that campaign's flows, or scope 'membersProgram' to get only members program flows (flows with no campaign). With no input, returns all flows.",
+      "description": "List automation flows for the organization. A flow is the container that groups automations by trigger — call this first to find the flow an automation should go into, and only create a new flow (createAutomationFlow) if none fits. Pass campaignId to get only that campaign's flows, or scope 'membersProgram' to get only members program flows (flows with no campaign). With no input, returns all flows.",
       "needsApproval": false,
       "type": "query",
       "path": [
@@ -845,6 +871,79 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "searchUsers",
+      "domain": "membersProgram",
+      "description": "Search and explore members (loyalty guests) and their activity. Returns a page of the most recent user events, one per member, each carrying the member's serialNumber plus event details (type, time, and related object). Filters: query (free-text name search), eventTypes (e.g. sentText, receivedText, scan, order, rewardAwarded, rewardRedeemed, checkout, and the *Attribution types), progressMinBound/progressMaxBound (visit-count range), isUnread=true (members with unanswered inbound texts), orderBy (ASC|DESC by event time). Paginate with limit (default 100) and cursor (the `cursor` returned by the previous call; undefined cursor means no more pages).",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "loyalty",
+        "app",
+        "searchUsersV3"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "cursor": {
+            "type": "number"
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "sentText",
+                "receivedText",
+                "scan",
+                "order",
+                "passCreated",
+                "passUpdated",
+                "passRegistered",
+                "passDeleted",
+                "rewardAwarded",
+                "rewardRedeemed",
+                "rewardExpiration",
+                "fbAttribution",
+                "influencerAttribution",
+                "tiktokAttribution",
+                "googleAttribution",
+                "miscAttribution",
+                "referralAttribution",
+                "checkout",
+                "customerInference",
+                "reservationCreated"
+              ]
+            }
+          },
+          "limit": {
+            "type": "number"
+          },
+          "query": {
+            "type": "string"
+          },
+          "progressMinBound": {
+            "type": "number"
+          },
+          "progressMaxBound": {
+            "type": "number"
+          },
+          "isUnread": {
+            "type": "boolean"
+          },
+          "orderBy": {
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ]
+          }
+        },
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
