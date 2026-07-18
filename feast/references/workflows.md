@@ -9,9 +9,12 @@ Fully doable via the CLI today. The server does the heavy lifting (id generation
 1. `feast call loadCurrentOrganization --org <org>` — read the org to get valid **referrers** (subdomains) and location ids.
 2. `feast call createCampaign --org <org> --input '{"name": "...", "referrers": ["<subdomain>"]}'` — keep the returned campaign **id** (a UUID). The campaign comes back `isCreating: true`.
 3. `feast call populateCampaign --org <org> --input '{"campaignId": "<id>", ...}'` — finalizes it. To attach a promotion image, pass a public `imageUrl` string (skip the file-upload path, which the CLI can't do).
-4. (optional) `feast call chooseFunnelTemplate --org <org> --input '{"campaignId": "<id>", ...}'` — applies a funnel template.
+4. (optional) `feast call chooseFunnelTemplate --org <org> --input '{"campaignId": "<id>", ...}'` — applies a funnel template (the **acquisition** side: the screens a guest sees).
+5. (optional) `feast call applyAutomationTemplate --org <org> --input '{...}'` — applies an automation template (the **retention** side: the follow-up welcome/reminder messaging). This is the automation counterpart to the funnel template, and it provisions the campaign's automation flow *and* its automations in one call — so you don't create a flow by hand for this path. Preview options first with `listAutomationTemplates` / `loadTemplateAutomations`.
 
-The one-shot `createWithOffer` / `parseCampaignDescription` (text → campaign) endpoints aren't exposed to the CLI yet — use the three-step path above.
+Steps 4 and 5 configure the two halves of a campaign — the funnel (what the guest sees) and the automations (the messaging that follows). Both are optional and independent.
+
+The one-shot `createWithOffer` / `parseCampaignDescription` (text → campaign) endpoints aren't exposed to the CLI yet — use the steps above.
 
 ## Setting up a funnel and editing it
 
