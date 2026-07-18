@@ -67,6 +67,12 @@ Prefer reading before writing: e.g. `listCampaigns` to find the right `campaignI
 
 For the domain-specific meaning of fields — how automations chain, what a funnel screen contains, how offers are structured — consult the guidance in `references/domains.md` when the schema alone isn't enough.
 
+## Workflows
+
+Many tasks are multi-step and have a required ordering the app normally enforces. The most important rule: **automations live inside flows — always find a flow (`listAutomationFlows`) or create one (`createAutomationFlow`) before adding automations; never create an orphan automation.** The same "resolve the parent/ids first, then act" shape recurs across campaigns, funnels, and offers.
+
+For the ordered steps of each common workflow — creating a campaign, applying a funnel template, setting up automations, and which workflows (rewards, brand identity, exploring/replying to users) are **not yet exposed to the CLI** — read `references/workflows.md`. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools`; tell the user that part isn't available yet.
+
 ## Worked example
 
 User: "add a $5-off offer to the Plum location in my Plum Vietnamese org."
