@@ -71,7 +71,7 @@ For the domain-specific meaning of fields — how automations chain, what a funn
 
 Many tasks are multi-step and have a required ordering the app normally enforces. The most important rule: **automations live inside flows — always find a flow (`listAutomationFlows`) or create one (`createAutomationFlow`) before adding automations; never create an orphan automation.** The same "resolve the parent/ids first, then act" shape recurs across campaigns, funnels, and offers.
 
-For the ordered steps of each common workflow — creating a campaign, applying a funnel template, setting up automations, and which workflows (rewards, brand identity, exploring/replying to users) are **not yet exposed to the CLI** — read `references/workflows.md`. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools`; tell the user that part isn't available yet.
+For the ordered steps and domain rules of each common workflow, read `references/workflows.md`. It covers what's **fully doable** — creating/cloning a campaign, authoring automations end-to-end (create/edit/delete/simulate, with the trigger, condition, send-time, and chaining rules that make a flow professional), creating offers, and exploring users — and what's **not yet exposed** — funnel screen editing, members-program reward creation, brand identity, and replying to guests by SMS. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools`; tell the user that part isn't available yet.
 
 ## Worked example
 

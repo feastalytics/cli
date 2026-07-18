@@ -20,6 +20,7 @@ Typical flow: `createCampaign` (set `isCreating: true` if you'll finish it with 
 - An **automation** is one trigger → action unit (e.g. "on checkout, award reward").
 - A **flow** is a named grouping of automations. A flow belongs to *either* a campaign *or* the members program (never both).
 - `listAutomationFlows` scopes with input: `{ campaignId }` returns that campaign's flows; `{ scope: "membersProgram" }` returns members-program flows (those with no campaign). `listAutomations` returns every automation in the org, ordered by execution priority.
+- **Authoring:** `createAutomationFlow` makes a flow; `batchEditAutomations` creates/updates/deletes automations in one atomic batch (create ops **require** a `flowId`); `updateAutomationFlow` / `deleteAutomationFlow` manage the flow itself; `simulateAutomations` dry-runs a flow with no real sends. See `workflows.md` for the ordering and the trigger/condition/send-time rules.
 - Templates: `listAutomationTemplates` → `loadTemplateAutomations` (preview) → `applyAutomationTemplate`. Only apply a template to a campaign/members-program that has no existing flows.
 
 ## Offers (DFY strategy)
