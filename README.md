@@ -69,8 +69,21 @@ It works across Claude Code, Codex, Cursor, and the other agents the `skills` to
 ```bash
 npm install
 npm run dev -- tools          # run from source via tsx
+pnpm feast tools              # same thing via pnpm (no `--` needed)
 npm run build                 # bundle to dist/cli.js
 npm run typecheck
 ```
+
+### Install the `feast` command locally
+
+To get a global `feast` command backed by your local checkout:
+
+```bash
+npm run build          # build dist/cli.js first
+npm link               # symlink global `feast` -> this repo
+feast tools
+```
+
+`npm link` points the global command at the **built** `dist/cli.js`, so re-run `npm run build` after source changes. To remove it: `npm unlink -g @feast/cli`.
 
 The tool manifest (`src/generated/manifest.ts`) is generated from the Feastalytics API in the main monorepo and published here — do not edit it by hand.
