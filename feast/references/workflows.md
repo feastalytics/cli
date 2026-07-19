@@ -173,6 +173,13 @@ The retention counterpart to campaigns — flows with no `campaignId`.
 4. **Preview** (no CLI call): open `https://{referrer}.feastalytics.com/preview/{draftId}/{campaignId}` (drop `/{campaignId}` for a members-program draft). It renders the whole funnel as a flow diagram with the draft's edits applied. Screenshot it, then iterate — re-run `listFunnelScreens` **with the `draftId`** to read the funnel *with* the staged edits, stage more, re-preview — until it's right.
 5. **`saveFunnelEdits`** `{ "draftId": "..." }` — **promotes to prod** (mutation, confirms first): applies the draft's edits to the live funnel and marks the draft `promoted`. To abandon instead, `discardFunnelDraft`.
 
+> **Never promote without a review first.** Because edits aren't applied locally, the preview is the *only* way to see the result — so before `saveFunnelEdits`:
+> - If you can view the preview URL yourself (you have a browser/screenshot tool), do so and confirm the change looks right.
+> - Otherwise, **give the user the preview URL and wait for their go-ahead** — don't call `saveFunnelEdits` in the same turn.
+> - Skip this and promote directly **only** if the user explicitly told you to save without previewing.
+>
+> Promoting is one-way: a draft can't be re-opened once `promoted`, and the funnel changes immediately. (Its preview URL then just shows the now-live result.)
+
 `saveFunnelEdits` can also take an inline `{ "referrer", "campaignId", "edits": [ { "screenId", "edit" } ] }` array instead of a `draftId` — a one-shot save with no persisted draft (you lose the preview step, so prefer the draft loop when the change is visual).
 
 ### Domain rules
