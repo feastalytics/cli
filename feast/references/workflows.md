@@ -158,10 +158,28 @@ The retention counterpart to campaigns — flows with no `campaignId`.
 
 ---
 
-## Setting up / editing a funnel
+**Applying a funnel template** expands a whole screen tree server-side in one call: `chooseFunnelTemplate` (needs the campaign's funnel unset — a fresh campaign — and resolves the referrer from the campaign). `deleteFunnel` tears one down.
 
-- **Applying a funnel template is doable**: `chooseFunnelTemplate` expands a whole screen tree server-side in one call. It needs the campaign's funnel unset (a fresh campaign) and resolves the referrer from the campaign. `deleteFunnel` removes one.
-- **Editing individual funnel screens is NOT exposed to the CLI yet.** The screen-level endpoints (`layoutEngine.screens.listV2` / `create` / `updateV2`) carry no CLI tool, and screen editing depends on client-side machinery (per-renderable UUID generation, staged-edit folding, default-renderable construction, read-before-every-edit). A dedicated **funnel-draft preview environment** (stage edits off-prod → preview at a stable URL → screenshot-iterate → promote) is in progress and will be the CLI's path to screen editing. Until it ships, tell the user funnel screen editing isn't CLI-drivable.
+**Editing individual funnel screens is now CLI-drivable** through a **draft → preview → promote** loop. You never apply edits locally: you stage them on an off-prod draft, preview the result at a stable URL, then save. Tools: `listFunnelScreens`, `createFunnelDraft`, `stageFunnelEdit`, `getFunnelDraft`, `listFunnelDrafts`, `discardFunnelDraft`, `saveFunnelEdits`.
+
+### The loop
+
+1. **`listFunnelScreens`** `{ "referrer": "<subdomain>", "campaignId": "<id>" }` — read the funnel's screens to get each `screenId` and its renderables' `id`s + content. **Read before any `update` edit** — an update replaces a renderable by id, so you need its current shape. (Omit `campaignId` for a base/members-program funnel.)
+2. **`createFunnelDraft`** `{ "referrer": "...", "campaignId": "..." }` — creates an off-prod overlay; keep the returned `draftId`. Nothing is live yet.
+3. **`stageFunnelEdit`** `{ "draftId": "...", "screenId": "...", "edit": <RenderableEdit> }` — one renderable edit per call; the server validates it against the current screen. Repeat per change. A `RenderableEdit` is a discriminated union (`describe stageFunnelEdit` for the full schema):
+   - `{ "type": "update", "id": "<renderableId>", "renderable": { ...clone of what you read, with your changes... } }` — keep the same `id`.
+   - `{ "type": "create", "renderable": { "id": "<new-uuid>", ... }, "targetId": "<sibling id>", "position": "before" | "after" | "inside" }` — generate a fresh UUID.
+   - `{ "type": "delete", "id": "<renderableId>" }` and `{ "type": "move", "id": "...", "targetId": "...", "position": "..." }`.
+4. **Preview** (no CLI call): open `https://{referrer}.feastalytics.com/preview/{draftId}/{campaignId}` (drop `/{campaignId}` for a members-program draft). It renders the whole funnel as a flow diagram with the draft's edits applied. Screenshot it, then iterate — re-run `listFunnelScreens` **with the `draftId`** to read the funnel *with* the staged edits, stage more, re-preview — until it's right.
+5. **`saveFunnelEdits`** `{ "draftId": "..." }` — **promotes to prod** (mutation, confirms first): applies the draft's edits to the live funnel and marks the draft `promoted`. To abandon instead, `discardFunnelDraft`.
+
+`saveFunnelEdits` can also take an inline `{ "referrer", "campaignId", "edits": [ { "screenId", "edit" } ] }` array instead of a `draftId` — a one-shot save with no persisted draft (you lose the preview step, so prefer the draft loop when the change is visual).
+
+### Domain rules
+- **Base screens vs campaign screens.** A campaign-owned screen is edited in place; a **base/shared screen edited in a campaign context becomes a campaign *override*** — the shared screen is left untouched. `saveFunnelEdits` decides this automatically from the draft's `campaignId`, so a change scoped to one campaign only affects that campaign.
+- **Read before every `update`.** Construct the edit from what `listFunnelScreens` returned (renderable ids are stable), never from memory.
+- **One edit per `stageFunnelEdit`**, staged incrementally; each is validated as it lands.
+- **Drift guard.** `saveFunnelEdits` rejects the promote if the live funnel changed since the draft was created — re-create the draft in that case.
 
 ---
 
