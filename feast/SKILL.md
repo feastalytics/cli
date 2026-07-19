@@ -1,6 +1,6 @@
 ---
 name: feast
-description: Operate a Feastalytics organization from the terminal — list, create, and update campaigns, automations, offers, funnels, and members-program rewards — via the `feast` CLI. Use this skill whenever the user wants to inspect or change Feastalytics data outside the dashboard: "list my campaigns", "create an automation for org X", "what offers does this location have", "clone this campaign", "update the members program", or any request to script/batch/automate Feastalytics operations. Reach for it even when the user doesn't say "CLI" — if the task is reading or changing Feastalytics campaign/automation/offer/reward data, this is the tool.
+description: Operate a Feastalytics organization from the terminal — list, create, and update campaigns, automations, offers, funnels, and members-program rewards — via the `feast` CLI. Use this skill whenever the user wants to inspect or change Feastalytics data outside the dashboard — "list my campaigns", "create an automation for org X", "what offers does this location have", "clone this campaign", "update the members program", or any request to script/batch/automate Feastalytics operations. Reach for it even when the user doesn't say "CLI" — if the task is reading or changing Feastalytics campaign/automation/offer/reward data, this is the tool.
 ---
 
 # Feast CLI
