@@ -4608,6 +4608,9 @@ export const CLI_MANIFEST: CliManifest = {
           "isUnread": {
             "type": "boolean"
           },
+          "campaignId": {
+            "type": "string"
+          },
           "orderBy": {
             "type": "string",
             "enum": [
