@@ -165,7 +165,7 @@ The retention counterpart to campaigns — flows with no `campaignId`.
 ### The loop
 
 1. **`listFunnelScreens`** `{ "referrer": "<subdomain>", "campaignId": "<id>" }` — read the funnel's screens to get each `screenId` and its renderables' `id`s + content. **Read before any `update` edit** — an update replaces a renderable by id, so you need its current shape. (Omit `campaignId` for a base/members-program funnel.)
-2. **`createFunnelDraft`** `{ "referrer": "...", "campaignId": "..." }` — creates an off-prod overlay; keep the returned `draftId`. Nothing is live yet.
+2. **`createFunnelDraft`** `{ "referrer": "...", "campaignId": "..." }` — creates an off-prod overlay; keep the returned `draftId`. Nothing is live yet. **Immediately inspect the funnel's current state**: open the draft's preview URL (see step 4 — with no edits staged yet it renders the live funnel as-is) so you have a visual baseline of what you're about to change. If you have a browser/screenshot tool, open and screenshot it now; if you can't view it yourself, share the URL with the user before editing.
 3. **`stageFunnelEdit`** `{ "draftId": "...", "screenId": "...", "edit": <RenderableEdit> }` — one renderable edit per call; the server validates it against the current screen. Repeat per change. A `RenderableEdit` is a discriminated union (`describe stageFunnelEdit` for the full schema):
    - `{ "type": "update", "id": "<renderableId>", "renderable": { ...clone of what you read, with your changes... } }` — keep the same `id`.
    - `{ "type": "create", "renderable": { "id": "<new-uuid>", ... }, "targetId": "<sibling id>", "position": "before" | "after" | "inside" }` — generate a fresh UUID.

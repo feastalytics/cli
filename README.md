@@ -59,6 +59,20 @@ npx skills add feastalytics/cli
 
 It works across Claude Code, Codex, Cursor, and the other agents the `skills` tool supports.
 
+### Updating the installed skill
+
+The skill is **copied** into a global store (`~/.agents/skills/feast`) and symlinked into each agent's skills directory, so it does **not** auto-update when this repo changes. After the skill is updated (or if your agents are showing a stale version), re-run the add to refresh every agent at once:
+
+```bash
+npx skills add feastalytics/cli -g -a '*' -y
+```
+
+- `-g` installs globally (user-level), matching where the skill lives.
+- `-a '*'` re-links **all** agents (Claude Code, Codex, …) so each picks up the new version.
+- `-y` skips the confirmation prompts.
+
+To refresh from a local checkout instead of GitHub, run `npx skills add ./feast -g -a '*' -y` from the repo root.
+
 ## Environment
 
 - `FEAST_API_URL` — override the API base URL (e.g. a local dev server)
