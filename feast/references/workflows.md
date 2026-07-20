@@ -45,7 +45,7 @@ Unlike the in-app agent (which scaffolds an automation, then edits it, then expl
 
 1. `listAutomationFlows` — find an existing flow. Pass `{ "campaignId": "<id>" }` for a campaign's flows, or `{ "scope": "membersProgram" }` for members-program flows. Reuse a matching flow when one fits.
 2. If none fits, `createAutomationFlow` to make one. If the campaign/members-program has **no flows at all**, strongly prefer `applyAutomationTemplate` (then customize) over building from scratch. Only apply a template when there are no existing flows.
-3. `listAutomations` (filter the result by `flowId`) to see what's already in the flow before editing.
+3. `listAutomations` with `{ "flowId": "<id>" }` to see the automations already in that flow before editing (omit the input to list every automation in the org).
 4. `batchEditAutomations` with a list of `operations`:
    - `{ "type": "create", "automation": { ...full automation..., "flowId": "<id>" } }` — generate a fresh UUID for the automation's id, set the `flowId`, and include triggers, conditions, actions, send time, and a descriptive title all at once. The server validates it and (create ops) requires the flowId.
    - `{ "type": "update", "automationId": "<id>", "automation": { ...changed fields... } }`
