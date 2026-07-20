@@ -2537,7 +2537,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAutomations",
       "domain": "automations",
-      "description": "List all automations for the organization. Returns automations ordered by their execution priority.",
+      "description": "List automations for the organization, ordered by execution priority. Pass { flowId } to return only the automations in that flow — the way to read a single flow's contents before editing it. Omit the input to return every automation in the org.",
       "needsApproval": false,
       "type": "query",
       "path": [
@@ -2545,7 +2545,23 @@ export const CLI_MANIFEST: CliManifest = {
         "automation",
         "list"
       ],
-      "inputJsonSchema": null
+      "inputJsonSchema": {
+        "anyOf": [
+          {
+            "not": {}
+          },
+          {
+            "type": "object",
+            "properties": {
+              "flowId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
     },
     {
       "id": "listAutomationTemplates",
