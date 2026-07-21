@@ -6,6 +6,8 @@ import {
   login,
   logout,
 } from "./auth";
+import { browserLogin } from "./browserLogin";
+import { getWebBaseUrl } from "./config";
 import { getCredentialsPath } from "./credentials";
 import { callProcedure, createHttpCaller } from "./http";
 import {
@@ -25,7 +27,8 @@ import {
 const USAGE = `Usage: feast <command> [options]
 
 Commands:
-  login [username]                      Log in and store tokens in ${getCredentialsPath()}
+  login                                 Log in via the browser (opens ${getWebBaseUrl()}/oauth)
+  login --password [username]           Log in with username/password (headless/CI)
   logout                                Delete stored tokens
   whoami                                Show the logged-in user and their organizations
   tools [--domain <domain>] [--json]    List available tools
@@ -39,7 +42,8 @@ Call options:
   --yes                     Skip the confirmation prompt for mutations
 
 Environment:
-  FEAST_API_URL             Override the API base URL (default: production)`;
+  FEAST_API_URL             Override the API base URL (default: production)
+  FEAST_WEB_URL             Override the web app base URL for browser login (default: production)`;
 
 interface ParsedArgs {
   positional: string[];
@@ -72,18 +76,26 @@ function parseArgs(argv: string[]): ParsedArgs {
 }
 
 async function commandLogin(args: ParsedArgs): Promise<void> {
-  const username =
-    args.positional[0] ?? (await promptText("Username: "));
-  if (username.length === 0) {
-    throw new Error("Username is required");
+  if (args.flags["password"] === true) {
+    const username =
+      args.positional[0] ?? (await promptText("Username: "));
+    if (username.length === 0) {
+      throw new Error("Username is required");
+    }
+    const password = await promptHidden("Password: ");
+    if (password.length === 0) {
+      throw new Error("Password is required");
+    }
+    const tokens = await login(username, password);
+    const payload = decodeJwtPayload(tokens.accessToken.jwtToken);
+    console.info(`Logged in as ${payload.username ?? username}`);
+    console.info(`Tokens stored in ${getCredentialsPath()}`);
+    return;
   }
-  const password = await promptHidden("Password: ");
-  if (password.length === 0) {
-    throw new Error("Password is required");
-  }
-  const tokens = await login(username, password);
+
+  const tokens = await browserLogin();
   const payload = decodeJwtPayload(tokens.accessToken.jwtToken);
-  console.info(`Logged in as ${payload.username ?? username}`);
+  console.info(`Logged in as ${payload.username ?? payload.sub}`);
   console.info(`Tokens stored in ${getCredentialsPath()}`);
 }
 
