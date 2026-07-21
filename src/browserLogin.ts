@@ -91,7 +91,10 @@ function startLoopback(expectedState: string): Promise<Loopback> {
         return;
       }
 
-      res.writeHead(200, { "Content-Type": "text/html" });
+      res.writeHead(200, {
+        "Content-Type": "text/html",
+        Connection: "close",
+      });
       res.end(
         tabHtml(
           "You're all set ✓",
@@ -109,11 +112,18 @@ function startLoopback(expectedState: string): Promise<Loopback> {
 
     const close = (): void => {
       clearTimeout(timeout);
+      // Destroy any lingering keep-alive connections (the browser holds one
+      // open after the callback), then close the listening socket — otherwise
+      // the event loop never drains and the CLI hangs until Ctrl+C.
+      server.closeAllConnections?.();
       server.close();
     };
 
     server.on("error", rejectOuter);
     server.listen(0, "127.0.0.1", () => {
+      // Don't let the listening socket itself keep the process alive; the
+      // 5-minute timeout holds the loop open while we wait for the callback.
+      server.unref();
       const address = server.address();
       const port =
         typeof address === "object" && address != null ? address.port : 0;
