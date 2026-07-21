@@ -143,11 +143,12 @@ export async function browserLogin(): Promise<StoredTokens> {
     const code = await waitForCode;
 
     const client = createHttpCaller({});
-    const tokens: StoredTokens = await client.api.auth.exchangeAuthCode.mutate({
+    const response = await client.api.auth.exchangeAuthCode.mutate({
       code,
       codeVerifier,
     });
-    if (tokens == null) {
+    const tokens: StoredTokens | undefined = response?.tokens;
+    if (tokens?.accessToken?.jwtToken == null) {
       throw new Error("Authorization failed: empty token response");
     }
 
