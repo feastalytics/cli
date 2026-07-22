@@ -1,4 +1,4 @@
-# @feast/cli
+# @feastalytics/cli
 
 Command-line client for the Feastalytics platform. It exposes the same tool surface the in-app AI agent uses — campaigns, automations, offers, funnels, members-program rewards — as plain commands that hit the production API as the logged-in user.
 
@@ -7,13 +7,13 @@ Ships with an [agent skill](#agent-skill) so Claude Code, Codex, and other agent
 ## Install
 
 ```bash
-npm install -g @feast/cli
+npm install -g @feastalytics/cli
 ```
 
 Or run without installing:
 
 ```bash
-npx @feast/cli <command>
+npx @feastalytics/cli <command>
 ```
 
 ## Usage
@@ -98,6 +98,6 @@ npm link               # symlink global `feast` -> this repo
 feast tools
 ```
 
-`npm link` points the global command at the **built** `dist/cli.js`, so re-run `npm run build` after source changes. To remove it: `npm unlink -g @feast/cli`.
+`npm link` points the global command at the **built** `dist/cli.js`, so re-run `npm run build` after source changes. To remove it: `npm unlink -g @feastalytics/cli`.
 
 The tool manifest (`src/generated/manifest.ts`) is generated from the Feastalytics API in the main monorepo and published here — do not edit it by hand.

@@ -1,5 +1,5 @@
 {
-  "name": "@feast/cli",
+  "name": "@feastalytics/cli",
   "version": "0.1.0",
   "description": "Command-line client for the Feastalytics platform — list, create, and update campaigns, automations, offers, and members-program rewards from the terminal.",
   "type": "module",
@@ -10,6 +10,16 @@
     "dist",
     "feast"
   ],
+  "author": "Feastalytics",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/feastalytics/cli.git"
+  },
+  "homepage": "https://github.com/feastalytics/cli#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18"
   },
