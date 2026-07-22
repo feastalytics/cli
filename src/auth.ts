@@ -5,23 +5,11 @@ import {
   type StoredTokens,
 } from "./credentials";
 import { createHttpCaller } from "./http";
+import { type AccessTokenPayload, decodeJwtPayload } from "./jwt";
 
-export interface AccessTokenPayload {
-  sub: string;
-  username?: string;
-  "cognito:groups"?: string[];
-  exp: number;
-}
+export { type AccessTokenPayload, decodeJwtPayload };
 
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
-
-export function decodeJwtPayload(jwt: string): AccessTokenPayload {
-  const payload = jwt.split(".")[1];
-  if (payload == null) {
-    throw new Error("Malformed JWT");
-  }
-  return JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
-}
 
 export async function login(
   username: string,
