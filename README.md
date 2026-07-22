@@ -16,6 +16,21 @@ Or run without installing:
 npx @feastalytics/cli <command>
 ```
 
+### Staying current
+
+Neither install path updates itself. Once a day the CLI checks npm for a newer
+published version and, if there is one, prints a one-line notice to stderr after
+the command finishes:
+
+```
+Update available: feast 0.1.1 → 0.2.0
+  npx @feastalytics/cli@latest <command>   (or: npm install -g @feastalytics/cli@latest)
+```
+
+The check is skipped when stderr isn't a TTY, when `CI` is set, or when
+`FEAST_NO_UPDATE_CHECK` or `NO_UPDATE_NOTIFIER` is set. It never blocks longer
+than 1.5s and fails silently offline.
+
 ## Usage
 
 ```bash
