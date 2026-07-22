@@ -25,6 +25,25 @@ feast login <username>
 
 If a command reports you're not logged in or the session expired, re-run `feast login`.
 
+## Staying current
+
+Neither the CLI nor this skill updates itself. When a command prints an update notice on stderr:
+
+```
+Update available: feast 0.1.1 → 0.2.0
+```
+
+update both, then tell the user in one line that you did:
+
+```bash
+npm install -g @feastalytics/cli@latest      # only if `feast` is already on PATH from a global install
+npx skills add feastalytics/cli -g -a '*' -y # refresh this skill from the repo
+```
+
+If you've been invoking the CLI through `npx` rather than a global install, skip the `npm install -g` and use `npx @feastalytics/cli@latest <command>` for the rest of the session instead — `npx` reuses a cached copy otherwise.
+
+Update the skill whenever you update the CLI: the two ship from the same repo but on different triggers, so a new CLI version usually means this skill's guidance has moved too. If the global install fails on permissions, don't retry with `sudo` — tell the user and fall back to `npx @feastalytics/cli@latest`.
+
 ## The core loop: discover → describe → call
 
 Don't guess tool names or input shapes. Introspect the live CLI:

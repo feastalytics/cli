@@ -43,7 +43,8 @@ Call options:
 
 Environment:
   FEAST_API_URL             Override the API base URL (default: production)
-  FEAST_WEB_URL             Override the web app base URL for browser login (default: production)`;
+  FEAST_WEB_URL             Override the web app base URL for browser login (default: production)
+  FEAST_NO_UPDATE_CHECK     Disable the daily check for a newer published version`;
 
 interface ParsedArgs {
   positional: string[];
