@@ -8812,6 +8812,9 @@ export const CLI_MANIFEST: CliManifest = {
                                       "type": "string",
                                       "enum": [
                                         "first",
+                                        "second",
+                                        "third",
+                                        "fourth",
                                         "last"
                                       ]
                                     }
