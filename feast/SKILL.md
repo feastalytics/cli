@@ -20,7 +20,8 @@ npm install -g @feastalytics/cli    # or run ad-hoc with: npx @feastalytics/cli 
 Authenticate once — tokens are cached in `~/.config/feast-cli/credentials.json` and refreshed automatically:
 
 ```bash
-feast login <username>
+feast login                        # opens a browser to authorize (default)
+feast login --password [username]  # headless / CI: username + password prompt, no browser
 ```
 
 If a command reports you're not logged in or the session expired, re-run `feast login`.
@@ -88,7 +89,7 @@ The pattern generalizes: identify the org, learn the tool, resolve any reference
 
 ## When something fails
 
-- "Not logged in / session expired" → `feast login <username>`.
+- "Not logged in / session expired" → `feast login` (or `feast login --password [username]` in a headless/CI context).
 - "You belong to multiple organizations" → pick one with `--org`, using `feast whoami` to get the id.
 - "Input does not match the tool schema" → re-read `feast describe <tool>` and fix the named fields.
 - A tool you expected isn't listed by `feast tools` → it may not be exposed yet; don't fabricate a call, tell the user.
