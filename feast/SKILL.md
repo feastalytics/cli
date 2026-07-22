@@ -14,7 +14,7 @@ The CLI is the source of truth for *which* tools exist and *what* they accept â€
 The `feast` CLI must be installed and on PATH:
 
 ```bash
-npm install -g @feast/cli    # or run ad-hoc with: npx @feast/cli <command>
+npm install -g @feastalytics/cli    # or run ad-hoc with: npx @feastalytics/cli <command>
 ```
 
 Authenticate once â€” tokens are cached in `~/.config/feast-cli/credentials.json` and refreshed automatically:
