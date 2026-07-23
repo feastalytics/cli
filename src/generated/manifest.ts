@@ -2078,6 +2078,42 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "deleteMedia",
+      "domain": "core",
+      "description": "Delete an uploaded media file for the organization by its S3 key. The key must belong to the given scope (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, or creativeLibrary).",
+      "needsApproval": true,
+      "type": "mutation",
+      "path": [
+        "api",
+        "media",
+        "delete"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "passBuilder",
+              "funnel",
+              "organizationFilePublic",
+              "organizationFilePrivate",
+              "creativeLibrary"
+            ]
+          },
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "key"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "describeData",
       "domain": "data",
       "description": "Describe the queryable data model, then use queryData to read it. Call with no arguments for an index of every queryable object type plus the full query grammar - start here. Call with schemaName for every object type in that schema with full column detail, schemaName plus objectTypeName for a single object type, or detail='full' for the entire model at once. Columns come back with their type, enum values, nullability and a description; links come back with the name you pass to a pivot or join command. Prefer the 'interface' schema, whose object types (order, orderItem, customer, location, ...) are POS-agnostic and return the same shape regardless of which POS the organization runs. Pass includeGrammar=false to omit the grammar once you already have it.",
@@ -2541,6 +2577,46 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getMediaUploadUrl",
+      "domain": "core",
+      "description": "Get a presigned S3 upload URL for a media file in a given scope (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, creativeLibrary). PUT the file bytes to the returned presignedUrl, then reference the returned url/key.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "media",
+        "getUploadUrl"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "passBuilder",
+              "funnel",
+              "organizationFilePublic",
+              "organizationFilePrivate",
+              "creativeLibrary"
+            ]
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "fileName",
+          "fileType"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "listAutomationFlows",
       "domain": "automations",
       "description": "List automation flows for the organization. A flow is the container that groups automations by trigger — call this first to find the flow an automation should go into, and only create a new flow (createAutomationFlow) if none fits. Pass campaignId to get only that campaign's flows, or scope 'membersProgram' to get only members program flows (flows with no campaign). With no input, returns all flows.",
@@ -2713,6 +2789,45 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "referrer"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "listMedia",
+      "domain": "core",
+      "description": "List uploaded media files for the organization across one or more scopes (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, creativeLibrary). Each file is tagged with its scope and a canDelete flag. Set mediaOnly to return only image/video files.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "media",
+        "list"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "passBuilder",
+                "funnel",
+                "organizationFilePublic",
+                "organizationFilePrivate",
+                "creativeLibrary"
+              ]
+            },
+            "minItems": 1
+          },
+          "mediaOnly": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scopes"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
