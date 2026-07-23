@@ -2078,6 +2078,45 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "describeData",
+      "domain": "data",
+      "description": "Describe the queryable data model, then use queryData to read it. Call with no arguments for an index of every queryable object type plus the full query grammar - start here. Call with schemaName for every object type in that schema with full column detail, schemaName plus objectTypeName for a single object type, or detail='full' for the entire model at once. Columns come back with their type, enum values, nullability and a description; links come back with the name you pass to a pivot or join command. Prefer the 'interface' schema, whose object types (order, orderItem, customer, location, ...) are POS-agnostic and return the same shape regardless of which POS the organization runs. Pass includeGrammar=false to omit the grammar once you already have it.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "data",
+        "describe"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "schemaName": {
+            "type": "string",
+            "description": "Narrow to one schema, e.g. \"interface\", \"core\", \"events\", \"texting\". Omit for the index of everything."
+          },
+          "objectTypeName": {
+            "type": "string",
+            "description": "Narrow to one object type within schemaName, e.g. \"order\", \"guest\". Requires schemaName."
+          },
+          "detail": {
+            "type": "string",
+            "enum": [
+              "index",
+              "full"
+            ],
+            "description": "Only applies when schemaName is omitted. \"index\" (default) lists object types with a one-line description; \"full\" returns every column of every object type."
+          },
+          "includeGrammar": {
+            "type": "boolean",
+            "description": "Whether to include the query grammar for queryData. Defaults to true; pass false once you already have it."
+          }
+        },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "dfyCreateOffer",
       "domain": "offer",
       "description": "Creates a new offer in the strategy backlog queue. Requires name, headline, description, framework (free|combo|experience), items [{name, price}], offerPrice (null for free framework), and optionally locationId.",
@@ -2788,6 +2827,172 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "campaignId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "queryData",
+      "domain": "data",
+      "description": "Run a read-only query against the organization's data. Call describeData first for the object types and their exact column names - do not guess columns.\nResults are always scoped to the calling organization, so never filter on organizationId yourself.\n\nExample - export opted-in members with more than 5 visits, newest first:\n{\"schemaName\":\"core\",\"objectTypeName\":\"guest\",\"commands\":[{\"type\":\"filter\",\"filter\":{\"type\":\"and\",\"filters\":[{\"$optIn\":{\"boolean\":true}},{\"$testUser\":{\"boolean\":false}},{\"$progress\":{\"number\":5,\"match\":\"GT\"}}]}}],\"args\":{\"limit\":500,\"order\":{\"field\":\"timeAdded\",\"direction\":\"DESC\"},\"fields\":[\"serialNumber\",\"firstName\",\"lastName\",\"phoneNumber\",\"email\",\"progress\"]}}\n\nExample - order revenue by location for orders closed this year:\n{\"schemaName\":\"interface\",\"objectTypeName\":\"order\",\"commands\":[{\"type\":\"filter\",\"filter\":{\"$closedAt\":{\"datetime\":\"2026-01-01T00:00:00.000Z\",\"match\":\"GTE\"}}},{\"type\":\"aggregate\",\"aggregate\":{\"aggregate\":{\"$amount\":\"SUM\"},\"groupBy\":{\"$locationId\":\"EXACT\"}}}]}\n\nExample - a member's recent texts, newest first:\n{\"schemaName\":\"texting\",\"objectTypeName\":\"textMessage\",\"commands\":[{\"type\":\"filter\",\"filter\":{\"$serialNumber\":{\"string\":\"<serial>\",\"match\":\"EQ\"}}}],\"args\":{\"limit\":50,\"order\":{\"field\":\"dateCreated\",\"direction\":\"DESC\"}}}\n\nFilter leaves are one column each, written as the column name prefixed with $, combined with {\"type\":\"and\"|\"or\",\"filters\":[...]}. Use {\"strings\":[...]} for any-of rather than a large or. Page by passing the returned nextCursor back as args.cursor.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "data",
+        "query"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "schemaName": {
+            "type": "string",
+            "description": "Schema as reported by describeData, e.g. \"interface\", \"core\", \"events\", \"texting\"."
+          },
+          "objectTypeName": {
+            "type": "string",
+            "description": "Object type as reported by describeData, e.g. \"order\", \"guest\", \"userEvent\", \"textMessage\"."
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "filter"
+                    },
+                    "filter": {
+                      "description": "Required. A filter tree. One column per leaf, as the column name prefixed with $. Leaf: {\"$<column>\": <predicate>}. Combine with {\"type\":\"and\",\"filters\":[...]} or {\"type\":\"or\",\"filters\":[...]}. Predicates by column type - string: {\"string\":\"Jane\",\"match\":\"EQ\"|\"NEQ\"|\"IN\"|\"ENDS_WITH\"} where IN means contains, or {\"strings\":[\"a\",\"b\"]} for any-of. number: {\"number\":5,\"match\":\"GT\"|\"GTE\"|\"LT\"|\"LTE\"|\"EQ\"|\"NEQ\"}. boolean: {\"boolean\":true} with no match key. datetime/date: {\"datetime\":\"2026-01-01T00:00:00.000Z\",\"match\":\"GTE\"}. Nullable columns also accept {\"match\":\"NULL\"} or {\"match\":\"NOT_NULL\"}. Example: {\"type\":\"and\",\"filters\":[{\"$optIn\":{\"boolean\":true}},{\"$progress\":{\"number\":5,\"match\":\"GT\"}}]}"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "filter"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Restrict the set to matching rows. Example: {\"type\":\"filter\",\"filter\":{\"$eventType\":{\"strings\":[\"order\",\"rewardAwarded\"]}}}"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "pivot"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "A link name from describeData's links for the current object type. Replaces the set with that linked object type, so later commands apply to the new type."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "name"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Traverse a link. Example: {\"type\":\"pivot\",\"name\":\"orderItem\"} on interface.order gives its line items."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "aggregate"
+                    },
+                    "aggregate": {
+                      "description": "Required. Group and aggregate, replacing the row shape with the grouped and aggregated columns only. Shape: {\"aggregate\":{\"$<column>\":\"SUM\"|\"MAX\"|\"MIN\"|\"AVG\"|\"COUNT\"},\"groupBy\":{\"$<column>\":\"EXACT\"}}. Example - revenue by location: {\"aggregate\":{\"$amount\":\"SUM\"},\"groupBy\":{\"$locationId\":\"EXACT\"}}"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "aggregate"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Group and aggregate. Example: {\"type\":\"aggregate\",\"aggregate\":{\"aggregate\":{\"$amount\":\"SUM\"},\"groupBy\":{\"$locationId\":\"EXACT\"}}}"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "join"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "A link name from describeData for the current object type."
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Columns to pull from the linked object type."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "name",
+                    "fields"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Widen each row with columns from a linked object, keeping the current object type. Example: {\"type\":\"join\",\"name\":\"order\",\"fields\":[\"closedAt\",\"amount\"]}"
+                }
+              ]
+            },
+            "description": "Ordered list of commands, each narrowing or reshaping the set before the fetch. Omit to fetch the object type unfiltered. pivot and join must come before any aggregate."
+          },
+          "args": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 1000,
+                "description": "Rows to return. Defaults to 100, maximum 1000."
+              },
+              "cursor": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Row offset. Pass the nextCursor from the previous response to page; a missing nextCursor means there are no more rows."
+              },
+              "order": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "ASC",
+                      "DESC"
+                    ]
+                  }
+                },
+                "required": [
+                  "field",
+                  "direction"
+                ],
+                "additionalProperties": false,
+                "description": "Sort order. Example: {\"field\":\"eventTime\",\"direction\":\"DESC\"}"
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Columns to return. Omit for all of them. The main lever for keeping responses under the payload cap on wide object types."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "schemaName",
+          "objectTypeName"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
