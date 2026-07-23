@@ -1,6 +1,6 @@
 {
   "name": "@feastalytics/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Command-line client for the Feastalytics platform — list, create, and update campaigns, automations, offers, and members-program rewards from the terminal.",
   "type": "module",
   "bin": {
