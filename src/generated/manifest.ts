@@ -2098,7 +2098,8 @@ export const CLI_MANIFEST: CliManifest = {
               "funnel",
               "organizationFilePublic",
               "organizationFilePrivate",
-              "creativeLibrary"
+              "creativeLibrary",
+              "creativeLibraryBroll"
             ]
           },
           "key": {
@@ -2579,7 +2580,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getMediaUploadUrl",
       "domain": "core",
-      "description": "Get a presigned S3 upload URL for a media file in a given scope (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, creativeLibrary). Set cropped to store a cropped variant under the scope's cropped/ subfolder. PUT the file bytes to the returned presignedUrl, then reference the returned url/key.",
+      "description": "Get a presigned S3 upload URL for a media file in a given scope (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, creativeLibrary, creativeLibraryBroll). Set cropped to store a cropped variant under the scope's cropped/ subfolder. PUT the file bytes to the returned presignedUrl, then reference the returned url/key.",
       "needsApproval": false,
       "type": "mutation",
       "path": [
@@ -2597,7 +2598,8 @@ export const CLI_MANIFEST: CliManifest = {
               "funnel",
               "organizationFilePublic",
               "organizationFilePrivate",
-              "creativeLibrary"
+              "creativeLibrary",
+              "creativeLibraryBroll"
             ]
           },
           "fileName": {
@@ -2800,7 +2802,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listMedia",
       "domain": "core",
-      "description": "List uploaded media files for the organization across one or more scopes (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, creativeLibrary). Each file is tagged with its scope and a canDelete flag. Set mediaOnly to return only image/video files. Set cropped to list the cropped variants (each scope's cropped/ subfolder) instead of the base files.",
+      "description": "List uploaded media files for the organization across one or more scopes (passBuilder, funnel, organizationFilePublic, organizationFilePrivate, creativeLibrary, creativeLibraryBroll). Each file is tagged with its scope and a canDelete flag. Set mediaOnly to return only image/video files. Set cropped to list the cropped variants (each scope's cropped/ subfolder) instead of the base files.",
       "needsApproval": false,
       "type": "query",
       "path": [
@@ -2820,7 +2822,8 @@ export const CLI_MANIFEST: CliManifest = {
                 "funnel",
                 "organizationFilePublic",
                 "organizationFilePrivate",
-                "creativeLibrary"
+                "creativeLibrary",
+                "creativeLibraryBroll"
               ]
             },
             "minItems": 1
