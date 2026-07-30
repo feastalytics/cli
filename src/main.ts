@@ -1,5 +1,9 @@
 import fs from "fs";
 import {
+  environmentAccessToken,
+  resolveActingContext,
+} from "./actingContext";
+import {
   decodeJwtPayload,
   ensureFreshTokens,
   errorMessage,
@@ -10,11 +14,7 @@ import { browserLogin } from "./browserLogin";
 import { getWebBaseUrl } from "./config";
 import { getCredentialsPath } from "./credentials";
 import { callProcedure, createHttpCaller } from "./http";
-import {
-  listOrgRoles,
-  resolveOrganizationId,
-  resolvePreferredRole,
-} from "./orgs";
+import { listOrgRoles } from "./orgs";
 import { promptConfirm, promptHidden, promptText } from "./prompt";
 import {
   buildToolRegistry,
@@ -37,6 +37,7 @@ Commands:
 
 Call options:
   --org <organizationId>    Organization to act on (required unless you belong to exactly one)
+  --role <role|roleArn>     Role to act as, e.g. OWNER (required when FEAST_ACCESS_TOKEN is set)
   --input <json>            Tool input as a JSON string (default: {})
   --input-file <path>       Tool input from a JSON file
   --yes                     Skip the confirmation prompt for mutations
@@ -44,7 +45,14 @@ Call options:
 Environment:
   FEAST_API_URL             Override the API base URL (default: production)
   FEAST_WEB_URL             Override the web app base URL for browser login (default: production)
-  FEAST_NO_UPDATE_CHECK     Disable the daily check for a newer published version`;
+  FEAST_NO_UPDATE_CHECK     Disable the daily check for a newer published version
+
+Non-interactive credentials (for sandboxed agents):
+  FEAST_ACCESS_TOKEN        Access token to send verbatim. When set, no token is read
+                            from disk and none is refreshed, and the token is never
+                            decoded — so the organization and role must be supplied too.
+  FEAST_ORGANIZATION_ID     Pins the organization. --org must match it or be omitted.
+  FEAST_PREFERRED_ROLE      Pins the role. --role must match it or be omitted.`;
 
 interface ParsedArgs {
   positional: string[];
@@ -54,7 +62,7 @@ interface ParsedArgs {
 function parseArgs(argv: string[]): ParsedArgs {
   const positional: string[] = [];
   const flags: { [key: string]: string | boolean } = {};
-  const valueFlags = new Set(["org", "input", "input-file", "domain"]);
+  const valueFlags = new Set(["org", "role", "input", "input-file", "domain"]);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
     if (!arg.startsWith("--")) {
@@ -77,6 +85,11 @@ function parseArgs(argv: string[]): ParsedArgs {
 }
 
 async function commandLogin(args: ParsedArgs): Promise<void> {
+  if (environmentAccessToken() != null) {
+    throw new Error(
+      "FEAST_ACCESS_TOKEN is set, so this CLI is using credentials from the environment. Unset it to log in and store tokens on disk."
+    );
+  }
   if (args.flags["password"] === true) {
     const username =
       args.positional[0] ?? (await promptText("Username: "));
@@ -100,7 +113,21 @@ async function commandLogin(args: ParsedArgs): Promise<void> {
   console.info(`Tokens stored in ${getCredentialsPath()}`);
 }
 
-async function commandWhoami(): Promise<void> {
+async function commandWhoami(args: ParsedArgs): Promise<void> {
+  if (environmentAccessToken() != null) {
+    const acting = await resolveActingContext(
+      args.flags["org"] as string | undefined,
+      args.flags["role"] as string | undefined
+    );
+    console.info("Credentials: FEAST_ACCESS_TOKEN (environment)");
+    console.info(`Organization: ${acting.organizationId}`);
+    console.info(`Role: ${acting.roleLabel}`);
+    console.info(
+      "The token is opaque to this CLI, so the user and their other organizations cannot be listed."
+    );
+    return;
+  }
+
   const tokens = await ensureFreshTokens();
   const payload = decodeJwtPayload(tokens.accessToken.jwtToken);
   const orgRoles = listOrgRoles(tokens.accessToken.jwtToken);
@@ -255,28 +282,23 @@ async function commandCall(args: ParsedArgs): Promise<void> {
     );
   }
 
-  const tokens = await ensureFreshTokens();
+  const acting = await resolveActingContext(
+    args.flags["org"] as string | undefined,
+    args.flags["role"] as string | undefined
+  );
   const isWrite = tool.type === "mutation" || tool.needsApproval;
 
-  const organizationId = resolveOrganizationId(
-    tokens.accessToken.jwtToken,
-    args.flags["org"] as string | undefined
-  );
-  const resolved = resolvePreferredRole(
-    tokens.accessToken.jwtToken,
-    organizationId
-  );
   console.error(
-    `Acting on organization ${organizationId} as ${resolved.orgRole.role}`
+    `Acting on organization ${acting.organizationId} as ${acting.roleLabel}`
   );
 
   const client = createHttpCaller({
-    accessToken: tokens.accessToken.jwtToken,
-    preferredRole: resolved.arn,
+    accessToken: acting.accessToken,
+    preferredRole: acting.preferredRole,
   });
 
   if (isWrite) {
-    const organization = await verifyOrganization(client, organizationId);
+    const organization = await verifyOrganization(client, acting.organizationId);
     if (args.flags["yes"] !== true) {
       const orgLabel =
         organization.name != null
@@ -309,7 +331,7 @@ export async function runCli(argv: string[]): Promise<void> {
       console.info("Logged out");
       break;
     case "whoami":
-      await commandWhoami();
+      await commandWhoami(args);
       break;
     case "tools":
       commandTools(args);
