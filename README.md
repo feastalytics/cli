@@ -93,6 +93,53 @@ To refresh from a local checkout instead of GitHub, run `npx skills add ./feast 
 - `FEAST_API_URL` — override the API base URL (e.g. a local dev server)
 - `FEAST_API_KEY` — override the static API key
 
+### Non-interactive credentials
+
+`feast login` stores tokens under `~/.config/feast-cli/` and refreshes them on
+demand. That does not work where there is no interactive login and no writable
+home directory — most importantly inside a sandboxed agent, where the token is
+supplied by the host and must never be readable by the agent itself.
+
+Set `FEAST_ACCESS_TOKEN` for that case:
+
+```bash
+export FEAST_ACCESS_TOKEN="$TOKEN"
+export FEAST_ORGANIZATION_ID=4fafb31e-dd46-4081-9778-c298e577a1d1
+export FEAST_PREFERRED_ROLE=OWNER
+feast call listCampaigns
+```
+
+- `FEAST_ACCESS_TOKEN` — access token sent verbatim as `x-access-token`
+- `FEAST_ORGANIZATION_ID` — **pins** the organization
+- `FEAST_PREFERRED_ROLE` — **pins** the role; a role name (`OWNER`) or a full role ARN
+
+When `FEAST_ACCESS_TOKEN` is set the CLI reads no token from disk, refreshes
+nothing, and **never decodes the token**. Normally the organization and role are
+read from the token's `cognito:groups` claim, so both must be supplied instead.
+
+Not decoding the token is the point, not a limitation: it lets the token be an
+opaque placeholder that a secret store substitutes for the real value after the
+request leaves the machine, so a compromised sandbox yields nothing.
+
+`FEAST_ORGANIZATION_ID` and `FEAST_PREFERRED_ROLE` pin the session rather than
+just defaulting it. `--org` and `--role` may repeat the pinned value but cannot
+change it:
+
+```
+$ FEAST_ORGANIZATION_ID=org-A feast call listCampaigns --org org-B
+FEAST_ORGANIZATION_ID pins this session to org-A, so --org org-B is not allowed.
+```
+
+Pinning the role is how you run an agent at **reduced** privilege. The API
+validates a requested role against the user's real Cognito groups, so it will
+happily accept `OWNER` from a user who is an owner — only the pin can hold that
+user's agent down to `VIEWER`.
+
+Neither pin is a security boundary on its own: both are ordinary environment
+variables, so anything that can set env vars in the same process tree can change
+them. They stop a tool call from wandering, not a determined process. Scope the
+token itself if you need a hard guarantee.
+
 ## Development
 
 ```bash
