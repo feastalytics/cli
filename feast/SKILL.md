@@ -97,7 +97,9 @@ For the ordered steps and domain rules of each common workflow, read `references
 
 Work you do through the CLI lands somewhere in the product, and a link is a cheap thing to offer — so offer them freely. After a turn where you created, changed, or published something, close with a short markdown list: where to see it, where to edit it, where to preview it. Not because anyone has to go check your work, but because opening the thing is usually the next step anyway. When someone asks where a thing lives or how to set it up, lead with the link rather than click-by-click directions.
 
-Most of what you touch has a stable URL you can build from ids you already have — `{organizationId}` is what you pass to `--org`, and campaign, flow and draft ids come back from the call you just made. Read `references/links.md` for the patterns: dashboard routes and their panel/tab names, the guest-facing pages on the org's own subdomain, the `/preview/{draftId}` route that completes the funnel draft loop, and which query params actually suppress analytics (`internal_qa=1`) versus merely tagging a visit as a preview (`utm_source=PREVIEW`).
+**You don't know these URLs — read `references/links.md` before you write one.** The dashboard's shape is not the one you'd extrapolate from the guest-facing links elsewhere in this skill, so a URL that looks obviously right is the exact case to check. A wrong link is worse than no link: it looks authoritative and 404s.
+
+That file has the dashboard routes with their panel and tab names, the guest-facing pages on the organization's own subdomain, the preview route that completes the funnel draft loop, and which query params actually suppress analytics versus merely tagging a visit as a preview.
 
 ## Worked example
 
