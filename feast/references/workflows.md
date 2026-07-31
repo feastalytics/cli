@@ -46,11 +46,12 @@ Unlike the in-app agent (which scaffolds an automation, then edits it, then expl
 1. `listAutomationFlows` — find an existing flow. Pass `{ "campaignId": "<id>" }` for a campaign's flows, or `{ "scope": "membersProgram" }` for members-program flows. Reuse a matching flow when one fits.
 2. If none fits, `createAutomationFlow` to make one. If the campaign/members-program has **no flows at all**, strongly prefer `applyAutomationTemplate` (then customize) over building from scratch. Only apply a template when there are no existing flows.
 3. `listAutomations` with `{ "flowId": "<id>" }` to see the automations already in that flow before editing (omit the input to list every automation in the org).
-4. `batchEditAutomations` with a list of `operations`:
+4. `simulateAutomations` **with your proposed, un-saved `edits`** — dry-run the flow against a synthetic event timeline with **no real sends** and confirm the right automations would fire. This is the required verification step: automations have no draft/staging tier, so the write in step 5 goes straight to production. Simulate first, write once confident; if the simulation surprises you, fix the edits and re-simulate rather than writing and patching live.
+5. `batchEditAutomations` with the now-verified list of `operations`:
    - `{ "type": "create", "automation": { ...full automation..., "flowId": "<id>" } }` — generate a fresh UUID for the automation's id, set the `flowId`, and include triggers, conditions, actions, send time, and a descriptive title all at once. The server validates it and (create ops) requires the flowId.
    - `{ "type": "update", "automationId": "<id>", "automation": { ...changed fields... } }`
    - `{ "type": "delete", "automationId": "<id>" }` — blocked if the automation already has sends.
-5. `simulateAutomations` — dry-run the flow against a synthetic event timeline with **no real sends**, to confirm the right automations fire before or after you save. It can also preview un-saved `edits` before you commit them.
+   After a write, `simulateAutomations` again (no `edits`) if you want to confirm the saved state behaves the same.
 
 `updateAutomationFlow` renames/retitles a flow; `deleteAutomationFlow` removes a flow and its automations (blocked at ≥20 sends — turn it off instead).
 
@@ -142,8 +143,19 @@ Every offer picks one **framework**:
 The retention counterpart to campaigns — flows with no `campaignId`.
 
 - **Automations are authorable** (see the automations workflow): use `listAutomationFlows` with `{ "scope": "membersProgram" }`, then the same create/edit loop. Remember the members-program 30-day `awardReward` default.
-- **Creating members-program rewards themselves is NOT exposed.** Reward creation in the app writes a catalog item + reward link through generic object-query mutations with no dedicated tool, and orchestrates catalog-item-create-or-reuse plus awarding-automation scaffolding client-side. There's no tagged `createReward`. If asked, tell the user this needs the app (or a new endpoint).
-- **Pass builder** (wallet pass design) is not exposed to the CLI.
+- **Rewards are now readable and creatable.** `listMembersProgramRewards` returns every reward with its catalog `name`, `staffInstructions`, and `pointsCost` (fields are `null` when unset). `createMembersProgramReward` takes `{ "name", "staffInstructions"?, "pointsCost"? }` and does the catalog-item dance for you: an existing catalog item with that exact name is reused (updating its `staffInstructions` if you passed any), otherwise one is created, then the reward row is linked to it.
+- **The `pointsCost` fork matters.** A reward with `pointsCost` set is redeemed *by the member with points* and is never auto-awarded. Omit `pointsCost` for automation-awarded rewards — and then actually pair the reward with an `awardReward` automation (see the automations workflow), or it will never reach anyone. `listMembersProgramRewards` deliberately has no `hasAutomation` flag: cross-reference `listAutomations` for `awardReward` actions carrying the reward's `itemId` to find orphans.
+- Reward **update/delete are not exposed** yet — those still need the app.
+
+---
+
+## Wallet pass configuration
+
+The pass (the wallet membership card) is now CLI-readable and -writable as a whole document.
+
+- **`readPassConfiguration`** `{}` — returns the latest live configuration: `sections`, `features`, `locations`, `metadata`, and its `version`.
+- **`savePassConfiguration`** — **a full-document save, not a patch.** Anything you omit is dropped from the new version. The only safe workflow is read → modify the returned document → save the complete result. Saving appends a new version (history is preserved server-side), and a visible change triggers a re-push of the pass to every member's wallet — so this confirms before running and deserves the same care as a live send.
+- Pass **image generation** (punch-card strips etc.) is not exposed — image workflows still need the app.
 
 ---
 
@@ -160,7 +172,7 @@ The retention counterpart to campaigns — flows with no `campaignId`.
 
 **Applying a funnel template** expands a whole screen tree server-side in one call: `chooseFunnelTemplate` (needs the campaign's funnel unset — a fresh campaign — and resolves the referrer from the campaign). `deleteFunnel` tears one down.
 
-**Editing individual funnel screens is now CLI-drivable** through a **draft → preview → promote** loop. You never apply edits locally: you stage them on an off-prod draft, preview the result at a stable URL, then save. Tools: `listFunnelScreens`, `createFunnelDraft`, `stageFunnelEdit`, `getFunnelDraft`, `listFunnelDrafts`, `discardFunnelDraft`, `saveFunnelEdits`.
+**Editing individual funnel screens is now CLI-drivable** through a **draft → preview → promote** loop. You never apply edits locally: you stage them on an off-prod draft, preview the result at a stable URL, then save. Tools: `listFunnelScreens`, `createFunnelDraft`, `stageFunnelEdit`, `stageFunnelScreen`, `getFunnelDraft`, `listFunnelDrafts`, `discardFunnelDraft`, `saveFunnelEdits`.
 
 ### The loop
 
@@ -170,6 +182,7 @@ The retention counterpart to campaigns — flows with no `campaignId`.
    - `{ "type": "update", "id": "<renderableId>", "renderable": { ...clone of what you read, with your changes... } }` — keep the same `id`.
    - `{ "type": "create", "renderable": { "id": "<new-uuid>", ... }, "targetId": "<sibling id>", "position": "before" | "after" | "inside" }` — generate a fresh UUID.
    - `{ "type": "delete", "id": "<renderableId>" }` and `{ "type": "move", "id": "...", "targetId": "...", "position": "..." }`.
+   **Need a brand-new screen?** `stageFunnelScreen` `{ "draftId": "...", "title": "...", "description"? }` stages an empty screen on the draft and returns its **permanent `screenId`** — the id is assigned at staging time, not at save, so you can immediately `stageFunnelEdit` content into it and reference it from navigation/buttons on other screens; nothing gets re-keyed at promote. On a campaign draft the screen is campaign-scoped unless you pass `"campaignScoped": false`. The screen only exists on the draft (and in draft-scoped `listFunnelScreens`/previews) until `saveFunnelEdits` promotes it, which reports it in `createdScreenIds`.
 4. **Preview** (no CLI call): open `https://{referrer}.feastalytics.com/preview/{draftId}/{campaignId}` (drop `/{campaignId}` for a members-program draft). It renders the whole funnel as a flow diagram with the draft's edits applied. Screenshot it, then iterate — re-run `listFunnelScreens` **with the `draftId`** to read the funnel *with* the staged edits, stage more, re-preview — until it's right.
 5. **`saveFunnelEdits`** `{ "draftId": "..." }` — **promotes to prod** (mutation, confirms first): applies the draft's edits to the live funnel and marks the draft `promoted`. To abandon instead, `discardFunnelDraft`.
 
