@@ -1,10 +1,10 @@
 # Linking to your work
 
-The CLI changes data; people still have to go *look* at it. Every campaign, funnel, automation and settings pane has a stable URL, so end your work by handing over links rather than describing where to click.
+Most of what you create or change through the CLI has a stable URL in the product. Handing one over is cheap and saves the user hunting through the dashboard for the thing you just made — opening it is usually their next step anyway.
 
-The rule: after any turn where you created, changed, or published something, finish your message with a short markdown list of links — usually two to four, covering where to see it, where to edit it, and where to preview it. When someone asks where a thing lives or how to set it up, answer with the link.
+So offer links freely: after a turn where you created, changed, or published something, close with a short markdown list — usually two to four, covering where to see it, where to edit it, and where to preview it. When someone asks where a thing lives or how to set it up, lead with the link rather than describing where to click. It's an affordance, not a checkpoint; nobody has to go verify your work.
 
-You can build every URL below from ids you already have. `{organizationId}` is the same value you pass to `--org`. Campaign, flow and draft ids come back from the tool call you just made. Only `{subdomain}` needs a lookup.
+You can build almost every URL below from ids you already have. `{organizationId}` is the same value you pass to `--org`. Campaign, flow and draft ids come back from the tool call you just made. Only `{subdomain}` needs a lookup.
 
 ## Dashboard
 

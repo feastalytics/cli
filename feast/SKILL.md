@@ -95,9 +95,9 @@ For the ordered steps and domain rules of each common workflow, read `references
 
 ## Link to what you touched
 
-The CLI changes data, but people still have to go look at it. Every campaign, funnel, automation and settings pane has a stable URL you can build from ids you already have, so **end any turn where you created, changed, or published something with a short markdown list of links** — where to see it, where to edit it, where to preview it. When the user asks where a thing lives or how to set it up, answer with the link rather than click-by-click directions.
+Work you do through the CLI lands somewhere in the product, and a link is a cheap thing to offer — so offer them freely. After a turn where you created, changed, or published something, close with a short markdown list: where to see it, where to edit it, where to preview it. Not because anyone has to go check your work, but because opening the thing is usually the next step anyway. When someone asks where a thing lives or how to set it up, lead with the link rather than click-by-click directions.
 
-Read `references/links.md` for the URL patterns: the dashboard routes and their panel/tab names, the guest-facing pages on the org's own subdomain, the `/preview/{draftId}` route that completes the funnel draft loop, and which query params actually suppress analytics (`internal_qa=1`) versus merely tagging a visit as a preview (`utm_source=PREVIEW`).
+Most of what you touch has a stable URL you can build from ids you already have — `{organizationId}` is what you pass to `--org`, and campaign, flow and draft ids come back from the call you just made. Read `references/links.md` for the patterns: dashboard routes and their panel/tab names, the guest-facing pages on the org's own subdomain, the `/preview/{draftId}` route that completes the funnel draft loop, and which query params actually suppress analytics (`internal_qa=1`) versus merely tagging a visit as a preview (`utm_source=PREVIEW`).
 
 ## Worked example
 
