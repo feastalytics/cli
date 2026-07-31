@@ -2027,6 +2027,37 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "createMembersProgramReward",
+      "domain": "membersProgram",
+      "description": "Create a members program reward. The name is matched against the organization's catalog items: an exact match is reused (and its staff instructions updated when you pass staffInstructions), otherwise a new catalog item is created. Pass pointsCost to make the reward redeemable by guests spending points; omit it for a reward that is granted by an automation instead. A reward with no awardReward automation and no pointsCost can never reach a guest, so pair it with an automation via createAutomation.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "membersProgram",
+        "createReward"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "staffInstructions": {
+            "type": "string"
+          },
+          "pointsCost": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "deleteAutomationFlow",
       "domain": "automations",
       "description": "Delete an automation flow and the automations inside it. Pass flowId. Blocked if the flow's automations have 20 or more sends — turn the flow off instead of deleting it in that case. This is destructive; prefer disabling over deleting when unsure.",
@@ -2843,6 +2874,25 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "listMembersProgramRewards",
+      "domain": "membersProgram",
+      "description": "List the organization's members program rewards, each with its catalog item name, staff instructions, and points cost. A reward with a pointsCost is redeemable by guests spending points; one without is granted by an automation. To find orphaned rewards — rewards nothing ever awards — call listAutomations and check which itemIds appear in an awardReward action.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "membersProgram",
+        "listRewards"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false,
+        "default": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "loadCurrentOrganization",
       "domain": "core",
       "description": "Load the current organization, including its POS location IDs. Use the returned locationIds (not organizationId) when calling tools that require a locationId.",
@@ -2951,6 +3001,32 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "campaignId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "previewFunnelDraft",
+      "domain": "funnel",
+      "description": "Render every screen of a funnel draft to a PDF (one screen per page, mobile viewport) and return a short-lived download URL. Open drafts render with their staged edits applied; promoted drafts render the live funnel. Fetch the returned URL with web_fetch to visually inspect the screens.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "layoutEngine",
+        "drafts",
+        "preview"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "draftId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3123,9 +3199,28 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "readPassConfiguration",
+      "domain": "passBuilder",
+      "description": "Read the organization's live wallet pass configuration: sections (the pass content fields), features, locations, metadata, and the current version number. Returns null when the organization has never saved a pass configuration. Read this before changing the pass — savePassConfiguration is a full-document save, so the returned document is the starting point you modify.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "passBuilder",
+        "get"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false,
+        "default": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "saveFunnelEdits",
       "domain": "funnel",
-      "description": "Apply funnel edits to production and save. Accepts either a draftId (applies the draft's staged edits, then marks it promoted) or an inline edits array. This writes to the live funnel.",
+      "description": "Apply funnel edits to production and save. Accepts either a draftId (applies the draft's staged edits, creates any screens staged with stageFunnelScreen, then marks it promoted) or an inline edits array. This writes to the live funnel.",
       "needsApproval": true,
       "type": "mutation",
       "path": [
@@ -4888,6 +4983,1427 @@ export const CLI_MANIFEST: CliManifest = {
             }
           }
         },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "savePassConfiguration",
+      "domain": "passBuilder",
+      "description": "Save the organization's wallet pass configuration. This is a full-document save, not a patch: send the complete configuration, so the normal flow is readPassConfiguration, modify the returned document, then save it back. Anything you omit is dropped. Each save appends a new version rather than editing the current one, and when the sections, features, or locations differ from the previous version every pass already in a guest's wallet is re-pushed with the new design.",
+      "needsApproval": true,
+      "type": "mutation",
+      "path": [
+        "api",
+        "passBuilder",
+        "create"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "object",
+            "properties": {
+              "headerFields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "valueRules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ruleId": {
+                            "type": "string"
+                          },
+                          "conditions": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "event"
+                                    },
+                                    "event": {
+                                      "type": "object",
+                                      "properties": {
+                                        "event": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "receiveAutomation"
+                                                },
+                                                "receiveAutomation": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "automationId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "receiveAutomation"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "reply"
+                                                },
+                                                "reply": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "automationId": {
+                                                      "type": "string"
+                                                    },
+                                                    "keywords": {
+                                                      "type": "array",
+                                                      "items": {
+                                                        "type": "string"
+                                                      }
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "reply"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "signUp"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "importedCustomer"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "addPass"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "visit"
+                                                },
+                                                "visit": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "locationId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "viewCampaign"
+                                                },
+                                                "viewCampaign": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "viewCampaign"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "offerRedemption"
+                                                },
+                                                "offerRedemption": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    },
+                                                    "promoId": {
+                                                      "type": "string"
+                                                    },
+                                                    "offerId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "offerExpiration"
+                                                },
+                                                "offerExpiration": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    },
+                                                    "promoId": {
+                                                      "type": "string"
+                                                    },
+                                                    "offerId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "offerExpiration"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "checkout"
+                                                },
+                                                "checkout": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "promoId": {
+                                                      "type": "string"
+                                                    },
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "checkout"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "buttonClick"
+                                                },
+                                                "buttonClick": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "buttonId": {
+                                                      "type": "string"
+                                                    },
+                                                    "eventName": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "buttonId",
+                                                    "eventName"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "buttonClick"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "formSubmission"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "invalidScan"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "gotReferred"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "referred"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "subscriptionRenewal"
+                                                },
+                                                "subscriptionRenewal": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "pickupDate"
+                                                },
+                                                "pickupDate": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": false
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        },
+                                        "occur": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "match": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "GTE",
+                                                    "LTE",
+                                                    "EQ"
+                                                  ]
+                                                },
+                                                "duration": {
+                                                  "type": "number",
+                                                  "description": "Duration in milliseconds"
+                                                }
+                                              },
+                                              "required": [
+                                                "match",
+                                                "duration"
+                                              ],
+                                              "additionalProperties": false,
+                                              "description": "Time-based occur. Use match (GTE/LTE/EQ) and duration (ms). No 'relative' type."
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "today"
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "event"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Nested: event.event is the AutomationEvent, event.occur is optional. NOT flat event/occur at top level."
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "event"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "operatingSystem"
+                                    },
+                                    "operatingSystem": {
+                                      "type": "object",
+                                      "properties": {
+                                        "os": {
+                                          "type": "string",
+                                          "enum": [
+                                            "ios",
+                                            "android"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "os"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "operatingSystem"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "and"
+                                    },
+                                    "conditions": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items"
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "conditions"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "or"
+                                    },
+                                    "conditions": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items"
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "conditions"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "not"
+                                    },
+                                    "condition": {
+                                      "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "condition"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "progress"
+                                    },
+                                    "progress": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "divisible"
+                                            },
+                                            "divisible": {
+                                              "type": "object",
+                                              "properties": {
+                                                "offset": {
+                                                  "type": "number"
+                                                },
+                                                "step": {
+                                                  "type": "number"
+                                                }
+                                              },
+                                              "required": [
+                                                "offset",
+                                                "step"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "divisible"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "match"
+                                            },
+                                            "match": {
+                                              "type": "object",
+                                              "properties": {
+                                                "match": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "GTE",
+                                                    "LTE",
+                                                    "EQ"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "number"
+                                                }
+                                              },
+                                              "required": [
+                                                "match",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "match"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "progress"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "passSubType"
+                                    },
+                                    "passSubType": {
+                                      "type": "object",
+                                      "properties": {
+                                        "identifier": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "identifier"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "passSubType"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "cohort"
+                                    },
+                                    "cohort": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "specific"
+                                            },
+                                            "specific": {
+                                              "type": "object",
+                                              "properties": {
+                                                "cohort": {
+                                                  "type": "string"
+                                                },
+                                                "step": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "cohort",
+                                                "step"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "specific"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "none"
+                                            }
+                                          },
+                                          "required": [
+                                            "type"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "cohort"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "dayOfWeek"
+                                    },
+                                    "dayOfWeek": {
+                                      "type": "object",
+                                      "properties": {
+                                        "localDayOfWeek": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 6
+                                        }
+                                      },
+                                      "required": [
+                                        "localDayOfWeek"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "dayOfWeek"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "hasActiveSubscription"
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "customProperty"
+                                    },
+                                    "customProperty": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "propertyId": {
+                                              "type": "string"
+                                            },
+                                            "propertyType": {
+                                              "type": "string",
+                                              "const": "number"
+                                            },
+                                            "number": {
+                                              "type": "object",
+                                              "properties": {
+                                                "operator": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "GTE",
+                                                    "LTE",
+                                                    "EQ",
+                                                    "GT",
+                                                    "LT"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "number"
+                                                }
+                                              },
+                                              "required": [
+                                                "operator",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "propertyId",
+                                            "propertyType",
+                                            "number"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "propertyId": {
+                                              "type": "string"
+                                            },
+                                            "propertyType": {
+                                              "type": "string",
+                                              "const": "dayOfYear"
+                                            },
+                                            "dayOfYear": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "relative"
+                                                    },
+                                                    "relative": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "direction": {
+                                                          "type": "string",
+                                                          "enum": [
+                                                            "since",
+                                                            "until"
+                                                          ]
+                                                        },
+                                                        "operator": {
+                                                          "type": "string",
+                                                          "enum": [
+                                                            "GTE",
+                                                            "LTE",
+                                                            "EQ",
+                                                            "GT",
+                                                            "LT"
+                                                          ]
+                                                        },
+                                                        "durationMs": {
+                                                          "type": "number"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "direction",
+                                                        "operator",
+                                                        "durationMs"
+                                                      ],
+                                                      "additionalProperties": false
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "relative"
+                                                  ],
+                                                  "additionalProperties": false
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "propertyId",
+                                            "propertyType",
+                                            "dayOfYear"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "propertyId": {
+                                              "type": "string"
+                                            },
+                                            "propertyType": {
+                                              "type": "string",
+                                              "const": "date"
+                                            },
+                                            "date": {
+                                              "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items/anyOf/10/properties/customProperty/anyOf/1/properties/dayOfYear"
+                                            }
+                                          },
+                                          "required": [
+                                            "propertyId",
+                                            "propertyType",
+                                            "date"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "propertyId": {
+                                              "type": "string"
+                                            },
+                                            "propertyType": {
+                                              "type": "string",
+                                              "const": "boolean"
+                                            },
+                                            "boolean": {
+                                              "type": "object",
+                                              "properties": {
+                                                "value": {
+                                                  "type": "boolean"
+                                                }
+                                              },
+                                              "required": [
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "propertyId",
+                                            "propertyType",
+                                            "boolean"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "propertyId": {
+                                              "type": "string"
+                                            },
+                                            "propertyType": {
+                                              "type": "string",
+                                              "const": "string"
+                                            },
+                                            "string": {
+                                              "type": "object",
+                                              "properties": {
+                                                "operator": {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "EQ",
+                                                    "NEQ",
+                                                    "CONTAINS",
+                                                    "STARTS_WITH",
+                                                    "ENDS_WITH"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "string"
+                                                }
+                                              },
+                                              "required": [
+                                                "operator",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          },
+                                          "required": [
+                                            "propertyId",
+                                            "propertyType",
+                                            "string"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "customProperty"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "property"
+                                  },
+                                  "property": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "name"
+                                          },
+                                          "name": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "name"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "phoneNumber"
+                                          },
+                                          "phoneNumber": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "phoneNumber"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "progress"
+                                          },
+                                          "progress": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "progress"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "memberNumber"
+                                          },
+                                          "memberNumber": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "memberNumber"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "lastVisit"
+                                          },
+                                          "lastVisit": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "lastVisit"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "property"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "expression"
+                                  },
+                                  "expression": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "string"
+                                          },
+                                          "string": {
+                                            "type": "object",
+                                            "properties": {
+                                              "text": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "text"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "string"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "expression"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ruleId",
+                          "conditions",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "alignment": {
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "center",
+                        "right"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "valueRules"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "auxiliaryFields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/sections/properties/headerFields/items"
+                }
+              },
+              "secondaryFields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/sections/properties/headerFields/items"
+                }
+              },
+              "logoFile": {
+                "type": "object",
+                "properties": {
+                  "conditionalRules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ruleId": {
+                          "type": "string"
+                        },
+                        "conditions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items"
+                          }
+                        },
+                        "file": {
+                          "type": "string"
+                        },
+                        "originalFile": {
+                          "type": "string"
+                        },
+                        "crop": {
+                          "type": "object",
+                          "properties": {
+                            "cropPosition": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "x",
+                                "y"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "zoom": {
+                              "type": "number"
+                            },
+                            "croppedAreaPixels": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                },
+                                "width": {
+                                  "type": "number"
+                                },
+                                "height": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "x",
+                                "y",
+                                "width",
+                                "height"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "cropPosition",
+                            "zoom",
+                            "croppedAreaPixels"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "ruleId",
+                        "conditions",
+                        "file"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "conditionalRules"
+                ],
+                "additionalProperties": false
+              },
+              "stripFile": {
+                "$ref": "#/properties/sections/properties/logoFile"
+              },
+              "backgroundColor": {
+                "type": "object",
+                "properties": {
+                  "conditionalRules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ruleId": {
+                          "type": "string"
+                        },
+                        "conditions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items"
+                          }
+                        },
+                        "color": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ruleId",
+                        "conditions",
+                        "color"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "conditionalRules"
+                ],
+                "additionalProperties": false
+              },
+              "labelColor": {
+                "$ref": "#/properties/sections/properties/backgroundColor"
+              }
+            },
+            "required": [
+              "headerFields",
+              "auxiliaryFields",
+              "secondaryFields",
+              "logoFile",
+              "stripFile",
+              "backgroundColor",
+              "labelColor"
+            ],
+            "additionalProperties": false
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "renderRewards": {
+                "type": "boolean"
+              },
+              "campaignTakeover": {
+                "type": "boolean"
+              },
+              "rewardLabelRules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ruleId": {
+                      "type": "string"
+                    },
+                    "conditions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/properties/sections/properties/headerFields/items/properties/valueRules/items/properties/conditions/items"
+                      }
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ruleId",
+                    "conditions",
+                    "label"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "renderRewards",
+              "campaignTakeover"
+            ],
+            "additionalProperties": false
+          },
+          "locations": {
+            "type": "object",
+            "properties": {
+              "locations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "locationId": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "altitude": {
+                      "type": "number"
+                    },
+                    "relevantText": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "locations"
+            ],
+            "additionalProperties": false
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "description"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "sections",
+          "features",
+          "metadata"
+        ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -8497,6 +10013,45 @@ export const CLI_MANIFEST: CliManifest = {
           "draftId",
           "screenId",
           "edit"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "stageFunnelScreen",
+      "domain": "funnel",
+      "description": "Stage a new, empty funnel screen onto a funnel draft. The screen only exists on the draft until saveFunnelEdits promotes it, and can be filled in with stageFunnelEdit using the returned screenId. On a campaign draft the screen is campaign-scoped unless campaignScoped is false.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "layoutEngine",
+        "drafts",
+        "stageScreenCreate"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "screenId": {
+            "type": "string"
+          },
+          "campaignScoped": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "draftId",
+          "title"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
