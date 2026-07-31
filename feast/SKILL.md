@@ -93,6 +93,12 @@ Many tasks are multi-step and have a required ordering the app normally enforces
 
 For the ordered steps and domain rules of each common workflow, read `references/workflows.md`. It covers what's **fully doable** — creating/cloning a campaign, authoring automations end-to-end (create/edit/delete/simulate, with the trigger, condition, send-time, and chaining rules that make a flow professional), editing funnel screens (the draft → preview → promote loop), creating offers, and exploring users — and what's **not yet exposed** — members-program reward creation, brand identity, and replying to guests by SMS. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools`; tell the user that part isn't available yet.
 
+## Link to what you touched
+
+The CLI changes data, but people still have to go look at it. Every campaign, funnel, automation and settings pane has a stable URL you can build from ids you already have, so **end any turn where you created, changed, or published something with a short markdown list of links** — where to see it, where to edit it, where to preview it. When the user asks where a thing lives or how to set it up, answer with the link rather than click-by-click directions.
+
+Read `references/links.md` for the URL patterns: the dashboard routes and their panel/tab names, the guest-facing pages on the org's own subdomain, the `/preview/{draftId}` route that completes the funnel draft loop, and which query params actually suppress analytics (`internal_qa=1`) versus merely tagging a visit as a preview (`utm_source=PREVIEW`).
+
 ## Worked example
 
 User: "add a $5-off offer to the Plum location in my Plum Vietnamese org."
