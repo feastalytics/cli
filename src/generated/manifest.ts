@@ -6487,7 +6487,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "simulateAutomations",
       "domain": "automations",
-      "description": "Dry-run automations against a synthetic event timeline and see what would fire — with NO real sends or side effects (runs against an in-memory mock). Pass `events` (the serialized event timeline to replay) and optionally campaignId/variantId to scope, serialNumber to simulate a specific member, includeInactive to also evaluate disabled automations, and `edits` (a list of batch operations) to preview un-saved changes before committing them via batchEditAutomations. Use this to validate an automation before saving or running it for real.",
+      "description": "Dry-run automations against a synthetic event timeline and see what would fire — with NO real sends or side effects (runs against an in-memory mock). First call: omit `events` and pass `flowId` — the server auto-seeds a timeline from that flow's triggers (a viewCampaign event when the flow has a campaign, then the first eligible trigger event 15s later; trigger types receiveAutomation/reply/viewCampaign are never seeded) and returns the exact timeline it ran as `eventsUsed`. Branch-test or continue the journey by copying `eventsUsed`, editing or appending to it (e.g. change a reply body, or add a reply event after the checkout), and passing the full array back as `events`. Either `events` or `flowId` is required. Also optional: campaignId/variantId to scope, serialNumber to simulate a specific member, includeInactive to also evaluate disabled automations, and `edits` (a list of batch operations) to preview un-saved changes before committing them via batchEditAutomations. Returns `scheduledTexts` (what would send) plus `eventsUsed`. Use this to validate an automation before saving or running it for real.",
       "needsApproval": false,
       "type": "mutation",
       "path": [
@@ -6531,6 +6531,9 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "null"
               }
             ]
+          },
+          "flowId": {
+            "type": "string"
           },
           "events": {
             "type": "array",
@@ -8258,9 +8261,6 @@ export const CLI_MANIFEST: CliManifest = {
             }
           }
         },
-        "required": [
-          "events"
-        ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
