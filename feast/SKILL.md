@@ -97,7 +97,26 @@ For the ordered steps and domain rules of each common workflow, read `references
 
 Work you do through the CLI lands somewhere in the product, and a link is a cheap thing to offer — so offer them freely. After a turn where you created, changed, or published something, close with a short markdown list: where to see it, where to edit it, where to preview it. Not because anyone has to go check your work, but because opening the thing is usually the next step anyway. When someone asks where a thing lives or how to set it up, lead with the link rather than click-by-click directions.
 
-Most of what you touch has a stable URL you can build from ids you already have — `{organizationId}` is what you pass to `--org`, and campaign, flow and draft ids come back from the call you just made. Read `references/links.md` for the patterns: dashboard routes and their panel/tab names, the guest-facing pages on the org's own subdomain, the `/preview/{draftId}` route that completes the funnel draft loop, and which query params actually suppress analytics (`internal_qa=1`) versus merely tagging a visit as a preview (`utm_source=PREVIEW`).
+**Do not construct a dashboard URL from intuition — the shape is not what you would guess.** There is no `app.` subdomain, and a funnel is not a path segment. Substitute the real ids inline; never emit a literal `{placeholder}` or leave backticks in a URL.
+
+```
+dashboard root    https://feastalytics.com/<organizationId>/app
+a campaign        .../app/campaigns/<campaignId>
+its funnel        .../app/campaigns/<campaignId>?panel=funnel-v2
+its automations   .../app/campaigns/<campaignId>?panel=automations
+members program   .../app/members-program?panel=funnel
+settings          .../app/settings/integrations
+```
+
+`<organizationId>` is the value you pass to `--org`; campaign, flow and draft ids come back from the call you just made. A complete example, nothing left to fill in:
+
+```
+https://feastalytics.com/3e8cb27c-6e54-444b-859f-66dbae0e711b/app/campaigns/e8ccc852-6555-4a9a-b48b-127d687bb34a?panel=funnel-v2
+```
+
+Guest-facing pages are the exception — those live on the organization's own subdomain: `https://<subdomain>.feastalytics.com/campaign/<campaignId>`.
+
+Read `references/links.md` before emitting any link not listed above. It has every panel and tab name, the `/preview/<draftId>` route that completes the funnel draft loop, and which query params actually suppress analytics (`internal_qa=1`) versus merely tagging a visit as a preview (`utm_source=PREVIEW`).
 
 ## Worked example
 
