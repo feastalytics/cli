@@ -56,7 +56,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "batchEditAutomations",
       "domain": "automations",
-      "description": "Create, update, and delete automations (text/reward triggers) in one atomic batch. Pass `operations`, a list of ops: { type: 'create', automation } | { type: 'update', automationId, automation } | { type: 'delete', automationId } | { type: 'createVariant'|'updateVariant', ... }. IMPORTANT: every automation lives inside a flow, and `create` ops REQUIRE a `flowId` — this endpoint throws if it is missing. So before creating: call listAutomationFlows (scoped to the campaign or membersProgram) to find a matching flow and reuse its id, or call createFlow to make one, then set that flowId on the automation. Never invent a flowId. Delete is blocked for automations that already have sends.",
+      "description": "Write automation changes (text/reward triggers) straight to production in one atomic batch. PREFER THE DRAFT FLOW: createAutomationDraft + stageAutomationEdits let a human preview and sign off before anything goes live, and saveAutomationEdits promotes them through this same code path. Reach for this tool only when an immediate live write is explicitly wanted. Pass `operations`, a list of ops: { type: 'create', automation } | { type: 'update', automationId, automation } | { type: 'delete', automationId } | { type: 'createVariant'|'updateVariant', ... }. IMPORTANT: every automation lives inside a flow, and `create` ops REQUIRE a `flowId` — this endpoint throws if it is missing. So before creating: call listAutomationFlows (scoped to the campaign or membersProgram) to find a matching flow and reuse its id, or call createFlow to make one, then set that flowId on the automation. Never invent a flowId. Delete is blocked for automations that already have sends.",
       "needsApproval": false,
       "type": "mutation",
       "path": [
@@ -1849,6 +1849,1732 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "createAutomationDraft",
+      "domain": "automations",
+      "description": "Start a draft of automation changes — an off-prod overlay a human can preview and sign off on before anything goes live. This is the DEFAULT way to change automations: create a draft, add changes with stageAutomationEdits, share the review link, then promote with saveAutomationEdits. Pass a short `title` describing the change (the reviewer sees it), and optionally seed it with `operations` in the same format batchEditAutomations takes. Returns the draft, including `reviewUrl` — the link to send for sign-off. Nothing is written to live automations until saveAutomationEdits runs.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "automation",
+        "createDraft"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "create"
+                    },
+                    "automation": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "event"
+                                  },
+                                  "event": {
+                                    "type": "object",
+                                    "properties": {
+                                      "event": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "receiveAutomation"
+                                              },
+                                              "receiveAutomation": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "automationId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "receiveAutomation"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "reply"
+                                              },
+                                              "reply": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "automationId": {
+                                                    "type": "string"
+                                                  },
+                                                  "keywords": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "reply"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "signUp"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "importedCustomer"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "addPass"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "visit"
+                                              },
+                                              "visit": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "locationId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "viewCampaign"
+                                              },
+                                              "viewCampaign": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "viewCampaign"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "offerRedemption"
+                                              },
+                                              "offerRedemption": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  },
+                                                  "promoId": {
+                                                    "type": "string"
+                                                  },
+                                                  "offerId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "offerExpiration"
+                                              },
+                                              "offerExpiration": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  },
+                                                  "promoId": {
+                                                    "type": "string"
+                                                  },
+                                                  "offerId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "offerExpiration"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "checkout"
+                                              },
+                                              "checkout": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "promoId": {
+                                                    "type": "string"
+                                                  },
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "checkout"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "buttonClick"
+                                              },
+                                              "buttonClick": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "buttonId": {
+                                                    "type": "string"
+                                                  },
+                                                  "eventName": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "buttonId",
+                                                  "eventName"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "buttonClick"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "formSubmission"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "invalidScan"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "gotReferred"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "referred"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "subscriptionRenewal"
+                                              },
+                                              "subscriptionRenewal": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "pickupDate"
+                                              },
+                                              "pickupDate": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "occur": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "match": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "GTE",
+                                                  "LTE",
+                                                  "EQ"
+                                                ]
+                                              },
+                                              "duration": {
+                                                "type": "number",
+                                                "description": "Duration in milliseconds"
+                                              }
+                                            },
+                                            "required": [
+                                              "match",
+                                              "duration"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Time-based occur. Use match (GTE/LTE/EQ) and duration (ms). No 'relative' type."
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "today"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "event"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Nested: event.event is the AutomationEvent, event.occur is optional. NOT flat event/occur at top level."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "event"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "operatingSystem"
+                                  },
+                                  "operatingSystem": {
+                                    "type": "object",
+                                    "properties": {
+                                      "os": {
+                                        "type": "string",
+                                        "enum": [
+                                          "ios",
+                                          "android"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "os"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "operatingSystem"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "and"
+                                  },
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "conditions"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "or"
+                                  },
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "conditions"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "not"
+                                  },
+                                  "condition": {
+                                    "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "condition"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "progress"
+                                  },
+                                  "progress": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "divisible"
+                                          },
+                                          "divisible": {
+                                            "type": "object",
+                                            "properties": {
+                                              "offset": {
+                                                "type": "number"
+                                              },
+                                              "step": {
+                                                "type": "number"
+                                              }
+                                            },
+                                            "required": [
+                                              "offset",
+                                              "step"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "divisible"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "match"
+                                          },
+                                          "match": {
+                                            "type": "object",
+                                            "properties": {
+                                              "match": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "GTE",
+                                                  "LTE",
+                                                  "EQ"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "number"
+                                              }
+                                            },
+                                            "required": [
+                                              "match",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "match"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "progress"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "passSubType"
+                                  },
+                                  "passSubType": {
+                                    "type": "object",
+                                    "properties": {
+                                      "identifier": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "identifier"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "passSubType"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "cohort"
+                                  },
+                                  "cohort": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "specific"
+                                          },
+                                          "specific": {
+                                            "type": "object",
+                                            "properties": {
+                                              "cohort": {
+                                                "type": "string"
+                                              },
+                                              "step": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "cohort",
+                                              "step"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "specific"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "none"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "cohort"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "dayOfWeek"
+                                  },
+                                  "dayOfWeek": {
+                                    "type": "object",
+                                    "properties": {
+                                      "localDayOfWeek": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 6
+                                      }
+                                    },
+                                    "required": [
+                                      "localDayOfWeek"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "dayOfWeek"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "hasActiveSubscription"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "customProperty"
+                                  },
+                                  "customProperty": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "number"
+                                          },
+                                          "number": {
+                                            "type": "object",
+                                            "properties": {
+                                              "operator": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "GTE",
+                                                  "LTE",
+                                                  "EQ",
+                                                  "GT",
+                                                  "LT"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "number"
+                                              }
+                                            },
+                                            "required": [
+                                              "operator",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "number"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "dayOfYear"
+                                          },
+                                          "dayOfYear": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "type": {
+                                                    "type": "string",
+                                                    "const": "relative"
+                                                  },
+                                                  "relative": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "direction": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "since",
+                                                          "until"
+                                                        ]
+                                                      },
+                                                      "operator": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "GTE",
+                                                          "LTE",
+                                                          "EQ",
+                                                          "GT",
+                                                          "LT"
+                                                        ]
+                                                      },
+                                                      "durationMs": {
+                                                        "type": "number"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "direction",
+                                                      "operator",
+                                                      "durationMs"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  }
+                                                },
+                                                "required": [
+                                                  "type",
+                                                  "relative"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "dayOfYear"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "date"
+                                          },
+                                          "date": {
+                                            "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items/anyOf/10/properties/customProperty/anyOf/1/properties/dayOfYear"
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "date"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "boolean"
+                                          },
+                                          "boolean": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": [
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "boolean"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "string"
+                                          },
+                                          "string": {
+                                            "type": "object",
+                                            "properties": {
+                                              "operator": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "EQ",
+                                                  "NEQ",
+                                                  "CONTAINS",
+                                                  "STARTS_WITH",
+                                                  "ENDS_WITH"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "operator",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "string"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "customProperty"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "time": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "immediate"
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "absoluteDelay"
+                                },
+                                "absoluteDelay": {
+                                  "type": "object",
+                                  "properties": {
+                                    "utcDayOfWeek": {
+                                      "type": "number"
+                                    },
+                                    "utcDay": {
+                                      "type": "string"
+                                    },
+                                    "utcHour": {
+                                      "type": "number"
+                                    },
+                                    "utcMinute": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "utcHour",
+                                    "utcMinute"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "absoluteDelay"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "relativeDelay"
+                                },
+                                "relativeDelay": {
+                                  "type": "object",
+                                  "properties": {
+                                    "delayMs": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "delayMs"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "relativeDelay"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "triggers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "event": {
+                                "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items/anyOf/0/properties/event/properties/event"
+                              },
+                              "repeatability": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "retrigger"
+                                  },
+                                  "retrigger": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "retrigger"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "event"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "text"
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  },
+                                  "media": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "s3"
+                                            },
+                                            "key": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "key"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "url"
+                                            },
+                                            "url": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "url"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "text"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "awardReward"
+                                  },
+                                  "awardReward": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "expirationDate": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "absolute"
+                                              },
+                                              "absolute": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "unixMs": {
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "unixMs"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "absolute"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "relative"
+                                              },
+                                              "relative": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "offsetMs": {
+                                                    "type": "number"
+                                                  },
+                                                  "rounding": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "utcDayOfWeek": {
+                                                        "type": "number"
+                                                      },
+                                                      "utcHour": {
+                                                        "type": "number"
+                                                      },
+                                                      "utcMinute": {
+                                                        "type": "number"
+                                                      },
+                                                      "direction": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "up",
+                                                          "down"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "utcHour",
+                                                      "utcMinute",
+                                                      "direction"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  }
+                                                },
+                                                "required": [
+                                                  "offsetMs"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "relative"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "items": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "locationId": {
+                                              "type": "string"
+                                            },
+                                            "itemId": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "locationId",
+                                            "itemId"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "isPrepaid": {
+                                        "type": "boolean"
+                                      },
+                                      "useSubscriptionItems": {
+                                        "type": "boolean"
+                                      },
+                                      "personalizeRewards": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "items"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "awardReward"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "redeemReward"
+                                  },
+                                  "redeemReward": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "itemId": {
+                                        "type": "string"
+                                      },
+                                      "locationId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "redeemReward"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "extendReward"
+                                  },
+                                  "extendReward": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "itemId": {
+                                        "type": "string"
+                                      },
+                                      "extensionDuration": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "required": [
+                                      "extensionDuration"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "extendReward"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "createTask"
+                                  },
+                                  "createTask": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "description": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "description"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "createTask"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "awardScan"
+                                  },
+                                  "awardScan": {
+                                    "type": "object",
+                                    "properties": {
+                                      "locationId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "awardScan"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "setExpiration"
+                                  },
+                                  "setExpiration": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "expirationDate": {
+                                        "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions/items/anyOf/1/properties/awardReward/properties/expirationDate"
+                                      }
+                                    },
+                                    "required": [
+                                      "campaignId",
+                                      "promoId"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "setExpiration"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "cancelSubscription"
+                                  },
+                                  "cancelSubscription": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "cancelSubscription"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "sendStripePortalLink"
+                                  },
+                                  "sendStripePortalLink": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "sendStripePortalLink"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "resetProgress"
+                                  },
+                                  "resetProgress": {
+                                    "type": "object",
+                                    "properties": {
+                                      "progress": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "resetProgress"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "automationId": {
+                          "type": "string"
+                        },
+                        "parentCampaignId": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "isTextBlast": {
+                          "type": "boolean"
+                        },
+                        "isActive": {
+                          "type": "boolean"
+                        },
+                        "isArchived": {
+                          "type": "boolean"
+                        },
+                        "flowId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "conditions",
+                        "time",
+                        "triggers",
+                        "actions",
+                        "automationId",
+                        "isActive"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "applyToHistorical": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automation"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "update"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    },
+                    "automation": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions"
+                        },
+                        "time": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/time"
+                        },
+                        "triggers": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/triggers"
+                        },
+                        "actions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
+                        },
+                        "automationId": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/automationId"
+                        },
+                        "parentCampaignId": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/parentCampaignId"
+                        },
+                        "title": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/title"
+                        },
+                        "isTextBlast": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/isTextBlast"
+                        },
+                        "isActive": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/isActive"
+                        },
+                        "isArchived": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/isArchived"
+                        },
+                        "flowId": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/flowId"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId",
+                    "automation"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "delete"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "createVariant"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    },
+                    "variantId": {
+                      "type": "string"
+                    },
+                    "variant": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions"
+                        },
+                        "time": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/time"
+                        },
+                        "triggers": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/triggers"
+                        },
+                        "actions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
+                        }
+                      },
+                      "required": [
+                        "conditions",
+                        "time",
+                        "triggers",
+                        "actions"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId",
+                    "variantId",
+                    "variant"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "updateVariant"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    },
+                    "variantId": {
+                      "type": "string"
+                    },
+                    "variant": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions"
+                        },
+                        "time": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/time"
+                        },
+                        "triggers": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/triggers"
+                        },
+                        "actions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId",
+                    "variantId",
+                    "variant"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "campaignId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "createAutomationFlow",
       "domain": "automations",
       "description": "Create a new automation flow — the container that groups automations by a shared trigger (visit, signUp, checkout, textBlast, etc.). Automations always live inside a flow, so before adding automations you must either find an existing flow with listAutomationFlows or create one here. Requires user approval before execution. In local mode, navigate to the campaign's automations tab (campaigns with campaignId and tab AUTOMATIONS) BEFORE calling this, so the user sees the flow in the UI.",
@@ -2494,6 +4220,31 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "discardAutomationDraft",
+      "domain": "automations",
+      "description": "Discard an automation draft without promoting its staged changes. Live automations are untouched.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "automation",
+        "discardDraft"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "draftId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "discardFunnelDraft",
       "domain": "funnel",
       "description": "Discard a funnel draft without saving its edits.",
@@ -2504,6 +4255,31 @@ export const CLI_MANIFEST: CliManifest = {
         "layoutEngine",
         "drafts",
         "discard"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "draftId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "getAutomationDraft",
+      "domain": "automations",
+      "description": "Read an automation draft — its staged operations, the flows it touches, and the preview links that show those changes highlighted. Use the returned `operations` as `edits` on simulateAutomations to preview what the draft would do.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "automation",
+        "getDraft"
       ],
       "inputJsonSchema": {
         "type": "object",
@@ -3214,6 +4990,31 @@ export const CLI_MANIFEST: CliManifest = {
         "properties": {},
         "additionalProperties": false,
         "default": {},
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "saveAutomationEdits",
+      "domain": "automations",
+      "description": "Promote an automation draft to production — this writes to live automations and real guests start receiving the result. Refuses if any touched automation changed since the draft was staged, in which case re-stage against the current state. Marks the draft promoted on success.",
+      "needsApproval": true,
+      "type": "mutation",
+      "path": [
+        "api",
+        "automation",
+        "saveEdits"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "draftId"
+        ],
+        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -8261,6 +10062,1730 @@ export const CLI_MANIFEST: CliManifest = {
             }
           }
         },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "stageAutomationEdits",
+      "domain": "automations",
+      "description": "Add changes to an open automation draft without touching live automations. `operations` takes the same ops batchEditAutomations does: { type: 'create', automation } | { type: 'update', automationId, automation } | { type: 'delete', automationId } | { type: 'createVariant'|'updateVariant', ... }. Ops append to the draft in order, so call it repeatedly as you build a change up. Preview the result with simulateAutomations by passing the draft's `operations` as `edits`, or send the returned `reviewUrl` for sign-off. Nothing goes live until saveAutomationEdits runs.",
+      "needsApproval": false,
+      "type": "mutation",
+      "path": [
+        "api",
+        "automation",
+        "stageEdits"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "draftId": {
+            "type": "string"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "create"
+                    },
+                    "automation": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "event"
+                                  },
+                                  "event": {
+                                    "type": "object",
+                                    "properties": {
+                                      "event": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "receiveAutomation"
+                                              },
+                                              "receiveAutomation": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "automationId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "receiveAutomation"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "reply"
+                                              },
+                                              "reply": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "automationId": {
+                                                    "type": "string"
+                                                  },
+                                                  "keywords": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "reply"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "signUp"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "importedCustomer"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "addPass"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "visit"
+                                              },
+                                              "visit": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "locationId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "viewCampaign"
+                                              },
+                                              "viewCampaign": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "viewCampaign"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "offerRedemption"
+                                              },
+                                              "offerRedemption": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  },
+                                                  "promoId": {
+                                                    "type": "string"
+                                                  },
+                                                  "offerId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "offerExpiration"
+                                              },
+                                              "offerExpiration": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  },
+                                                  "promoId": {
+                                                    "type": "string"
+                                                  },
+                                                  "offerId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "offerExpiration"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "checkout"
+                                              },
+                                              "checkout": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "promoId": {
+                                                    "type": "string"
+                                                  },
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "checkout"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "buttonClick"
+                                              },
+                                              "buttonClick": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "buttonId": {
+                                                    "type": "string"
+                                                  },
+                                                  "eventName": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "buttonId",
+                                                  "eventName"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "buttonClick"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "formSubmission"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "invalidScan"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "gotReferred"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "referred"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "subscriptionRenewal"
+                                              },
+                                              "subscriptionRenewal": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "pickupDate"
+                                              },
+                                              "pickupDate": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "occur": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "match": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "GTE",
+                                                  "LTE",
+                                                  "EQ"
+                                                ]
+                                              },
+                                              "duration": {
+                                                "type": "number",
+                                                "description": "Duration in milliseconds"
+                                              }
+                                            },
+                                            "required": [
+                                              "match",
+                                              "duration"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Time-based occur. Use match (GTE/LTE/EQ) and duration (ms). No 'relative' type."
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "today"
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "event"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "Nested: event.event is the AutomationEvent, event.occur is optional. NOT flat event/occur at top level."
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "event"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "operatingSystem"
+                                  },
+                                  "operatingSystem": {
+                                    "type": "object",
+                                    "properties": {
+                                      "os": {
+                                        "type": "string",
+                                        "enum": [
+                                          "ios",
+                                          "android"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "os"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "operatingSystem"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "and"
+                                  },
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "conditions"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "or"
+                                  },
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "conditions"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "not"
+                                  },
+                                  "condition": {
+                                    "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items"
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "condition"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "progress"
+                                  },
+                                  "progress": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "divisible"
+                                          },
+                                          "divisible": {
+                                            "type": "object",
+                                            "properties": {
+                                              "offset": {
+                                                "type": "number"
+                                              },
+                                              "step": {
+                                                "type": "number"
+                                              }
+                                            },
+                                            "required": [
+                                              "offset",
+                                              "step"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "divisible"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "match"
+                                          },
+                                          "match": {
+                                            "type": "object",
+                                            "properties": {
+                                              "match": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "GTE",
+                                                  "LTE",
+                                                  "EQ"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "number"
+                                              }
+                                            },
+                                            "required": [
+                                              "match",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "match"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "progress"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "passSubType"
+                                  },
+                                  "passSubType": {
+                                    "type": "object",
+                                    "properties": {
+                                      "identifier": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "identifier"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "passSubType"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "cohort"
+                                  },
+                                  "cohort": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "specific"
+                                          },
+                                          "specific": {
+                                            "type": "object",
+                                            "properties": {
+                                              "cohort": {
+                                                "type": "string"
+                                              },
+                                              "step": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "cohort",
+                                              "step"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "specific"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "none"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "cohort"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "dayOfWeek"
+                                  },
+                                  "dayOfWeek": {
+                                    "type": "object",
+                                    "properties": {
+                                      "localDayOfWeek": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 6
+                                      }
+                                    },
+                                    "required": [
+                                      "localDayOfWeek"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "dayOfWeek"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "hasActiveSubscription"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "customProperty"
+                                  },
+                                  "customProperty": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "number"
+                                          },
+                                          "number": {
+                                            "type": "object",
+                                            "properties": {
+                                              "operator": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "GTE",
+                                                  "LTE",
+                                                  "EQ",
+                                                  "GT",
+                                                  "LT"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "number"
+                                              }
+                                            },
+                                            "required": [
+                                              "operator",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "number"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "dayOfYear"
+                                          },
+                                          "dayOfYear": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "type": {
+                                                    "type": "string",
+                                                    "const": "relative"
+                                                  },
+                                                  "relative": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "direction": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "since",
+                                                          "until"
+                                                        ]
+                                                      },
+                                                      "operator": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "GTE",
+                                                          "LTE",
+                                                          "EQ",
+                                                          "GT",
+                                                          "LT"
+                                                        ]
+                                                      },
+                                                      "durationMs": {
+                                                        "type": "number"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "direction",
+                                                      "operator",
+                                                      "durationMs"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  }
+                                                },
+                                                "required": [
+                                                  "type",
+                                                  "relative"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "dayOfYear"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "date"
+                                          },
+                                          "date": {
+                                            "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items/anyOf/10/properties/customProperty/anyOf/1/properties/dayOfYear"
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "date"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "boolean"
+                                          },
+                                          "boolean": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "boolean"
+                                              }
+                                            },
+                                            "required": [
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "boolean"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "propertyId": {
+                                            "type": "string"
+                                          },
+                                          "propertyType": {
+                                            "type": "string",
+                                            "const": "string"
+                                          },
+                                          "string": {
+                                            "type": "object",
+                                            "properties": {
+                                              "operator": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "EQ",
+                                                  "NEQ",
+                                                  "CONTAINS",
+                                                  "STARTS_WITH",
+                                                  "ENDS_WITH"
+                                                ]
+                                              },
+                                              "value": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "operator",
+                                              "value"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "propertyId",
+                                          "propertyType",
+                                          "string"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "customProperty"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "time": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "immediate"
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "absoluteDelay"
+                                },
+                                "absoluteDelay": {
+                                  "type": "object",
+                                  "properties": {
+                                    "utcDayOfWeek": {
+                                      "type": "number"
+                                    },
+                                    "utcDay": {
+                                      "type": "string"
+                                    },
+                                    "utcHour": {
+                                      "type": "number"
+                                    },
+                                    "utcMinute": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "utcHour",
+                                    "utcMinute"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "absoluteDelay"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "relativeDelay"
+                                },
+                                "relativeDelay": {
+                                  "type": "object",
+                                  "properties": {
+                                    "delayMs": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "delayMs"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "relativeDelay"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "triggers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "event": {
+                                "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions/items/anyOf/0/properties/event/properties/event"
+                              },
+                              "repeatability": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "retrigger"
+                                  },
+                                  "retrigger": {
+                                    "type": "object",
+                                    "properties": {},
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "retrigger"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "event"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "text"
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  },
+                                  "media": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "s3"
+                                            },
+                                            "key": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "key"
+                                          ],
+                                          "additionalProperties": false
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string",
+                                              "const": "url"
+                                            },
+                                            "url": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "type",
+                                            "url"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "text"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "awardReward"
+                                  },
+                                  "awardReward": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "expirationDate": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "absolute"
+                                              },
+                                              "absolute": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "unixMs": {
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "unixMs"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "absolute"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "relative"
+                                              },
+                                              "relative": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "offsetMs": {
+                                                    "type": "number"
+                                                  },
+                                                  "rounding": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "utcDayOfWeek": {
+                                                        "type": "number"
+                                                      },
+                                                      "utcHour": {
+                                                        "type": "number"
+                                                      },
+                                                      "utcMinute": {
+                                                        "type": "number"
+                                                      },
+                                                      "direction": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "up",
+                                                          "down"
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "utcHour",
+                                                      "utcMinute",
+                                                      "direction"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  }
+                                                },
+                                                "required": [
+                                                  "offsetMs"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "relative"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "items": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "locationId": {
+                                              "type": "string"
+                                            },
+                                            "itemId": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "locationId",
+                                            "itemId"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "isPrepaid": {
+                                        "type": "boolean"
+                                      },
+                                      "useSubscriptionItems": {
+                                        "type": "boolean"
+                                      },
+                                      "personalizeRewards": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "items"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "awardReward"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "redeemReward"
+                                  },
+                                  "redeemReward": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "itemId": {
+                                        "type": "string"
+                                      },
+                                      "locationId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "redeemReward"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "extendReward"
+                                  },
+                                  "extendReward": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "itemId": {
+                                        "type": "string"
+                                      },
+                                      "extensionDuration": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "required": [
+                                      "extensionDuration"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "extendReward"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "createTask"
+                                  },
+                                  "createTask": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "description": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "description"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "createTask"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "awardScan"
+                                  },
+                                  "awardScan": {
+                                    "type": "object",
+                                    "properties": {
+                                      "locationId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "awardScan"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "setExpiration"
+                                  },
+                                  "setExpiration": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      },
+                                      "promoId": {
+                                        "type": "string"
+                                      },
+                                      "expirationDate": {
+                                        "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions/items/anyOf/1/properties/awardReward/properties/expirationDate"
+                                      }
+                                    },
+                                    "required": [
+                                      "campaignId",
+                                      "promoId"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "setExpiration"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "cancelSubscription"
+                                  },
+                                  "cancelSubscription": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "cancelSubscription"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "sendStripePortalLink"
+                                  },
+                                  "sendStripePortalLink": {
+                                    "type": "object",
+                                    "properties": {
+                                      "campaignId": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "sendStripePortalLink"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "resetProgress"
+                                  },
+                                  "resetProgress": {
+                                    "type": "object",
+                                    "properties": {
+                                      "progress": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "resetProgress"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "automationId": {
+                          "type": "string"
+                        },
+                        "parentCampaignId": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "isTextBlast": {
+                          "type": "boolean"
+                        },
+                        "isActive": {
+                          "type": "boolean"
+                        },
+                        "isArchived": {
+                          "type": "boolean"
+                        },
+                        "flowId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "conditions",
+                        "time",
+                        "triggers",
+                        "actions",
+                        "automationId",
+                        "isActive"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "applyToHistorical": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automation"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "update"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    },
+                    "automation": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions"
+                        },
+                        "time": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/time"
+                        },
+                        "triggers": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/triggers"
+                        },
+                        "actions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
+                        },
+                        "automationId": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/automationId"
+                        },
+                        "parentCampaignId": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/parentCampaignId"
+                        },
+                        "title": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/title"
+                        },
+                        "isTextBlast": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/isTextBlast"
+                        },
+                        "isActive": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/isActive"
+                        },
+                        "isArchived": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/isArchived"
+                        },
+                        "flowId": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/flowId"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId",
+                    "automation"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "delete"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "createVariant"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    },
+                    "variantId": {
+                      "type": "string"
+                    },
+                    "variant": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions"
+                        },
+                        "time": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/time"
+                        },
+                        "triggers": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/triggers"
+                        },
+                        "actions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
+                        }
+                      },
+                      "required": [
+                        "conditions",
+                        "time",
+                        "triggers",
+                        "actions"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId",
+                    "variantId",
+                    "variant"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "updateVariant"
+                    },
+                    "automationId": {
+                      "type": "string"
+                    },
+                    "variantId": {
+                      "type": "string"
+                    },
+                    "variant": {
+                      "type": "object",
+                      "properties": {
+                        "conditions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/conditions"
+                        },
+                        "time": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/time"
+                        },
+                        "triggers": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/triggers"
+                        },
+                        "actions": {
+                          "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "automationId",
+                    "variantId",
+                    "variant"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "draftId",
+          "operations"
+        ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
