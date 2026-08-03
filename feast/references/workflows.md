@@ -39,19 +39,26 @@ The one-shot text→campaign endpoints (`createWithOffer` / `parseCampaignDescri
 - A **flow** groups automations by a shared trigger, and belongs to *either* a campaign *or* the members program — never both.
 - **The rule that matters most: every automation needs a `flowId`. `batchEditAutomations` throws on a create op without one.** So you must resolve the flow *before* creating. Never invent a flowId.
 
-### The CLI loop (simpler than the app — no navigate/stage/save split)
+### The CLI loop: draft → stage → share → save
 
-Unlike the in-app agent (which scaffolds an automation, then edits it, then explicitly saves), the CLI sends a **complete** automation in one operation and it persists immediately.
+Automations have a staging tier, and it is the default path. Changes accumulate on a **draft** — an off-prod overlay — until someone explicitly promotes them. A draft carries a link that renders the change as a text-message thread with the edits highlighted, which is what you hand a human to look at before anything reaches a real guest.
 
 1. `listAutomationFlows` — find an existing flow. Pass `{ "campaignId": "<id>" }` for a campaign's flows, or `{ "scope": "membersProgram" }` for members-program flows. Reuse a matching flow when one fits.
 2. If none fits, `createAutomationFlow` to make one. If the campaign/members-program has **no flows at all**, strongly prefer `applyAutomationTemplate` (then customize) over building from scratch. Only apply a template when there are no existing flows.
 3. `listAutomations` with `{ "flowId": "<id>" }` to see the automations already in that flow before editing (omit the input to list every automation in the org).
-4. `simulateAutomations` **with your proposed, un-saved `edits`** — dry-run the flow against a synthetic event timeline with **no real sends** and confirm the right automations would fire. This is the required verification step: automations have no draft/staging tier, so the write in step 5 goes straight to production. Simulate first, write once confident; if the simulation surprises you, fix the edits and re-simulate rather than writing and patching live.
-5. `batchEditAutomations` with the now-verified list of `operations`:
-   - `{ "type": "create", "automation": { ...full automation..., "flowId": "<id>" } }` — generate a fresh UUID for the automation's id, set the `flowId`, and include triggers, conditions, actions, send time, and a descriptive title all at once. The server validates it and (create ops) requires the flowId.
+4. `createAutomationDraft` with a short `title` describing the change in the user's terms ("Shorten the day-3 nudge") — that title is what the reviewer sees. Keep the returned `draftId`; **there is no way to list drafts, so if you lose it the draft is unreachable.**
+5. `stageAutomationEdits` with `{ "draftId": "<id>", "operations": [...] }`. The ops are exactly the ones `batchEditAutomations` takes:
+   - `{ "type": "create", "automation": { ...full automation..., "flowId": "<id>" } }` — generate a fresh UUID for the automation's id, set the `flowId`, and include triggers, conditions, actions, send time, and a descriptive title all at once. Create ops require the flowId.
    - `{ "type": "update", "automationId": "<id>", "automation": { ...changed fields... } }`
-   - `{ "type": "delete", "automationId": "<id>" }` — blocked if the automation already has sends.
-   After a write, `simulateAutomations` again (no `edits`) if you want to confirm the saved state behaves the same.
+   - `{ "type": "delete", "automationId": "<id>" }` — blocked at save time if the automation already has sends.
+   Call it repeatedly to build a change up; ops append in order.
+6. `simulateAutomations` with `{ "flowId": "<id>", "edits": <the draft's operations> }` — dry-run against a synthetic event timeline with **no real sends** and confirm the right automations fire. If the simulation surprises you, stage a correction rather than promoting and patching live.
+7. **Give the user the `previewUrls` from the draft** and let them look before you promote. Each entry is one flow's before/after view. Don't promote unprompted work on the user's behalf — staging exists so a human sees the change first.
+8. `saveAutomationEdits` with `{ "draftId": "<id>" }` — this is the write to production. It refuses if any automation the draft touches was changed by someone else since you staged, naming which; re-stage against the current state rather than retrying.
+
+`discardAutomationDraft` throws a draft away without promoting. `getAutomationDraft` re-reads one by id. Drafts expire after 14 days.
+
+**`batchEditAutomations` still exists and writes straight to production in one call.** Reach for it only when the user explicitly wants an immediate live change and has said so — not as a shortcut past the review step.
 
 `updateAutomationFlow` renames/retitles a flow; `deleteAutomationFlow` removes a flow and its automations (blocked at ≥20 sends — turn it off instead).
 
