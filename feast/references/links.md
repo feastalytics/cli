@@ -33,6 +33,19 @@ Settings tabs: `account`, `general`, `members`, `integrations`, `notifications`,
 
 Funnels are always edited inside a panel, never on a page of their own — a campaign's `funnel-v2` panel, or the members program's `funnel` panel.
 
+### Automation previews
+
+These two hang off the **root**, not off `/<organizationId>/app` — the organization id is the first path segment:
+
+```
+https://feastalytics.com/automation-preview/<organizationId>/<flowId>
+https://feastalytics.com/automation-preview/<organizationId>/<flowId>?draftId=<draftId>
+```
+
+Without `draftId` it dry-runs the live flow as a text-message thread. With one, the same page diffs the draft's staged changes against live — added messages tinted, removed struck through, edited showing the old copy above the new — which is the link to hand someone before you promote.
+
+A `flowId` contains `:` and `;` and **must be percent-encoded** in the path. Easier: `createAutomationDraft` and `stageAutomationEdits` both return `previewUrls`, already built and encoded, one per flow the draft touches. Use those rather than assembling your own.
+
 ## Public pages
 
 The guest-facing site lives on the organization's own subdomain, `https://<subdomain>.feastalytics.com`:
