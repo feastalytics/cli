@@ -91,7 +91,21 @@ For the domain-specific meaning of fields — how automations chain, what a funn
 
 Many tasks are multi-step and have a required ordering the app normally enforces. The most important rule: **automations live inside flows — always find a flow (`listAutomationFlows`) or create one (`createAutomationFlow`) before adding automations; never create an orphan automation.** The same "resolve the parent/ids first, then act" shape recurs across campaigns, funnels, and offers.
 
-For the ordered steps and domain rules of each common workflow, read `references/workflows.md`. It covers what's **fully doable** — working the onboarding taskboard (`getTaskboard`, completing what the CLI can and handing over `completionUrl` links for what it can't), creating/cloning a campaign, authoring automations end-to-end (draft-first: stage edits on a draft, dry-run them with `simulateAutomations`, hand the user the preview link, then promote), editing funnel screens (the draft → preview → promote loop, including staging brand-new screens), reading and saving the wallet pass configuration (full-document save — read, modify, save the whole thing), listing/creating members-program rewards, creating offers, and exploring users — and what's **not yet exposed** — reward update/delete, pass image generation, brand identity, and replying to guests by SMS. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools`; tell the user that part isn't available yet.
+**Before acting on any multi-step task, read the workflow file for it.** Each one carries the required call ordering and the domain rules that make the result good rather than merely valid — neither of which is in the tool schemas. Read it first; don't reconstruct the sequence from tool descriptions.
+
+| Doing this | Read |
+|---|---|
+| Creating, cloning or configuring a campaign; offers in the strategy backlog | `references/workflows/campaigns.md` |
+| Anything touching automations — creating, editing, simulating, promoting a draft | `references/workflows/automations.md` |
+| Editing funnel screens, applying a funnel template, staging a new screen | `references/workflows/funnels.md` |
+| Creator sourcing — approving applicants, reviewing their content, conversations | `references/workflows/creators.md` |
+| Members-program rewards; reading or saving the wallet pass configuration | `references/workflows/members-program.md` |
+| Working the onboarding taskboard; brand identity | `references/workflows/onboarding.md` |
+| Searching guests/members and their activity | `references/workflows/guests.md` |
+
+Read more than one when a task spans them — a new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`.
+
+Some things are deliberately **not exposed**: replying to a guest or a creator by SMS, firing an automation at a live member, reward update/delete, pass image generation, and most of the creator pipeline beyond the two approval decisions. The workflow files say which. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools` — tell the user that part isn't available yet.
 
 ## Link to what you touched
 

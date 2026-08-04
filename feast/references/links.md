@@ -63,7 +63,7 @@ The guest-facing site lives on the organization's own subdomain, `https://<subdo
 
 Get `<subdomain>` from `loadCurrentOrganization` → `organization.subdomains2[].subdomain`. When the link is about a campaign, pick the subdomain matching that campaign's `referrers` rather than the first one. The funnel draft tools (`createFunnelDraft`, `getFunnelDraft`) already return the draft's `referrer`, so use that instead of looking it up again.
 
-The `/preview/<draftId>` route is the payoff of the draft → preview → promote loop in `workflows.md`: it renders every screen of the staged funnel as a tree, so it's the right link to hand over after `stageFunnelEdit` and before `saveFunnelEdits`. It stops working once the draft is discarded or expires.
+The `/preview/<draftId>` route is the payoff of the draft → preview → promote loop in `workflows/funnels.md`: it renders every screen of the staged funnel as a tree, so it's the right link to hand over after `stageFunnelEdit` and before `saveFunnelEdits`. It stops working once the draft is discarded or expires.
 
 ## Two query params that don't do what they look like
 
