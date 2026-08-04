@@ -54,6 +54,39 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "approveCreatorVisit",
+      "domain": "creators",
+      "description": "Approve or deny a creator's application to visit. THIS TEXTS THE CREATOR IMMEDIATELY — approving sends them their booking link, denying sends a decline. It also consumes the location's monthly creator sourcing allowance, and recruitment pauses automatically once that limit is reached, so approving is both an outbound message and a spend. `eventId` is the visit id: find pending applications with queryData against creators.creatorVisitApplication, filtering on a null approvalStatus (that object is the application — there is no separate application record). Denying is not reversible from here.",
+      "needsApproval": true,
+      "type": "mutation",
+      "path": [
+        "api",
+        "dfy",
+        "approveVisit"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "denied"
+            ]
+          }
+        },
+        "required": [
+          "eventId",
+          "decision"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "batchEditAutomations",
       "domain": "automations",
       "description": "Write automation changes (text/reward triggers) straight to production in one atomic batch. PREFER THE DRAFT FLOW: createAutomationDraft + stageAutomationEdits let a human preview and sign off before anything goes live, and saveAutomationEdits promotes them through this same code path. Reach for this tool only when an immediate live write is explicitly wanted. Pass `operations`, a list of ops: { type: 'create', automation } | { type: 'update', automationId, automation } | { type: 'delete', automationId } | { type: 'createVariant'|'updateVariant', ... }. IMPORTANT: every automation lives inside a flow, and `create` ops REQUIRE a `flowId` — this endpoint throws if it is missing. So before creating: call listAutomationFlows (scoped to the campaign or membersProgram) to find a matching flow and reuse its id, or call createFlow to make one, then set that flowId on the automation. Never invent a flowId. Delete is blocked for automations that already have sends.",
@@ -3911,315 +3944,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "dfyCreateOffer",
-      "domain": "offer",
-      "description": "Creates a new offer in the strategy backlog queue. Requires name, headline, description, framework (free|combo|experience), items [{name, price}], offerPrice (null for free framework), and optionally locationId.",
-      "needsApproval": false,
-      "type": "mutation",
-      "path": [
-        "api",
-        "dfy",
-        "createOffer"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "headline": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "framework": {
-            "type": "string",
-            "enum": [
-              "free",
-              "combo",
-              "experience"
-            ]
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "price": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "name",
-                "price"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "offerPrice": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "locationId": {
-            "type": "string"
-          },
-          "terms": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "headline",
-          "description",
-          "framework",
-          "items"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "dfyDeleteOffer",
-      "domain": "offer",
-      "description": "Deletes an offer from the queue. Requires offerId. Cannot delete offers currently being tested.",
-      "needsApproval": true,
-      "type": "mutation",
-      "path": [
-        "api",
-        "dfy",
-        "deleteOffer"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "offerId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "offerId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "dfyGetMenuHierarchy",
-      "domain": "offer",
-      "description": "Retrieves the restaurant's full menu hierarchy (menus > categories > items with prices) for a given locationId. Use this to browse menu items and prices when building offers.",
-      "needsApproval": false,
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "getMenuHierarchy"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "locationId": {
-            "type": "string"
-          },
-          "menuId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "locationId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "dfyListOffers",
-      "domain": "offer",
-      "description": "Lists all offers in the organization's strategy backlog, sorted by priority. Optionally filter by locationId. Returns offer details including headline, framework, items, status, and priority.",
-      "needsApproval": false,
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "listOffers"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "locationId": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "dfyUpdateOffer",
-      "domain": "offer",
-      "description": "Updates an existing offer. Requires offerId plus any fields to change: name, headline, description, framework, items, offerPrice, priority, status.",
-      "needsApproval": true,
-      "type": "mutation",
-      "path": [
-        "api",
-        "dfy",
-        "updateOffer"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "offerId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "headline": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "framework": {
-            "type": "string",
-            "enum": [
-              "free",
-              "combo",
-              "experience"
-            ]
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "price": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "name",
-                "price"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "offerPrice": {
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "photos": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "customCreatives": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "priority": {
-            "type": "number"
-          },
-          "terms": {
-            "type": "string"
-          },
-          "campaignId": {
-            "type": "string"
-          },
-          "facebookCampaignId": {
-            "type": "string"
-          },
-          "facebookCampaignStatus": {
-            "type": "string",
-            "enum": [
-              "active",
-              "paused"
-            ]
-          },
-          "creatorSourcingLimit": {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "period": {
-                        "type": "string",
-                        "const": "lifetime"
-                      },
-                      "count": {
-                        "type": "number"
-                      }
-                    },
-                    "required": [
-                      "period",
-                      "count"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "period": {
-                        "type": "string",
-                        "const": "monthly"
-                      },
-                      "count": {
-                        "type": "number"
-                      }
-                    },
-                    "required": [
-                      "period",
-                      "count"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "purpose": {
-            "type": "string",
-            "enum": [
-              "customer",
-              "recruitment"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "queued",
-              "preparing",
-              "testing",
-              "winner",
-              "loser"
-            ]
-          }
-        },
-        "required": [
-          "offerId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "discardAutomationDraft",
       "domain": "automations",
       "description": "Discard an automation draft without promoting its staged changes. Live automations are untouched.",
@@ -4425,6 +4149,154 @@ export const CLI_MANIFEST: CliManifest = {
           "fileType"
         ],
         "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "getTaskboard",
+      "domain": "validate",
+      "description": "Get everything that needs fixing or finishing for the organization, as one list of entries discriminated by kind. kind:'task' entries are onboarding tasks (status incomplete|complete, isRequired, priorityScore) read from the task system — they may lag a recompute by ~30s; this call triggers a refresh. kind:'issue' entries are live-computed misconfigurations (severity error|warning, a human message, and a fixHint naming what fixes it): missing/placeholder offer images, inactive automations, missing 'Text STOP' opt-out, automation action errors, funnel screens with placeholder text/images, members rewards no automation awards, wallet pass problems, and missing phone number or tracking pixel. Scope the check with the scope input: {type:'all'} (default) for everything, {type:'onboarding'} for tasks only, {type:'campaign',campaign:{campaignId}} for one campaign's automations+funnel+offer, {type:'funnel',funnel:{campaignId}} for just that campaign's funnel screens, {type:'flow',flow:{flowId}} for one automation flow, {type:'members-program'} for members automations, screens, rewards, and pass. Funnel checks cover all screens resolved for the campaign, including ones not reachable from the funnel's start screen.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "taskboard",
+        "get"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "all"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "onboarding"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "members-program"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "campaign"
+                  },
+                  "campaign": {
+                    "type": "object",
+                    "properties": {
+                      "campaignId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "campaignId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "campaign"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "funnel"
+                  },
+                  "funnel": {
+                    "type": "object",
+                    "properties": {
+                      "campaignId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "campaignId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "funnel"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "flow"
+                  },
+                  "flow": {
+                    "type": "object",
+                    "properties": {
+                      "flowId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "flowId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "flow"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "default": {
+              "type": "all"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "default": {
+          "scope": {
+            "type": "all"
+          }
+        },
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
