@@ -98,6 +98,7 @@ Many tasks are multi-step and have a required ordering the app normally enforces
 | Creating, cloning or configuring a campaign; offers in the strategy backlog | `references/workflows/campaigns.md` |
 | Anything touching automations — creating, editing, simulating, promoting a draft | `references/workflows/automations.md` |
 | Editing funnel screens, applying a funnel template, staging a new screen | `references/workflows/funnels.md` |
+| Writing Meta ad copy — guest-facing or creator recruitment | `references/workflows/facebook.md` |
 | Creator sourcing — approving applicants, reviewing their content, conversations | `references/workflows/creators.md` |
 | Members-program rewards; reading or saving the wallet pass configuration | `references/workflows/members-program.md` |
 | Working the onboarding taskboard; brand identity | `references/workflows/onboarding.md` |
