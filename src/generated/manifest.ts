@@ -56,7 +56,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "approveCreatorVisit",
       "domain": "creators",
-      "description": "Approve or deny a creator's application to visit. THIS TEXTS THE CREATOR IMMEDIATELY — approving sends them their booking link, denying sends a decline. It also consumes the location's monthly creator sourcing allowance, and recruitment pauses automatically once that limit is reached, so approving is both an outbound message and a spend. `eventId` is the visit id: find pending applications with queryData against creators.creatorVisitApplication, filtering on a null approvalStatus (that object is the application — there is no separate application record). Denying is not reversible from here.",
+      "description": "Approve or deny a creator's application to visit. THIS TEXTS THE CREATOR IMMEDIATELY — approving sends them their booking link, denying sends a decline. It also consumes the location's monthly creator sourcing allowance, and recruitment pauses automatically once that limit is reached, so approving is both an outbound message and a spend. `eventId` is the visit id: find pending applications with queryData against creators.creatorVisitApplication, filtering approvalStatus == 'pending_approval' and status != 'cancelled' (that object is the application — there is no separate application record). Approving is a no-op on a row that is no longer actionable; denying is not reversible from here.",
       "needsApproval": true,
       "type": "mutation",
       "path": [
@@ -3817,6 +3817,54 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "decideCreatorSubmission",
+      "domain": "creators",
+      "description": "Decide on a creator's content submission: 'approved', 'rejected', 'revision_requested', or 'under_review'. THIS TEXTS THE CREATOR unless skipApprovalText is true — approving tells them they're done, revision_requested sends your feedbackMessage plus a resubmit link, so write feedbackMessage as something the creator will read. Approving also queues their bonus payout. approvalType 'ad' (the default) means the content may be used in paid ads and is blocked when the board's bonus is $0; 'organic' does not. Find submissionIds with listCreatorSubmissions.",
+      "needsApproval": true,
+      "type": "mutation",
+      "path": [
+        "api",
+        "dfy",
+        "updateSubmissionStatus"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "under_review",
+              "approved",
+              "revision_requested",
+              "rejected"
+            ]
+          },
+          "approvalType": {
+            "type": "string",
+            "enum": [
+              "ad",
+              "organic"
+            ]
+          },
+          "skipApprovalText": {
+            "type": "boolean"
+          },
+          "feedbackMessage": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "submissionId",
+          "status"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "deleteAutomationFlow",
       "domain": "automations",
       "description": "Delete an automation flow and the automations inside it. Pass flowId. Blocked if the flow's automations have 20 or more sends — turn the flow off instead of deleting it in that case. This is destructive; prefer disabling over deleting when unsure.",
@@ -4155,7 +4203,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getTaskboard",
       "domain": "validate",
-      "description": "Get everything that needs fixing or finishing for the organization, as one list of entries discriminated by kind. kind:'task' entries are onboarding tasks (status incomplete|complete, isRequired, priorityScore) read from the task system — they may lag a recompute by ~30s; this call triggers a refresh. kind:'issue' entries are live-computed misconfigurations (severity error|warning, a human message, and a fixHint naming what fixes it): missing/placeholder offer images, inactive automations, missing 'Text STOP' opt-out, automation action errors, funnel screens with placeholder text/images, members rewards no automation awards, wallet pass problems, and missing phone number or tracking pixel. Scope the check with the scope input: {type:'all'} (default) for everything, {type:'onboarding'} for tasks only, {type:'campaign',campaign:{campaignId}} for one campaign's automations+funnel+offer, {type:'funnel',funnel:{campaignId}} for just that campaign's funnel screens, {type:'flow',flow:{flowId}} for one automation flow, {type:'members-program'} for members automations, screens, rewards, and pass. Funnel checks cover all screens resolved for the campaign, including ones not reachable from the funnel's start screen.",
+      "description": "Get everything that needs fixing or finishing for the organization, as one list of entries discriminated by kind. kind:'task' entries are onboarding tasks (status incomplete|complete, isRequired, priorityScore) read from the task system — they may lag a recompute by ~30s; this call triggers a refresh. Each task carries a completionUrl — a browser page where a human can complete that task interactively — and completionInstructions describing exactly what completes it and whether it needs a human in a browser. When you ask the user to complete a specific task, include its completionUrl in your reply: in the dashboard that link automatically opens the task's completion UI next to the chat, and in a terminal it is clickable. Prefer completionInstructions over guessing how a task is evaluated. kind:'issue' entries are live-computed misconfigurations (severity error|warning, a human message, and a fixHint naming what fixes it): missing/placeholder offer images, inactive automations, missing 'Text STOP' opt-out, automation action errors, funnel screens with placeholder text/images, members rewards no automation awards, wallet pass problems, and missing phone number or tracking pixel. Scope the check with the scope input: {type:'all'} (default) for everything, {type:'onboarding'} for tasks only, {type:'task',task:{taskId}} to fetch ONE task's entry (status, completionUrl, completionInstructions), {type:'campaign',campaign:{campaignId}} for one campaign's automations+funnel+offer, {type:'funnel',funnel:{campaignId}} for just that campaign's funnel screens, {type:'flow',flow:{flowId}} for one automation flow, {type:'members-program'} for members automations, screens, rewards, and pass. Funnel checks cover only screens reachable from the campaign funnel's start screen (the same dependency walk the funnel editor uses).",
       "needsApproval": false,
       "type": "query",
       "path": [
@@ -4191,6 +4239,32 @@ export const CLI_MANIFEST: CliManifest = {
                 },
                 "required": [
                   "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "task"
+                  },
+                  "task": {
+                    "type": "object",
+                    "properties": {
+                      "taskId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "taskId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "task"
                 ],
                 "additionalProperties": false
               },
@@ -4404,6 +4478,68 @@ export const CLI_MANIFEST: CliManifest = {
         "list"
       ],
       "inputJsonSchema": null
+    },
+    {
+      "id": "listCreatorApplications",
+      "domain": "creators",
+      "description": "List creator applications waiting on an approve/deny decision, newest first, across every location — it takes no arguments. Each row carries the `eventId` to pass to approveCreatorVisit, plus who applied, which location, when, and their Instagram/TikTok handles and follower count. The follower count is the usual deciding factor and is not available through queryData, so start here rather than querying creatorVisitApplication when the task is working the approval queue.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "dfy",
+        "listPendingApprovals"
+      ],
+      "inputJsonSchema": null
+    },
+    {
+      "id": "listCreatorConversations",
+      "domain": "creators",
+      "description": "List every creator's SMS conversation with its unread state — this is the 'who is waiting on a reply' queue. Takes no arguments. `hasUnread` true means their last message came in after our last one and nobody has marked it read; those are the ones needing a human. Each row also carries lastTextBody, lastTextTime, lastTextDirection, the creator's handles, and `visitStatus` — a derived stage (pending_approval, approved_unscheduled, scheduled_confirmed, visited, missed, ...) that is more useful than reading raw columns off creatorVisitApplication. This tool is read-only: it cannot send a reply or clear the unread flag — texting a creator back and marking a conversation read both stay in the dashboard.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "users",
+        "listInfluencersWithTexts"
+      ],
+      "inputJsonSchema": null
+    },
+    {
+      "id": "listCreatorSubmissions",
+      "domain": "creators",
+      "description": "List creator content submissions, newest first. Pass status to narrow: 'submitted' and 'revision_requested' together are the review queue, then 'approved' or 'rejected'. Omit status for everything. Each row carries the `submissionId` to pass to decideCreatorSubmission. Submissions live outside the queryData catalog, so this is the only way to read them.",
+      "needsApproval": false,
+      "type": "query",
+      "path": [
+        "api",
+        "dfy",
+        "listSubmissions"
+      ],
+      "inputJsonSchema": {
+        "anyOf": [
+          {
+            "not": {}
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "submitted",
+                  "under_review",
+                  "approved",
+                  "revision_requested",
+                  "rejected"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
     },
     {
       "id": "listFunnelDrafts",
