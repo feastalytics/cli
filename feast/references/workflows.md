@@ -166,6 +166,17 @@ The pass (the wallet membership card) is now CLI-readable and -writable as a who
 
 ---
 
+## Onboarding tasks (the taskboard)
+
+`getTaskboard` is the single "what needs fixing or finishing" surface: one `entries` list discriminated by `kind`. `task` entries are the org's onboarding tasks; `issue` entries are live-computed misconfigurations with a `fixHint`. Scope with `{"scope":{"type":"onboarding"}}` for tasks only, `{"type":"task","task":{"taskId":"..."}}` for one task, or leave the default `all`.
+
+- **Start from `completionInstructions`, not guesswork.** Every task entry says exactly what completes it and whether it needs a human in a browser. Trust it over inferring from the task name.
+- **Split the work accordingly.** Tasks like campaigns, automations, funnel fixes, and rewards are completable through the workflows above — do them. Tasks that need OAuth (Facebook, POS), purchases (phone number), device setup, image uploads, or in-restaurant staff training cannot be done from the CLI: hand the user that task's **`completionUrl`** — a page where they complete exactly that task. Paste the URL directly in your reply; in the dashboard chat it opens the task next to the conversation, and in a terminal it's clickable.
+- **Never claim a task complete or try to mark one.** Statuses are derived from live data by a recompute (triggered by every taskboard read, ~30s lag) — do the underlying work, then re-read the taskboard to confirm the checkmark flipped.
+- Working through onboarding = repeat: `getTaskboard` (scope `onboarding`) → do the CLI-doable incomplete required tasks → hand over completionUrls for the rest → re-read to verify.
+
+---
+
 ## Exploring users (guests / members)
 
 **Reading is now available** via `searchUsers`. It returns a page of recent member activity — one event per member, each carrying the member's `serialNumber` plus the event (type, time, related object).

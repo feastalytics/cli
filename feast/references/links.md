@@ -33,6 +33,10 @@ Settings tabs: `account`, `general`, `members`, `integrations`, `notifications`,
 
 Funnels are always edited inside a panel, never on a page of their own — a campaign's `funnel-v2` panel, or the members program's `funnel` panel.
 
+### Onboarding task pages
+
+Task entries from `getTaskboard` come with a ready-made `completionUrl` — always prefer pasting that over constructing a URL. The shape behind it: `https://feastalytics.com/tasks/<organizationId>` is the org's standalone task list, and `https://feastalytics.com/tasks/<organizationId>/<taskId>` opens one task's completion UI directly (chrome-less; works in the dashboard's agent preview panel and as a normal browser link). These are the links to hand over when a task needs the human — OAuth connections, phone purchase, device setup.
+
 ### Automation previews
 
 These two hang off the **root**, not off `/<organizationId>/app` — the organization id is the first path segment:
