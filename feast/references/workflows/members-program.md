@@ -18,8 +18,8 @@ The retention counterpart to campaigns — flows with no `campaignId`.
 
 The pass (the wallet membership card) is now CLI-readable and -writable as a whole document.
 
-- **`readPassConfiguration`** `{}` — returns the latest live configuration: `sections`, `features`, `locations`, `metadata`, and its `version`.
-- **`savePassConfiguration`** — **a full-document save, not a patch.** Anything you omit is dropped from the new version. The only safe workflow is read → modify the returned document → save the complete result. Saving appends a new version (history is preserved server-side), and a visible change triggers a re-push of the pass to every member's wallet — so this confirms before running and deserves the same care as a live send.
+- **`getPassConfiguration`** `{}` — returns the latest live configuration: `sections`, `features`, `locations`, `metadata`, and its `version`.
+- **`updatePassConfiguration`** — **a full-document save, not a patch.** Anything you omit is dropped from the new version. The only safe workflow is read → modify the returned document → save the complete result. Saving appends a new version (history is preserved server-side), and a visible change triggers a re-push of the pass to every member's wallet — so this confirms before running and deserves the same care as a live send.
 - Pass **image generation** (punch-card strips etc.) is not exposed — image workflows still need the app.
 
 ---

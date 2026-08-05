@@ -4,7 +4,7 @@ Background for constructing tool input correctly. This is the conceptual map; th
 
 ## Organizations
 
-The top-level tenant. Nearly every tool is scoped to one organization via `--org`. An org has one or more POS locations (Toast/Square/Clover); many tools that operate on menus or offers need a `locationId`, which you get from `loadCurrentOrganization` (it returns the org's `locations`) — not the organization id.
+The top-level tenant. Nearly every tool is scoped to one organization via `--org`. An org has one or more POS locations (Toast/Square/Clover); many tools that operate on menus or offers need a `locationId`, which you get from `getOrganization` (it returns the org's `locations`) — not the organization id.
 
 ## Campaigns (acquisition)
 
@@ -21,7 +21,7 @@ Typical flow: `createCampaign` (set `isCreating: true` if you'll finish it with 
 - A **flow** is a named grouping of automations. A flow belongs to *either* a campaign *or* the members program (never both).
 - `listAutomationFlows` scopes with input: `{ campaignId }` returns that campaign's flows; `{ scope: "membersProgram" }` returns members-program flows (those with no campaign). `listAutomations` returns every automation in the org, ordered by execution priority.
 - **Authoring:** `createAutomationFlow` makes a flow; `batchEditAutomations` creates/updates/deletes automations in one atomic batch (create ops **require** a `flowId`); `updateAutomationFlow` / `deleteAutomationFlow` manage the flow itself; `simulateAutomations` dry-runs a flow with no real sends. See `workflows/automations.md` for the ordering and the trigger/condition/send-time rules.
-- Templates: `listAutomationTemplates` → `loadTemplateAutomations` (preview) → `applyAutomationTemplate`. Only apply a template to a campaign/members-program that has no existing flows.
+- Templates: `listAutomationTemplates` → `listTemplateAutomations` (preview) → `applyAutomationTemplate`. Only apply a template to a campaign/members-program that has no existing flows.
 
 ## Offers (DFY strategy)
 
