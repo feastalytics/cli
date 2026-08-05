@@ -7,14 +7,14 @@
 
 Fully doable via the CLI. The server does the heavy lifting (id generation, default config, the funnel prerequisite) — you sequence the calls.
 
-1. `loadCurrentOrganization` — read the org to get valid **referrers** (subdomains, from `subdomains2[].subdomain`) and location ids.
+1. `getOrganization` — read the org to get valid **referrers** (subdomains, from `subdomains2[].subdomain`) and location ids.
 2. `createCampaign` with `{ "campaign": { "name": "...", "isCreating": true, "fbCampaigns": [], "attributionRules": [] } }` — keep the returned campaign **id** (a UUID). It comes back `isCreating: true`.
 3. `populateCampaign` with the `campaignId` and a **`funnelType`**:
    - `"reservation"` — no extra config.
    - `"simpleRewards"` — needs `simpleRewardsConfig` with a `promotionName` and an image. Pass a public `imageUrl` string (the CLI can't do the app's file-upload path).
    - `"prepay"` — needs `prepayConfig` with `promotionName`, `price`, and an image (`imageUrl`).
-4. (optional) `chooseFunnelTemplate` — the **acquisition** half: the funnel screens a guest sees. Requires a fresh campaign whose funnel is unset; resolves the referrer from the campaign.
-5. (optional) `applyAutomationTemplate` — the **retention** half: the follow-up messaging. Provisions the campaign's flow *and* its automations in one call, so you don't hand-build a flow for this path. Preview options first with `listAutomationTemplates` / `loadTemplateAutomations`.
+4. (optional) `applyFunnelTemplate` — the **acquisition** half: the funnel screens a guest sees. Requires a fresh campaign whose funnel is unset; resolves the referrer from the campaign.
+5. (optional) `applyAutomationTemplate` — the **retention** half: the follow-up messaging. Provisions the campaign's flow *and* its automations in one call, so you don't hand-build a flow for this path. Preview options first with `listAutomationTemplates` / `listTemplateAutomations`.
 
 Steps 4 and 5 are the two independent halves of a working campaign — the funnel (what the guest sees) and the automations (the messaging that follows). A fully working campaign has a funnel with no screen errors and at least one automation flow.
 
@@ -30,7 +30,7 @@ The one-shot text→campaign endpoints (`createWithOffer` / `parseCampaignDescri
 
 Fully doable from the CLI. Offers live in the organization's strategy backlog (the offer queue), sourced from real menu data.
 
-1. `loadCurrentOrganization` → get the **`locationId`** (from `locations`) — offer tools key on the location, **never** the organizationId.
+1. `getOrganization` → get the **`locationId`** (from `locations`) — offer tools key on the location, **never** the organizationId.
 2. `dfyGetMenuHierarchy` with that `locationId` — browse real menu items and prices.
 3. `dfyListOffers` — see the current backlog; avoid duplicates.
 4. `dfyCreateOffer` — create it. `dfyUpdateOffer` / `dfyDeleteOffer` to revise.

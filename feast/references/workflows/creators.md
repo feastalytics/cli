@@ -15,6 +15,29 @@ There is no separate application object. One row covers a creator's whole journe
 
 **Gotcha:** denying an application stamps `postVisitFollowUpSentAt` and every content follow-up with the current time, as the way to suppress the remaining message sequence. So a denied row looks *completed* on those timestamps. Always pair a timestamp check with `approvalStatus == "approved"`.
 
+### Setting up the program
+
+The program lives on a **location**, not the organization — one config per `locationId`, which you get from `queryData interface.location`.
+
+`updateInfluencerBoardConfig` is an **upsert**. There is no create tool: call it for a location with no program and it writes one, seeding a 5000-cent dining credit and leaving `landingPageConfirmed`, `calendarConfigured` and `passConfigured` false. Omitted fields are left alone on subsequent calls.
+
+**Set `schedulingMode` on the first call.** It's the one field with no default, and without it the *Design creator program* task never completes no matter what else you fill in. `self_schedule_approval` lets approved creators book themselves; `apply_only` collects applications for the restaurant to schedule.
+
+**The setup task and the launch check disagree.** The task wants `schedulingMode` *and* a positive credit *and* `landingPageConfirmed`. Launching only checks `landingPageConfirmed` and a positive credit — and since the credit's floor and its default are both 5000, that leaves `landingPageConfirmed` as the only real precondition. A program can be live while its task still reads incomplete; don't report the task as the launch gate.
+
+`getInfluencerBoardConfig` returns the config (or `null`) plus the location's recruitment offers. **Read it before writing recruitment copy** — the dining credit, creator bonus and follower minimum you're supposed to quote live here and nowhere else. It's also how you check the bonus is non-zero before calling `decideCreatorSubmission` with `approvalType: "ad"`.
+
+### The creative brief
+
+`createCreativeStrategy` has two paths behind one tool, and only one of them finishes synchronously:
+
+- **`awareness`** — assembled from a fixed template and saved before the call returns. `generationStatus` comes back `complete`.
+- **`cta`** — handed to a background LLM. You get a `strategyId` and `generationStatus: "generating"` immediately. **Poll `getCreativeStrategy` until it reads `complete` or `failed`** before using the brief or quoting anything from it.
+
+`getCreativeStrategy` is the one tool that takes `organizationId` in its input rather than from `--org` — it also serves the creator-facing brief pages. Pass the organization you're acting on.
+
+`updateCreativeStrategy` is the revision step. Two things to get right: omitting `strategyId` **creates a new strategy** instead of editing the one you meant, and it replaces the fields you send rather than merging them — so read first, apply your edits to the full `concepts` array, and send the whole thing back. Generating into a strategy that isn't still a draft is rejected rather than silently overwritten.
+
 ### The decision loop
 
 1. `listCreatorApplications` — the approval queue, newest first, across every location. Takes no arguments. Use this rather than querying the data model: it carries **`instagramFollowerCount`**, which is usually the deciding factor and isn't reachable any other way.
@@ -33,6 +56,6 @@ There is no separate application object. One row covers a creator's whole journe
 
 The `creators` schema exposes `creator` (the person, one row shared across all their applications) and `creatorVisitApplication` (one application/visit). Join on `creator.influencerId = creatorVisitApplication.userId`. Use it for anything the tools above don't answer — no-shows, per-location counts, repeat creators. Content submissions and payouts are **not** in the catalog.
 
-> **Not exposed:** launching recruitment ads, scheduling or cancelling a visit, marking a visit attended, paying a bonus, and publishing creator content to Facebook. Those stay in the app.
+> **Not exposed:** launching the program, launching recruitment ads, booking windows, scheduling or cancelling a visit, marking a visit attended, paying a bonus, and publishing creator content to Facebook. Those stay in the app — so you can configure a program and write its brief from here, but a human still has to launch it.
 
 ---
