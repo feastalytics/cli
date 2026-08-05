@@ -39,8 +39,3 @@ export function promptHidden(question: string): Promise<string> {
     muted = true;
   });
 }
-
-export async function promptConfirm(question: string): Promise<boolean> {
-  const answer = await promptText(`${question} [y/N] `);
-  return answer.toLowerCase() === "y" || answer.toLowerCase() === "yes";
-}

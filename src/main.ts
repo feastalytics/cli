@@ -15,7 +15,7 @@ import { getWebBaseUrl } from "./config";
 import { getCredentialsPath } from "./credentials";
 import { callProcedure, createHttpCaller } from "./http";
 import { listOrgRoles } from "./orgs";
-import { promptConfirm, promptHidden, promptText } from "./prompt";
+import { promptHidden, promptText } from "./prompt";
 import {
   buildToolRegistry,
   type CliTool,
@@ -40,7 +40,6 @@ Call options:
   --role <role|roleArn>     Role to act as, e.g. OWNER (required when FEAST_ACCESS_TOKEN is set)
   --input <json>            Tool input as a JSON string (default: {})
   --input-file <path>       Tool input from a JSON file
-  --yes                     Skip the confirmation prompt for mutations
 
 Environment:
   FEAST_API_URL             Override the API base URL (default: production)
@@ -176,7 +175,6 @@ function commandTools(args: ParsedArgs): void {
           id: tool.id,
           domain: tool.domain,
           type: tool.type,
-          needsApproval: tool.needsApproval,
           path: tool.path.join("."),
         })),
         null,
@@ -186,11 +184,7 @@ function commandTools(args: ParsedArgs): void {
     return;
   }
   for (const tool of tools) {
-    const flags = [
-      tool.type,
-      ...(tool.needsApproval ? ["needs-approval"] : []),
-    ].join(", ");
-    console.info(`${tool.id} [${tool.domain}] (${flags})`);
+    console.info(`${tool.id} [${tool.domain}] (${tool.type})`);
     console.info(`    ${tool.description.split("\n")[0]}`);
   }
 }
@@ -205,7 +199,6 @@ function commandDescribe(args: ParsedArgs): void {
   console.info(`Domain: ${tool.domain}`);
   console.info(`Type: ${tool.type}`);
   console.info(`Procedure: ${tool.path.join(".")}`);
-  console.info(`Needs approval: ${tool.needsApproval}`);
   console.info(`\n${tool.description}`);
   console.info("\nInput schema:");
   console.info(JSON.stringify(toolInputJsonSchema(tool), null, 2));
@@ -286,7 +279,7 @@ async function commandCall(args: ParsedArgs): Promise<void> {
     args.flags["org"] as string | undefined,
     args.flags["role"] as string | undefined
   );
-  const isWrite = tool.type === "mutation" || tool.needsApproval;
+  const isWrite = tool.type === "mutation";
 
   console.error(
     `Acting on organization ${acting.organizationId} as ${acting.roleLabel}`
@@ -299,20 +292,11 @@ async function commandCall(args: ParsedArgs): Promise<void> {
 
   if (isWrite) {
     const organization = await verifyOrganization(client, acting.organizationId);
-    if (args.flags["yes"] !== true) {
-      const orgLabel =
-        organization.name != null
-          ? `"${organization.name}" (${organization.id})`
-          : organization.id;
-      const approved = await promptConfirm(
-        `Run ${tool.id} (${tool.type}) against organization ${orgLabel}?`
-      );
-      if (!approved) {
-        console.error("Aborted");
-        process.exitCode = 1;
-        return;
-      }
-    }
+    const orgLabel =
+      organization.name != null
+        ? `"${organization.name}" (${organization.id})`
+        : organization.id;
+    console.error(`Running ${tool.id} (${tool.type}) against ${orgLabel}`);
   }
 
   const result = await callProcedure(client, tool.path, tool.type, input);
