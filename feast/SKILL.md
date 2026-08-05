@@ -73,11 +73,13 @@ Pass the target org with `--org <organizationId>`:
 
 ## Reads vs. writes
 
-Query tools (listing, describing, reading) are safe and read-only. Mutation tools (create, update, clone, delete, apply) change production data, so the CLI adds guards:
+Query tools (listing, describing, reading) are safe and read-only. Mutation tools (create, update, clone, delete, apply) change production data.
 
 - Mutations require `--org` explicitly.
-- Before running, the CLI verifies the server-resolved org and prompts for `y/N` confirmation.
-- In a non-interactive context where the user has already told you to proceed, add `--yes` to skip the prompt. Only do this when the user's intent is unambiguous — the confirmation exists to prevent acting on the wrong org or with the wrong payload.
+- Before running one, the CLI resolves the organization server-side and prints its name, so a wrong `--org` shows up as the wrong restaurant rather than an opaque id. Read that line.
+- **There is no confirmation prompt.** A mutation runs the moment you call it. Nothing asks twice, and nothing undoes it.
+
+That last point matters most for the tools that reach the real world rather than just the database. Buying a phone number bills the account. Approving a creator visit or deciding a submission sends that person a text immediately and cannot be recalled. Publishing a campaign puts it live, and pricing a recurring promotion creates real Stripe products. Saving automation edits changes what guests receive. Treat those as irreversible, and get the user's intent straight *before* the call, because there is no gate after it.
 
 Prefer reading before writing: e.g. `listCampaigns` to find the right `campaignId` before `updateCampaign`, or `describe`/`listAutomationFlows` before creating a flow.
 
