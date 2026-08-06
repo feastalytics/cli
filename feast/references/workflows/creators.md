@@ -27,6 +27,18 @@ The program lives on a **location**, not the organization — one config per `lo
 
 `getInfluencerBoardConfig` returns the config (or `null`) plus the location's recruitment offers. **Read it before writing recruitment copy** — the dining credit, creator bonus and follower minimum you're supposed to quote live here and nowhere else. It's also how you check the bonus is non-zero before calling `decideCreatorSubmission` with `approvalType: "ad"`.
 
+### Booking windows
+
+`listAvailability` (no arguments, **org-wide** — filter by `locationId` or `campaignId` yourself), `createAvailability`, `updateAvailability`, `deleteAvailability`.
+
+A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`; or `weekly`, with start and end hour/minute, the `utcDaysOfWeek` it repeats on, and `blockUtcStart` for when the repetition begins.
+
+**Everything is UTC and the restaurant will describe it in local time.** For weekly blocks `utcDaysOfWeek` is the day of week *in UTC*, so an evening local window that crosses midnight UTC lands on the **following** day — 9pm Friday New York is 02:00 Saturday UTC, and writing `Friday` there opens the wrong night. Convert the day and the time together, never just the time. This fails silently: you get a valid window on a day nobody asked for.
+
+**Set `campaignId`, not just `locationId`.** It's optional in the schema and required by the task — *Set booking windows* completes only when a window carries the first campaign's id. Without it the window books fine and the task stays open forever.
+
+`updateAvailability` replaces `block` whole rather than merging it, so send the complete block including the parts you aren't changing, and it returns nothing — re-read with `listAvailability` to confirm. `deleteAvailability` **succeeds silently on an id that doesn't exist**, so no error is not proof anything was removed; take ids from `listAvailability`. Deleting closes future slots but does not cancel visits already booked inside the window — those are separate rows.
+
 ### The creative brief
 
 `createCreativeStrategy` has two paths behind one tool, and only one of them finishes synchronously:
@@ -56,6 +68,6 @@ The program lives on a **location**, not the organization — one config per `lo
 
 The `creators` schema exposes `creator` (the person, one row shared across all their applications) and `creatorVisitApplication` (one application/visit). Join on `creator.influencerId = creatorVisitApplication.userId`. Use it for anything the tools above don't answer — no-shows, per-location counts, repeat creators. Content submissions and payouts are **not** in the catalog.
 
-> **Not exposed:** launching the program, launching recruitment ads, booking windows, scheduling or cancelling a visit, marking a visit attended, paying a bonus, and publishing creator content to Facebook. Those stay in the app — so you can configure a program and write its brief from here, but a human still has to launch it.
+> **Not exposed:** launching the program, launching recruitment ads, scheduling or cancelling a visit, marking a visit attended, paying a bonus, and publishing creator content to Facebook. Those stay in the app — so you can configure a program, set its booking windows and write its brief from here, but a human still has to launch it.
 
 ---
