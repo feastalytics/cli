@@ -47,9 +47,69 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "ads_get_ad_entities",
+      "domain": "ads",
+      "description": "Read the campaigns, ad sets or ads already on an ad account. Ads come back with their creative attached.\n\nlevel says what kind of thing comes back; the ids say where to look. An id at its own level fetches that one object, and at a lower level lists that object's children — so campaignId with level campaign returns that campaign, with level adSet returns its ad sets, and with level ad returns every ad in it across all of its ad sets. Ids can only point downward: an adSetId at level campaign is an error rather than being ignored. Where several apply, the narrowest wins.\n\nTo add new creatives to an ad set that is already running, use this to copy the settings the new ads must match, then publish with the addAds template. Read level ad with that adSetId, skip ads whose effectiveStatus is DELETED or ARCHIVED, take the first one left, and pull from its creative:\n- pageId: objectStorySpec.page_id\n- instagramAccountId: objectStorySpec.instagram_actor_id, or instagram_user_id if that is absent — both spellings occur\n- urlTags: urlTags\n- headline, primaryText and landingUrl live in whichever of three shapes the ad uses. assetFeedSpec, if present, wins: titles[0].text, bodies[0].text, link_urls[0].website_url. Otherwise objectStorySpec.link_data for an image ad: name, message, link. Otherwise objectStorySpec.video_data for a video ad: title, message, call_to_action.value.link.\n\nA mismatch here is not rejected by Meta — it publishes an ad pointing somewhere different from its siblings — so copy the values rather than inventing them.",
+      "type": "query",
+      "path": [
+        "api",
+        "ads",
+        "facebook",
+        "getAdEntities"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "campaign",
+              "adSet",
+              "ad"
+            ]
+          },
+          "adAccountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "adSetId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "adId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effectiveStatus": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          }
+        },
+        "required": [
+          "level",
+          "adAccountId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "ads_get_datasets",
       "domain": "ads",
-      "description": "List the datasets (Meta pixels) on an ad account, for the pixelId template variable. Without a pixel an ad set optimises for link clicks rather than conversions. lastFiredTime tells you which pixel is actually receiving traffic.",
+      "description": "List the datasets (Meta pixels) on an ad account, with lastFiredTime so you can see which are receiving events. This is for checking a pixel rather than choosing one: the pixelId a campaign should optimise against is the pixel its funnel actually fires, which comes from the organization's layout config. A pixel picked from this list because it looks plausible may receive no traffic from that funnel.",
       "type": "query",
       "path": [
         "api",
@@ -5703,32 +5763,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "schemaName",
           "objectTypeName"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "readAdSetDefaults",
-      "domain": "ads",
-      "description": "Read the Page, Instagram identity, landing URL, ad copy and URL tags off the first live ad in an ad set, so new ads added with the addAds template match the ones already running. Returns null when the ad set has no live ads to copy from.",
-      "type": "query",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "readAdSetDefaults"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "adSetId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "adSetId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
