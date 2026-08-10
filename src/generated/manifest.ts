@@ -24,6 +24,77 @@ export const CLI_MANIFEST: CliManifest = {
   ],
   "tools": [
     {
+      "id": "ads_activate_entity",
+      "domain": "ads",
+      "description": "Take a Meta campaign, ad set or ad from PAUSED to ACTIVE. This spends real money — call it only after the human has explicitly confirmed they want this live. Pausing is the other tool: ads_update_entity with status PAUSED. Activating a parent does NOT activate its children, so a structure that was published paused has to be activated from the top down — campaign, then ad set, then ad. Activating a child whose parent is still paused succeeds at Meta and delivers nothing, so the response reports pausedAncestors and willDeliver; if willDeliver is false the entity is live in name only and you should say so rather than reporting success. setAdCampaignStatus is the shortcut for a campaign Feastalytics published, because that one cascades to every level at once.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "ads",
+        "facebook",
+        "activateEntity"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "adAccountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "campaign",
+              "adSet",
+              "ad"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "adAccountId",
+          "entityType",
+          "entityId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "ads_create_dataset",
+      "domain": "ads",
+      "description": "Create a dataset (Meta pixel) on an ad account, for a restaurant that has none. Call ads_get_datasets first: an account usually already has one, a second dataset splits a funnel's events in two, and datasets cannot be deleted. Creating it connects it to nothing — write the returned id to the organization's layout config with updateBrandIdentity, which is what makes the funnel fire it and what the onboarding task reads.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "ads",
+        "facebook",
+        "createDataset"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "adAccountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "adAccountId",
+          "name"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "ads_get_ad_accounts",
       "domain": "ads",
       "description": "List the ad accounts this organization can publish to. The Meta token reaches every ad account of every business it was connected for, so the list is narrowed to accounts publishAds will accept; includeUnassigned returns the rest for diagnosing a missing account, and those are not publishable.",
@@ -172,6 +243,69 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": {
         "type": "object",
         "properties": {},
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "ads_update_entity",
+      "domain": "ads",
+      "description": "Change budget, name or pause state on a Meta campaign, ad set or ad. This is the lever the re-evaluation loop turns: scale a winner or throttle a loser by moving its daily budget. adAccountId must be the account that actually owns the entity, and is rejected otherwise. Budgets are integer cents and replace the current value rather than adjusting it — read the entity with ads_get_ad_entities first, and confirm the new number with the human, because it starts spending differently the moment it lands. An entity carries either a daily or a lifetime budget, never both. status only accepts PAUSED: pausing one ad is what this is for, while going live spends money and belongs to setAdCampaignStatus, which cascades. Creative content cannot be edited at all — Meta creatives are immutable, so new copy or media means a new ad.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "ads",
+        "facebook",
+        "updateEntity"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "adAccountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "campaign",
+              "adSet",
+              "ad"
+            ]
+          },
+          "entityId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fields": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dailyBudgetCents": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "lifetimeBudgetCents": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "status": {
+                "type": "string",
+                "const": "PAUSED"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "adAccountId",
+          "entityType",
+          "entityId",
+          "fields"
+        ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -4547,6 +4681,31 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "deleteMembersProgramReward",
+      "domain": "membersProgram",
+      "description": "Remove a members program reward. This is how an orphan gets cleaned up — a reward no automation's awardReward grants can never reach a guest and holds the members program short of complete. The catalog item is left alone, because it may be a real POS menu item or be used by another reward. Guests who already redeemed keep what they were given; this only stops it being offered again.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "membersProgram",
+        "deleteReward"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "rewardId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "rewardId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "describeData",
       "domain": "data",
       "description": "Describe the queryable data model, then read it with queryData. Call with no arguments first — that returns an index of every queryable object type plus the full query grammar. Narrowing by schema or object type returns full column detail: type, enum values, nullability, description, and the link names you pass to a pivot or join. Prefer the 'interface' schema, whose object types are POS-agnostic and return the same shape whichever POS the organization runs.",
@@ -4656,6 +4815,18 @@ export const CLI_MANIFEST: CliManifest = {
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
+    },
+    {
+      "id": "getBillingStatus",
+      "domain": "core",
+      "description": "Whether this organization is paid up, and on what. hasAccess is the one to read for \"can they use the product\": it means paid and not mid-charge. needsPayment is its inverse for the states worth acting on — PENDING, FAILED, or a charge in flight — and is what the dashboard polls to decide whether to block the app behind a payment form. currentTier and subscriptionStatus describe the plan; initialDepositCents is in cents. Read-only: every write here moves real money and stays in the dashboard. existingOrganizations lists *other* organizations billed under the same billing admin, with their names and tiers — they are not this organization, and it is empty for per-organization billing.",
+      "type": "query",
+      "path": [
+        "api",
+        "organization",
+        "checkPaymentStatus"
+      ],
+      "inputJsonSchema": null
     },
     {
       "id": "getCampaign",
@@ -13088,6 +13259,45 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "locationId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "updateMembersProgramReward",
+      "domain": "membersProgram",
+      "description": "Correct a members program reward in place, instead of creating a second one. pointsCost replaces the current value; pass null to clear it, which converts a reward guests redeem with points into one an automation grants. Omitting a field leaves it alone. staffInstructions is stored on the reward's catalog item and is rejected for a POS-sourced item, where the column does not exist. Find the rewardId with listMembersProgramRewards.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "membersProgram",
+        "updateReward"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "rewardId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pointsCost": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "staffInstructions": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rewardId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
