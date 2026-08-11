@@ -1,11 +1,11 @@
 ---
 name: feast
-description: Operate a Feastalytics organization from the terminal — list, create, and update campaigns, automations, offers, funnels, and members-program rewards — via the `feast` CLI. Use this skill whenever the user wants to inspect or change Feastalytics data outside the dashboard — "list my campaigns", "create an automation for org X", "what offers does this location have", "clone this campaign", "update the members program", or any request to script/batch/automate Feastalytics operations. Reach for it even when the user doesn't say "CLI" — if the task is reading or changing Feastalytics campaign/automation/offer/reward data, this is the tool.
+description: Operate a Feastalytics organization from the terminal — campaigns, automations, funnels, members-program rewards, the wallet pass, creator sourcing, Meta ads, onboarding, and read-only data queries — via the `feast` CLI. Use this skill whenever the user wants to inspect or change Feastalytics data outside the dashboard — "list my campaigns", "create an automation for org X", "approve this creator", "publish the recruitment ad", "query my guests", "update the members program", or any request to script/batch/automate Feastalytics operations. Reach for it even when the user doesn't say "CLI" — if the task is reading or changing Feastalytics data, this is the tool.
 ---
 
 # Feast CLI
 
-Drive the Feastalytics platform from the terminal. The `feast` CLI exposes the same tool surface the in-app AI agent uses (campaigns, automations, offers, funnels, members program) as plain commands that hit the production API as the logged-in user.
+Drive the Feastalytics platform from the terminal. The `feast` CLI exposes the same tool surface the in-app AI agent uses (campaigns, automations, funnels, members program, creator sourcing, Meta ads, onboarding, data queries) as plain commands that hit the production API as the logged-in user.
 
 The CLI is the source of truth for *which* tools exist and *what* they accept — always discover that at runtime rather than assuming, because the tool set grows as new endpoints are tagged. Your job is to pick the right tool, scope it to the right organization, and hand it valid input.
 
@@ -79,7 +79,7 @@ Query tools (listing, describing, reading) are safe and read-only. Mutation tool
 - Before running one, the CLI resolves the organization server-side and prints its name, so a wrong `--org` shows up as the wrong restaurant rather than an opaque id. Read that line.
 - **There is no confirmation prompt.** A mutation runs the moment you call it. Nothing asks twice, and nothing undoes it.
 
-That last point matters most for the tools that reach the real world rather than just the database. Buying a phone number bills the account. Approving a creator visit or deciding a submission sends that person a text immediately and cannot be recalled. Publishing a campaign puts it live, and pricing a recurring promotion creates real Stripe products. Saving automation edits changes what guests receive. Treat those as irreversible, and get the user's intent straight *before* the call, because there is no gate after it.
+That last point matters most for the tools that reach the real world rather than just the database. Buying a phone number bills the account. Approving a creator visit or deciding a submission sends that person a text immediately and cannot be recalled. Paying a creator's bonus charges the organization's card. Publishing a campaign puts it live, and pricing a recurring promotion creates real Stripe products. Activating a Meta campaign spends real ad budget. Saving automation edits changes what guests receive. Treat those as irreversible, and get the user's intent straight *before* the call, because there is no gate after it. (The one schema-level exception: `publishAds` requires `confirm: true` in its input — but that's you confirming, not the CLI asking.)
 
 Prefer reading before writing: e.g. `listCampaigns` to find the right `campaignId` before `updateCampaign`, or `describe`/`listAutomationFlows` before creating a flow.
 
@@ -97,18 +97,19 @@ Many tasks are multi-step and have a required ordering the app normally enforces
 
 | Doing this | Read |
 |---|---|
-| Creating, cloning or configuring a campaign; offers in the strategy backlog | `references/workflows/campaigns.md` |
+| Creating, cloning or configuring a campaign; promotions | `references/workflows/campaigns.md` |
 | Anything touching automations — creating, editing, simulating, promoting a draft | `references/workflows/automations.md` |
 | Editing funnel screens, applying a funnel template, staging a new screen | `references/workflows/funnels.md` |
 | Writing Meta ad copy — guest-facing or creator recruitment | `references/workflows/facebook.md` |
-| Creator sourcing — approving applicants, reviewing their content, conversations | `references/workflows/creators.md` |
+| Publishing, pausing, budgeting or diagnosing Meta ads | `references/workflows/ads.md` |
+| Creator sourcing — approving applicants, reviewing content, creatives, payouts | `references/workflows/creators.md` |
 | Members-program rewards; reading or saving the wallet pass configuration | `references/workflows/members-program.md` |
-| Working the onboarding taskboard; brand identity | `references/workflows/onboarding.md` |
-| Searching guests/members and their activity | `references/workflows/guests.md` |
+| Working the onboarding taskboard; brand identity; phone, media, invites, billing | `references/workflows/onboarding.md` |
+| Searching guests/members; querying anything via the data catalog | `references/workflows/guests.md` |
 
-Read more than one when a task spans them — a new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`.
+Read more than one when a task spans them — a new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`, and publishing a recruitment ad means `creators.md` plus `facebook.md` and `ads.md`.
 
-Some things are deliberately **not exposed**: replying to a guest or a creator by SMS, firing an automation at a live member, reward update/delete, pass image generation, and most of the creator pipeline beyond the two approval decisions. The workflow files say which. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools` — tell the user that part isn't available yet.
+Some things are deliberately **not exposed**: replying to a guest or a creator by SMS, firing an automation at a live member, pass image generation, ad-copy generation (write it yourself), and publishing creator content as partnership ads. The workflow files say which. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools` — tell the user that part isn't available yet.
 
 ## Link to what you touched
 
@@ -120,13 +121,13 @@ That file has the dashboard routes with their panel and tab names, the guest-fac
 
 ## Worked example
 
-User: "add a $5-off offer to the Plum location in my Plum Vietnamese org."
+User: "add a Free Dessert reward members can redeem for 100 points in my Plum Vietnamese org."
 
 ```bash
-feast whoami                                    # find the Plum Vietnamese org id
-feast describe dfyCreateOffer                    # learn the offer input shape
-feast call dfyGetMenuHierarchy --org <orgId> --input '{"locationId":"<id>"}'   # find the location/menu ids
-feast call dfyCreateOffer --org <orgId> --input '{ ... }'                       # create it (confirms first)
+feast whoami                                     # find the Plum Vietnamese org id
+feast describe createMembersProgramReward        # learn the input shape (type: item vs name)
+feast call listMembersProgramRewards --org <orgId>   # avoid duplicating an existing reward or catalog item
+feast call createMembersProgramReward --org <orgId> --input '{"type":"name","name":"Free Dessert","pointsCost":100}'
 ```
 
 The pattern generalizes: identify the org, learn the tool, resolve any referenced ids, then act.

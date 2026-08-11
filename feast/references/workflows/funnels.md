@@ -4,7 +4,7 @@
 
 **Applying a funnel template** expands a whole screen tree server-side in one call: `applyFunnelTemplate` (needs the campaign's funnel unset — a fresh campaign — and resolves the referrer from the campaign). `deleteFunnel` tears one down.
 
-**Editing individual funnel screens is now CLI-drivable** through a **draft → preview → promote** loop. You never apply edits locally: you stage them on an off-prod draft, preview the result at a stable URL, then save. Tools: `listFunnelScreens`, `createFunnelDraft`, `stageFunnelEdit`, `stageFunnelScreen`, `getFunnelDraft`, `listFunnelDrafts`, `discardFunnelDraft`, `saveFunnelEdits`.
+**Individual funnel screens are edited** through a **draft → preview → promote** loop. You never apply edits locally: you stage them on an off-prod draft, preview the result at a stable URL, then save. Tools: `listFunnelScreens`, `createFunnelDraft`, `stageFunnelEdit`, `stageFunnelScreen`, `getFunnelDraft`, `listFunnelDrafts`, `discardFunnelDraft`, `saveFunnelEdits`.
 
 ### The loop
 
@@ -15,8 +15,11 @@
    - `{ "type": "create", "renderable": { "id": "<new-uuid>", ... }, "targetId": "<sibling id>", "position": "before" | "after" | "inside" }` — generate a fresh UUID.
    - `{ "type": "delete", "id": "<renderableId>" }` and `{ "type": "move", "id": "...", "targetId": "...", "position": "..." }`.
    **Need a brand-new screen?** `stageFunnelScreen` `{ "draftId": "...", "title": "...", "description"? }` stages an empty screen on the draft and returns its **permanent `screenId`** — the id is assigned at staging time, not at save, so you can immediately `stageFunnelEdit` content into it and reference it from navigation/buttons on other screens; nothing gets re-keyed at promote. On a campaign draft the screen is campaign-scoped unless you pass `"campaignScoped": false`. The screen only exists on the draft (and in draft-scoped `listFunnelScreens`/previews) until `saveFunnelEdits` promotes it, which reports it in `createdScreenIds`.
-4. **Preview** (no CLI call): open `https://{referrer}.feastalytics.com/preview/{draftId}/{campaignId}` (drop `/{campaignId}` for a members-program draft). It renders the whole funnel as a flow diagram with the draft's edits applied. Screenshot it, then iterate — re-run `listFunnelScreens` **with the `draftId`** to read the funnel *with* the staged edits, stage more, re-preview — until it's right.
-5. **`saveFunnelEdits`** `{ "draftId": "..." }` — **promotes to prod** (mutation, confirms first): applies the draft's edits to the live funnel and marks the draft `promoted`. To abandon instead, `discardFunnelDraft`.
+4. **Preview** — two ways, use whichever fits how you can look at things:
+   - `previewFunnelDraft` renders every screen to a **PDF** (one screen per page, mobile viewport) and returns a short-lived download URL — the option that works when you can read files but not browse.
+   - The live preview page `https://{referrer}.feastalytics.com/preview/{draftId}/{campaignId}` (drop `/{campaignId}` for a members-program draft) renders the funnel as a flow diagram with the edits applied — the link to hand the user.
+   Iterate: re-run `listFunnelScreens` **with the `draftId`** to read the funnel *with* the staged edits, stage more, re-preview — until it's right.
+5. **`saveFunnelEdits`** `{ "draftId": "..." }` — **promotes to prod, with no confirmation prompt**: applies the draft's edits to the live funnel and marks the draft `promoted`. To abandon instead, `discardFunnelDraft`.
 
 `saveFunnelEdits` can also take an inline `{ "referrer", "campaignId", "edits": [ { "screenId", "edit" } ] }` array instead of a `draftId` — a one-shot save with no persisted draft (you lose the preview step, so prefer the draft loop when the change is visual).
 

@@ -50,6 +50,17 @@ A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`;
 
 `updateCreativeStrategy` is the revision step. Two things to get right: omitting `strategyId` **creates a new strategy** instead of editing the one you meant, and it replaces the fields you send rather than merging them — so read first, apply your edits to the full `concepts` array, and send the whole thing back. Generating into a strategy that isn't still a draft is rejected rather than silently overwritten.
 
+### Recruitment creatives and the recruitment ad
+
+The ads that bring applicants in are CLI-drivable end to end:
+
+1. `createRecruitmentCreatives` with the `campaignId` — it resolves (or creates) the campaign's recruitment offer itself, which is what groups the creatives and carries the monthly sourcing cap. Each run calls an image model per missing type; `force` deletes and regenerates the whole set, so don't pass it casually.
+2. `listCreatives` — each creative's `imageKey` is the reference `planAds` takes as a `libraryAsset`; `staleCreativeIds` flags creatives generated from an older version of their offer.
+3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect** — the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live.
+4. Copy rules for the ad live in `facebook.md` (`recruitmentAdCopy` — the creator-facing half; conflating it with guest copy is the classic failure).
+
+`markCreativesPublished` is only the fallback for recording ads created outside `publishAds` or repairing an effect that reported `error`.
+
 ### The decision loop
 
 1. `listCreatorApplications` — the approval queue, newest first, across every location. Takes no arguments. Use this rather than querying the data model: it carries **`instagramFollowerCount`**, which is usually the deciding factor and isn't reachable any other way.
@@ -60,6 +71,10 @@ A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`;
 4. `listCreatorSubmissions` with `{ "status": "submitted" }` (and `"revision_requested"`) — the content review queue. Submissions are stored outside the queryable data model, so this tool is the only way to read them.
 5. `decideCreatorSubmission` — `approved`, `rejected`, `revision_requested`, or `under_review`. **This texts the creator too.** `revision_requested` sends your `feedbackMessage` verbatim plus a resubmit link, so write it as something the creator will read, not an internal note. Approving queues their bonus payout. `approvalType` defaults to `"ad"` (the content may run in paid ads) and is rejected when the board's bonus is $0 — use `"organic"` when it's just for their own channels.
 
+### Paying the bonus
+
+`createInfluencerPayout` charges the organization's card and starts the creator's bonus on its way. **Never call it on your own initiative** — every call needs the client's explicit, fresh approval to pay this specific creator; a standing instruction doesn't count. The endpoint enforces its own preconditions (an ad-approved submission, no payout already active for the visit — one per visit), the amount comes from the board config grossed up to cover the Stripe fee, and after the charge Stripe webhooks carry it to the creator with no further action from you. Follow progress in `queryData` `creators.creatorPayout`, joined to the visit on `visitEventId`.
+
 ### Conversations
 
 `listCreatorConversations` is the "who is waiting on a reply" queue: every creator's SMS thread with `hasUnread`, the last message body and direction, and a derived `visitStatus` chip that's more reliable than reading raw columns.
@@ -68,8 +83,8 @@ A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`;
 
 ### Everything else: queryData
 
-The `creators` schema exposes `creator` (the person, one row shared across all their applications) and `creatorVisitApplication` (one application/visit). Join on `creator.influencerId = creatorVisitApplication.userId`. Use it for anything the tools above don't answer — no-shows, per-location counts, repeat creators. Content submissions and payouts are **not** in the catalog.
+The `creators` schema exposes `creator` (the person, one row shared across all their applications), `creatorVisitApplication` (one application/visit), and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Join person to visit on `creator.influencerId = creatorVisitApplication.userId`. Use it for anything the tools above don't answer — no-shows, per-location counts, repeat creators, payout history. Content submissions are **not** in the catalog; `listCreatorSubmissions` is the only read.
 
-> **Not exposed:** launching the program, launching recruitment ads, scheduling or cancelling a visit, marking a visit attended, paying a bonus, and publishing creator content to Facebook. Those stay in the app — so you can configure a program, set its booking windows and write its brief from here, but a human still has to launch it.
+> **Not exposed:** replying to a creator's texts or marking a conversation read (the dashboard owns creator messaging), the dashboard's launch-program button itself (its bookkeeping rides the recruitment publish effect — see above), and publishing a creator's submitted content as a partnership ad.
 
 ---

@@ -2,7 +2,7 @@
 
 > Part of the Feastalytics CLI workflows. Confirm a tool exists with `feast tools` before relying on it, and get its exact fields from `feast describe <tool>` — this file gives the *meaning* and *ordering* the schema can't.
 
-**Now fully authorable from the CLI** (create / edit / delete / dry-run). This is the richest workflow — the ordering is simpler than the app's, but the domain rules below are what separate a professional flow from a carrier-blocked mess. Follow them when creating, and use them as a checklist when reviewing.
+**Fully authorable** (create / edit / delete / dry-run). This is the richest workflow — the ordering is simpler than the app's, but the domain rules below are what separate a professional flow from a carrier-blocked mess. Follow them when creating, and use them as a checklist when reviewing.
 
 ### The model: automations live inside flows
 

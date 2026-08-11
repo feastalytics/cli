@@ -26,21 +26,10 @@ The one-shot text→campaign endpoints (`createWithOffer` / `parseCampaignDescri
 
 ---
 
-## Creating offers (strategy backlog)
+## Offers and promotions
 
-Fully doable from the CLI. Offers live in the organization's strategy backlog (the offer queue), sourced from real menu data.
-
-1. `getOrganization` → get the **`locationId`** (from `locations`) — offer tools key on the location, **never** the organizationId.
-2. `dfyGetMenuHierarchy` with that `locationId` — browse real menu items and prices.
-3. `dfyListOffers` — see the current backlog; avoid duplicates.
-4. `dfyCreateOffer` — create it. `dfyUpdateOffer` / `dfyDeleteOffer` to revise.
-
-Every offer picks one **framework**:
-
-- **`free`** — give away a low-cost item (appetizer, side, drink, small dessert) with no purchase. Maximizes signups. `offerPrice: null`; `items` = the single free item at its menu price. Headline: "A Complimentary [Item]" / "Free [Item]".
-- **`combo`** — bundle to lift the ticket. *Pattern A* "Buy X, Get Y Free" (`offerPrice` = purchased item only) — best for quick-service. *Pattern B* fixed-price bundle "[Item] & [Item] for $XX" (`offerPrice` = bundle price) — preserves brand equity for upscale.
-- **`experience`** — a curated multi-item tasting/pairing/prix-fixe with **no discount** (`offerPrice` = sum of item prices). MUST have 2+ items.
-
-`dfyCreateOffer` needs `name` (internal label, no restaurant name), `headline` (states what the guest gets + price, using real item names), a short `description` (context the headline can't carry), `framework`, `items` (`[{name, price}]` from the menu), `offerPrice`, and `locationId`. Always frame as "offers," never "discounts" or "deals."
+- A campaign's **promotions** are part of the campaign record: read them with `getCampaign`, edit them with `updateCampaign` (including a promotion's `staffInstructions`, and prices — noting the Stripe-products warning in `updateCampaign`'s description).
+- **Real menu data** for grounding any offer or promotion copy comes from `queryData` on `interface.catalogItem` — POS-agnostic, hierarchical via `parentId`/`catalogItemLink`.
+- When you write guest-facing offer language anywhere, frame it as an "offer," never a "discount" or "deal."
 
 ---
