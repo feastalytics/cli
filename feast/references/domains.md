@@ -25,7 +25,7 @@ Typical flow: `createCampaign` (set `isCreating: true` if you'll finish it with 
 
 ## Offers and promotions
 
-The strategy-backlog offer tools were removed from the surface by design — the backlog is read-only in the product. Promotions live on the campaign record (`getCampaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
+Promotions live on the campaign record (`getCampaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
 
 ## Members program (retention)
 

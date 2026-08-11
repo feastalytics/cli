@@ -28,10 +28,6 @@ The one-shot text→campaign endpoints (`createWithOffer` / `parseCampaignDescri
 
 ## Offers and promotions
 
-The strategy-backlog offer tools (`dfyCreateOffer` and friends) were **removed from the surface deliberately** — the backlog is read-only in the product now, so don't go looking for them or tell the user they're coming back.
-
-What remains CLI-drivable:
-
 - A campaign's **promotions** are part of the campaign record: read them with `getCampaign`, edit them with `updateCampaign` (including a promotion's `staffInstructions`, and prices — noting the Stripe-products warning in `updateCampaign`'s description).
 - **Real menu data** for grounding any offer or promotion copy comes from `queryData` on `interface.catalogItem` — POS-agnostic, hierarchical via `parentId`/`catalogItemLink`.
 - When you write guest-facing offer language anywhere, frame it as an "offer," never a "discount" or "deal."

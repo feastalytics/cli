@@ -109,7 +109,7 @@ Many tasks are multi-step and have a required ordering the app normally enforces
 
 Read more than one when a task spans them — a new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`, and publishing a recruitment ad means `creators.md` plus `facebook.md` and `ads.md`.
 
-Some things are deliberately **not exposed**: replying to a guest or a creator by SMS, firing an automation at a live member, pass image generation, ad-copy generation (write it yourself), publishing creator content as partnership ads, and offer authoring in the strategy backlog (removed from the product surface, not merely untagged). The workflow files say which. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools` — tell the user that part isn't available yet.
+Some things are deliberately **not exposed**: replying to a guest or a creator by SMS, firing an automation at a live member, pass image generation, ad-copy generation (write it yourself), and publishing creator content as partnership ads. The workflow files say which. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools` — tell the user that part isn't available yet.
 
 ## Link to what you touched
 
