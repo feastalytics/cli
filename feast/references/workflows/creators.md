@@ -56,7 +56,7 @@ The ads that bring applicants in are CLI-drivable end to end:
 
 1. `createRecruitmentCreatives` with the `campaignId` — it resolves (or creates) the campaign's recruitment offer itself, which is what groups the creatives and carries the monthly sourcing cap. Each run calls an image model per missing type; `force` deletes and regenerates the whole set, so don't pass it casually.
 2. `listCreatives` — each creative's `imageKey` is the reference `planAds` takes as a `libraryAsset`; `staleCreativeIds` flags creatives generated from an older version of their offer.
-3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect** — the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live — the bookkeeping the dashboard's launch flow used to do.
+3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect** — the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live.
 4. Copy rules for the ad live in `facebook.md` (`recruitmentAdCopy` — the creator-facing half; conflating it with guest copy is the classic failure).
 
 `markCreativesPublished` is only the fallback for recording ads created outside `publishAds` or repairing an effect that reported `error`.
@@ -85,6 +85,6 @@ The ads that bring applicants in are CLI-drivable end to end:
 
 The `creators` schema exposes `creator` (the person, one row shared across all their applications), `creatorVisitApplication` (one application/visit), and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Join person to visit on `creator.influencerId = creatorVisitApplication.userId`. Use it for anything the tools above don't answer — no-shows, per-location counts, repeat creators, payout history. Content submissions are **not** in the catalog; `listCreatorSubmissions` is the only read.
 
-> **Not exposed:** replying to a creator's texts or marking a conversation read (the dashboard owns creator messaging), the dashboard's launch-program button itself (its bookkeeping now rides the recruitment publish effect — see above), and publishing a creator's submitted content as a partnership ad.
+> **Not exposed:** replying to a creator's texts or marking a conversation read (the dashboard owns creator messaging), the dashboard's launch-program button itself (its bookkeeping rides the recruitment publish effect — see above), and publishing a creator's submitted content as a partnership ad.
 
 ---

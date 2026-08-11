@@ -20,13 +20,11 @@ Two POS setup tasks complete off `updateOrganization` instead: `staffInstruction
 
 ## Establishing brand identity
 
-CLI-drivable now:
-
 1. `searchGooglePlaces` — resolve the restaurant to its Google Place. Include the city in the query; only trust `confidentMatch` when it's non-null, otherwise show the candidates and let the customer pick.
 2. `createBrandIdentity` — the branded site: a subdomain, layout config, and a full default screen tree. The subdomain is claimed **across all organizations** and gates everything funnel-shaped downstream, so confirm the name with the customer first. Get `logoUrl` via `getMediaUploadUrl`.
 3. `updateBrandIdentity` — business data, theme, tracking pixel IDs, OpenTable links, and the Google Place link. It deep-merges, so send only what you're changing. **Setting `googleConfig.placeId` enqueues a review/photo scrape; changing an existing placeId orphans everything scraped under the old one** — confirm before replacing.
 
-Still browser-only: the brand *import* intelligence — auto-extracting a usable palette and logo from a scraped site lives in the app, not the API. If the customer wants that flow, hand them the dashboard.
+Browser-only: the brand *import* intelligence — auto-extracting a usable palette and logo from a scraped site lives in the app, not the API. If the customer wants that flow, hand them the dashboard.
 
 ## Plumbing the taskboard leans on
 

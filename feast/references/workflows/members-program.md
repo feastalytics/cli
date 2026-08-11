@@ -17,7 +17,7 @@ The retention counterpart to campaigns — flows with no `campaignId`.
 
 ## Wallet pass configuration
 
-The pass (the wallet membership card) is now CLI-readable and -writable as a whole document.
+The pass (the wallet membership card) is read and written as a whole document.
 
 - **`getPassConfiguration`** `{}` — returns the latest live configuration: `sections`, `features`, `locations`, `metadata`, and its `version`.
 - **`updatePassConfiguration`** — **a full-document save, not a patch.** Anything you omit is dropped from the new version. The only safe workflow is read → modify the returned document → save the complete result. Saving appends a new version (history is preserved server-side), and a visible change triggers a re-push of the pass to every member's wallet — there is no confirmation prompt, so treat it with the same care as a live send.

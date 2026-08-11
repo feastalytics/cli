@@ -2,7 +2,7 @@
 
 > Part of the Feastalytics CLI workflows. Confirm a tool exists with `feast tools` before relying on it, and get its exact fields from `feast describe <tool>` — this file gives the *meaning* and *ordering* the schema can't.
 
-Two jobs live under Meta ads: **writing the ad copy** and **publishing the ad**. Both are CLI work now — this file is the copywriting half; the publish loop (templates, planning, effects, activation) lives in `ads.md`.
+Two jobs live under Meta ads: **writing the ad copy** and **publishing the ad**. This file is the copywriting half; the publish loop (templates, planning, effects, activation) lives in `ads.md`.
 
 **You write the copy yourself.** The dashboard has a "generate copy" button behind an LLM call; there is no CLI equivalent and you shouldn't want one, because it would be you calling an HTTP endpoint in order to call a model. The copy lands on a plain field of the campaign record, so saving it is trivial and covered at the bottom of this file. Everything between here and there is the part that's actually hard.
 

@@ -32,7 +32,7 @@ Bookkeeping that must happen once the ads exist travels *inside* the publish as 
 - **A recruitment publish must declare `linkRecruitmentOffer`** with its `offerId` and `creativeIds` — the server refuses the publish without it. The effect stamps the creatives as published (no separate `markCreativesPublished` call needed), stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live.
 - **`linkFeastCampaign`** records the published Meta campaign onto a Feast campaign, which is what makes its ads panel and KPIs see the spend.
 
-`markCreativesPublished` remains as the fallback for ads created outside `publishAds`, or for repairing a publish whose effect reported `error`.
+`markCreativesPublished` is the fallback for ads created outside `publishAds`, or for repairing a publish whose effect reported `error`.
 
 ### Which template
 
