@@ -42,7 +42,3 @@ A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publish
 ## The data catalog
 
 `describeData` / `queryData` expose a read-only, org-scoped query surface over the data model — guests, orders, menu items, texts, creator visits, payouts. When no purpose-built tool answers a read question, the catalog usually does; `describeData` with no arguments is the index.
-
----
-
-Maintenance note: this file is currently hand-authored. The richest source of this domain knowledge is the in-app agent's prompt files (`src/agent-core/src/prompts/` — AutomationsPrompt, CampaignsPrompt, LayoutEnginePrompt, MembersProgramPrompt, OfferPrompt). A future improvement is to generate this reference from those, so the skill and the in-app agent never drift.
