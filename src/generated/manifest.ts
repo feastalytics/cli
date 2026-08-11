@@ -4299,7 +4299,6 @@ export const CLI_MANIFEST: CliManifest = {
                   }
                 },
                 "required": [
-                  "restaurantName",
                   "restaurantNeighborhood",
                   "differentiatorsText",
                   "mustTryItemsText"
@@ -4408,6 +4407,31 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "referrer"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "createInfluencerPayout",
+      "domain": "creators",
+      "description": "Charges the organization's card to pay a creator's content bonus. NEVER call this on your own initiative or as part of an automated flow — every call needs the client's explicit, fresh approval to pay this specific creator, given to you directly; a standing instruction or an inferred intent does not count. The endpoint enforces its own preconditions and refuses otherwise: the visit must have a content submission approved as a paid ad (decideCreatorSubmission with approvalType 'ad' — organic approvals earn no payout), and no payout may already exist for the visit in any active status — one payout per visit, so a second call while one is pending, funding, onboarding, or paid is rejected. The bonus amount comes from the location's board config, grossed up so the org covers the Stripe fee. After the charge, Stripe webhooks carry it to the creator (FUNDED → onboarding if needed → PAID) with no further action from you; follow progress in queryData creators.creatorPayout.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "stripe",
+        "createInfluencerPayout"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "The creator visit's eventId (creatorVisitApplication.eventId) whose approved paid-ad submission is being paid out."
+          }
+        },
+        "required": [
+          "eventId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -5382,6 +5406,34 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": null
     },
     {
+      "id": "listCreatives",
+      "domain": "creators",
+      "description": "The generated recruitment creatives for an organization, optionally narrowed to one offer. Each carries an imageKey resolving to the rendered variant that was picked, and selectedImageUrl for the same object as a URL — pass imageKey to planAds as a libraryAsset reference rather than choosing among the composite fields yourself. imageUrl is the base render and is not the ad asset. staleCreativeIds lists creatives generated from an older version of their offer, and is only populated when offerId is given.",
+      "type": "query",
+      "path": [
+        "api",
+        "dfy",
+        "listCreatives"
+      ],
+      "inputJsonSchema": {
+        "anyOf": [
+          {
+            "not": {}
+          },
+          {
+            "type": "object",
+            "properties": {
+              "offerId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "listCreatorApplications",
       "domain": "creators",
       "description": "Creator applications waiting on an approve/deny decision, newest first, across every location. Each row carries the `eventId` for updateCreatorVisit plus who applied, where, when, and their handles and follower count. That follower count is usually the deciding factor and is not reachable through queryData, so start here rather than querying creatorVisitApplication when working the approval queue.",
@@ -5600,6 +5652,46 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "markCreativesPublished",
+      "domain": "creators",
+      "description": "Record which Meta ad a recruitment creative was published in. Call this after publishAds finishes, with every creative that went into the ad — a dynamic ad rotates several at once, so they all take the same fbAdId. Without it the creatives keep offering to be published again.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "dfy",
+        "markCreativesPublished"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "creatives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "creativeId": {
+                  "type": "string"
+                },
+                "fbAdId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "creativeId",
+                "fbAdId"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "creatives"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "planAds",
       "domain": "ads",
       "description": "Resolve an ad template and its variables into the exact tree of campaigns, ad sets and ads that would be created on Meta. Creates nothing on Meta and changes no Feastalytics data — it is a mutation only so the variables travel in a request body rather than a URL. Returns the tree, a planHash, the fully defaulted variables, and validation issues. Fix any issue with severity error and plan again; then pass the returned variables, overrides and planHash to publishAds unchanged. Never hand-assemble Meta parameters — publishAds re-derives the tree from these variables and refuses anything else.",
@@ -5738,7 +5830,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "publishAds",
       "domain": "ads",
-      "description": "Publish a plan produced by planAds. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued — poll jobs.get with the returned jobId and jobType to follow it. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
+      "description": "Publish a plan produced by planAds. Declare what should be recorded once the ads exist through effects, and the worker runs them as part of the job — a recruitment publish must pass linkRecruitmentOffer with its offerId and creativeIds, which stamps the creatives, stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live; omitting it is refused rather than silently skipped. Doing it afterwards through a separate call is a step that can be missed, and missing it is silent. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued — poll jobs.get with the returned jobId and jobType to follow it. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
       "type": "mutation",
       "path": [
         "api",
@@ -5778,11 +5870,56 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "boolean",
             "const": true
           },
-          "campaignId": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "effects": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "linkFeastCampaign"
+                    },
+                    "campaignId": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "campaignId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "linkRecruitmentOffer"
+                    },
+                    "offerId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "creativeIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "offerId",
+                    "creativeIds"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
           },
           "reviewedPlan": {}
         },
