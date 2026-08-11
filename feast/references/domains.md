@@ -23,13 +23,25 @@ Typical flow: `createCampaign` (set `isCreating: true` if you'll finish it with 
 - **Authoring:** `createAutomationFlow` makes a flow; `batchEditAutomations` creates/updates/deletes automations in one atomic batch (create ops **require** a `flowId`); `updateAutomationFlow` / `deleteAutomationFlow` manage the flow itself; `simulateAutomations` dry-runs a flow with no real sends. See `workflows/automations.md` for the ordering and the trigger/condition/send-time rules.
 - Templates: `listAutomationTemplates` → `listTemplateAutomations` (preview) → `applyAutomationTemplate`. Only apply a template to a campaign/members-program that has no existing flows.
 
-## Offers (DFY strategy)
+## Offers and promotions
 
-Offers live in the organization's strategy backlog. `dfyCreateOffer` needs a `framework` — one of `free`, `combo`, or `experience` — a name, headline, description, and `items` (`[{ name, price }]`). `offerPrice` is null for the `free` framework. Browse the menu to source real item names/prices with `dfyGetMenuHierarchy` (needs a `locationId`). `dfyListOffers` shows the current backlog with status and priority.
+The strategy-backlog offer tools were removed from the surface by design — the backlog is read-only in the product. Promotions live on the campaign record (`getCampaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
 
 ## Members program (retention)
 
-The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above).
+The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (`getPassConfiguration` / `updatePassConfiguration`) — see `workflows/members-program.md`.
+
+## Creator sourcing
+
+Restaurants recruit local content creators to visit and post. One config per location (`getInfluencerBoardConfig`), an approval queue of applications, content review, and bonus payouts — see `workflows/creators.md`. Recruitment *ads* publish through the Meta ads surface (`workflows/ads.md`).
+
+## Meta ads
+
+A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `setAdCampaignStatus`, plus `ads_*` tools for reading and steering what's already on the ad account — see `workflows/ads.md`.
+
+## The data catalog
+
+`describeData` / `queryData` expose a read-only, org-scoped query surface over the data model — guests, orders, menu items, texts, creator visits, payouts. When no purpose-built tool answers a read question, the catalog usually does; `describeData` with no arguments is the index.
 
 ---
 

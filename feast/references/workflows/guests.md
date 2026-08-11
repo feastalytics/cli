@@ -8,3 +8,13 @@
 - Paginate with `limit` (default 100) and `cursor` (pass back the `cursor` from the previous call; an undefined cursor means no more pages).
 
 **Replying by SMS is NOT exposed, deliberately.** The send primitive enforces opt-out, quiet-hours, dedup, and rate limits *downstream* (not at the endpoint), and opt-in is currently gated only by a UI control. If a reply capability is ever exposed, it must run with confirmation and must not bypass those guardrails. For now, tell the user that replying to guests is done in the app.
+
+## Everything else: the data catalog
+
+`searchUsers` answers "recent activity, one event per member." Every other read question about guests — and about orders, menu items, texts, reservations, creator visits, payouts — goes through **`describeData` → `queryData`**:
+
+- `describeData` with no arguments returns the index of every queryable object type plus the full query grammar; narrowed by schema or object type it returns full column detail. Never guess column names.
+- `queryData` is read-only and always scoped to the calling organization — never filter on organizationId yourself.
+- Six schemas: `interface` (POS-agnostic orders, order items, menu `catalogItem`s, `location`s, reservations — same shape whichever POS the org runs), `core` (guests/members), `events` (user events), `texting` (SMS logs), `creators` (visits and payouts), `attribution` (campaign attribution). Prefer `interface` for anything POS-shaped.
+
+Typical uses: visit counts and cohorts, order history for one guest, menu items with real prices for grounding copy, text delivery history, creator payout status.

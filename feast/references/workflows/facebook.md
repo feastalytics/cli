@@ -2,7 +2,7 @@
 
 > Part of the Feastalytics CLI workflows. Confirm a tool exists with `feast tools` before relying on it, and get its exact fields from `feast describe <tool>` — this file gives the *meaning* and *ordering* the schema can't.
 
-Two jobs live under Meta ads: **writing the ad copy** and **publishing the ad**. Only the first is CLI work today.
+Two jobs live under Meta ads: **writing the ad copy** and **publishing the ad**. Both are CLI work now — this file is the copywriting half; the publish loop (templates, planning, effects, activation) lives in `ads.md`.
 
 **You write the copy yourself.** The dashboard has a "generate copy" button behind an LLM call; there is no CLI equivalent and you shouldn't want one, because it would be you calling an HTTP endpoint in order to call a model. The copy lands on a plain field of the campaign record, so saving it is trivial and covered at the bottom of this file. Everything between here and there is the part that's actually hard.
 
@@ -34,7 +34,7 @@ Generic copy is the failure mode, and specifics are the entire job. The differen
 1. `getOrganization` — brand name, cuisine, and the subdomains in `subdomains2[].subdomain`.
 2. `getCampaign` — `name`, `description`, `bannerConfig`, `promotions`, `referrers`, `shorthand`.
 3. `listFunnelScreens` `{ "referrer": "<subdomain>", "campaignId": "<id>" }` — **the actual landing-page copy the guest sees after the click.** This is your source of truth for congruence: the trip from ad to landing page should feel like one continuous thing, not a bait-and-switch. Copy that promises something the landing page doesn't deliver burns the click.
-4. `dfyListOffers` / `dfyGetMenuHierarchy` — real item names and real prices, not approximations of them.
+4. `queryData` on `interface.catalogItem` — real menu item names and real prices, not approximations of them. It's hierarchical; walk the tree with `parentId` or `catalogItemLink`.
 
 The landing page URL is `https://{referrer}.feastalytics.com/campaign/{campaignId}`, using a referrer from the campaign's own `referrers` rather than just the org's first subdomain.
 
@@ -185,7 +185,7 @@ That's a customer offer wearing a creator ad's clothes. Every one of "free meal"
 
 `foodCreditCents`, `creatorPayoutCents` and `minFollowerCount` on `recruitmentAdCopy` record the terms your copy actually stated. The dashboard compares them against the live creator board config and flags the copy as drifted when they diverge — so if you write "$30 tab" and leave them unset, nobody finds out when the credit later changes to $50 and the ad starts lying.
 
-**You can't read the creator board config from the CLI.** Ask the user for the dining credit, the bonus and the follower minimum, write those exact numbers into the copy, and mirror them into these fields (in **cents** for the two money fields). Don't guess them.
+**Read the creator board config with `getInfluencerBoardConfig` first** — the dining credit, the bonus and the follower minimum live there and nowhere else. Write those exact numbers into the copy, and mirror them into these fields (in **cents** for the two money fields). Don't guess them, and don't ask the user for numbers the config already has.
 
 The creator landing page is `/creator-landing` on the org's subdomain with `orgId`, `locId`, `campaignId` and UTM params — fiddly enough that you should reuse the existing `recruitmentAdCopy.landingPageUrl` when the campaign already has copy, rather than reconstructing it.
 
@@ -199,10 +199,10 @@ One `updateCampaign` call writes `adCopy` or `recruitmentAdCopy`. Run `feast des
 
 ## Publishing
 
-**Not yet possible from the CLI.** Creating the ad in Meta — ad account, page, budget, targeting, creative — stays in the dashboard for now. Write the copy, then hand the user the campaign's `ads` panel (or `creative-strategy` for recruitment) to publish it.
+**CLI-drivable — read `ads.md`.** The loop is `listAdTemplates` → gather variables → `planAds` → `publishAds` (with its effects) → `getJob` → `setAdCampaignStatus`, and that file carries the ordering, the idempotency-key discipline, and the effect declarations that make the publish self-bookkeeping.
 
 ---
 
-> **Not exposed:** ad copy generation (write it yourself, per above), marking copy as pushed to Meta, and everything to do with creating, editing or pausing a live Meta ad. Read `references/links.md` before writing the dashboard link you hand over.
+> **Not exposed:** ad copy generation (write it yourself, per above). Read `references/links.md` before writing any dashboard link you hand over.
 
 ---
