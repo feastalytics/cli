@@ -4962,6 +4962,30 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getCreatorConversation",
+      "domain": "creators",
+      "description": "One creator's full SMS thread, newest first — what the dashboard's creator chat view renders. userId comes from listCreatorConversations, which is the queue; this is the read you make before summarizing an exchange or drafting a reply for the human to send, because the queue only carries the last message. Each row has the body, direction (from/to the creator's number), and timestamps. Returns empty when the creator has no phone number on file. Read-only: sending the reply and marking the thread read stay in the dashboard.",
+      "type": "query",
+      "path": [
+        "api",
+        "users",
+        "getInfluencerMessages"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "getFunnelDraft",
       "domain": "funnel",
       "description": "Get a funnel draft and its staged edits by id.",
@@ -5076,6 +5100,66 @@ export const CLI_MANIFEST: CliManifest = {
           "scope",
           "fileName",
           "fileType"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "getMemberConversation",
+      "domain": "membersProgram",
+      "description": "One member's SMS thread and activity, newest first — what the dashboard's chat page renders, and the pair to searchUsers the way getCreatorConversation pairs with listCreatorConversations. serialNumber comes from searchUsers. eventTypes: ['sentText','receivedText'] is the conversation; adding scan, order, checkout, rewardAwarded or rewardRedeemed interleaves what happened between the messages. Unfiltered it fans out to every event source and returns the member's whole history unpaginated, so pass eventTypes unless you really want it all. Read-only: replying to a guest stays in the dashboard.",
+      "type": "query",
+      "path": [
+        "api",
+        "loyalty",
+        "app",
+        "listEventsForUser"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "serialNumber": {
+            "type": "string"
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "receivedText",
+                "sentText",
+                "customerInference",
+                "scan",
+                "passCreated",
+                "passUpdated",
+                "order",
+                "rewardAwarded",
+                "rewardRedeemed",
+                "rewardExpiration",
+                "offerExpired",
+                "fbAttribution",
+                "influencerAttribution",
+                "tiktokAttribution",
+                "googleAttribution",
+                "miscAttribution",
+                "referralAttribution",
+                "passRegistered",
+                "passDeleted",
+                "checkout",
+                "reservationCreated",
+                "optOut",
+                "subscriptionStarted",
+                "subscriptionEnded",
+                "subscriptionInvoice",
+                "formSubmission",
+                "autoReplyDraft"
+              ]
+            }
+          }
+        },
+        "required": [
+          "serialNumber"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -5500,7 +5584,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorConversations",
       "domain": "creators",
-      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read-only: replying to a creator and marking a conversation read both stay in the dashboard.",
+      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read the full thread behind a row with getCreatorConversation and its userId. Read-only: replying to a creator and marking a conversation read both stay in the dashboard.",
       "type": "query",
       "path": [
         "api",
@@ -5698,46 +5782,6 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "templateId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "markCreativesPublished",
-      "domain": "creators",
-      "description": "Record which Meta ad a recruitment creative was published in. The linkRecruitmentOffer effect on publishAds records this as part of the publish, so after an effect-declared publish there is nothing left to mark — call this only when ads were created outside publishAds or a publish's effect reported an error. Pass every creative that went into the ad — a dynamic ad rotates several at once, so they all take the same fbAdId. Without a record the creatives keep offering to be published again.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "dfy",
-        "markCreativesPublished"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "creatives": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "creativeId": {
-                  "type": "string"
-                },
-                "fbAdId": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "creativeId",
-                "fbAdId"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "creatives"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -6344,7 +6388,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "searchUsers",
       "domain": "membersProgram",
-      "description": "Search members (loyalty guests) and their activity. Returns a page of the most recent user events, one per member, each carrying the member's serialNumber plus the event type, time and related object. isUnread: true narrows the results to unread inbound texts only, overriding any broader eventTypes; progressMinBound/progressMaxBound bound the visit count. Paginate by passing the returned `cursor` back — an undefined cursor means no more pages.",
+      "description": "Search members (loyalty guests) and their activity. Returns a page of the most recent user events, one per member, each carrying the member's serialNumber plus the event type, time and related object. isUnread: true narrows the results to unread inbound texts only, overriding any broader eventTypes; progressMinBound/progressMaxBound bound the visit count. Paginate by passing the returned `cursor` back — an undefined cursor means no more pages. This finds the member; getMemberConversation with their serialNumber loads their SMS thread or full timeline.",
       "type": "query",
       "path": [
         "api",
