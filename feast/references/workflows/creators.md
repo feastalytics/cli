@@ -59,8 +59,6 @@ The ads that bring applicants in are CLI-drivable end to end:
 3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect** — the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live.
 4. Copy rules for the ad live in `facebook.md` (`recruitmentAdCopy` — the creator-facing half; conflating it with guest copy is the classic failure).
 
-`markCreativesPublished` is only the fallback for recording ads created outside `publishAds` or repairing an effect that reported `error`.
-
 ### The decision loop
 
 1. `listCreatorApplications` — the approval queue, newest first, across every location. Takes no arguments. Use this rather than querying the data model: it carries **`instagramFollowerCount`**, which is usually the deciding factor and isn't reachable any other way.
@@ -79,7 +77,9 @@ The ads that bring applicants in are CLI-drivable end to end:
 
 `listCreatorConversations` is the "who is waiting on a reply" queue: every creator's SMS thread with `hasUnread`, the last message body and direction, and a derived `visitStatus` chip that's more reliable than reading raw columns.
 
-**You cannot reply from the CLI, and you cannot clear the unread flag.** Both stay in the dashboard — texting a creator back is the highest-consequence action in this area. Surface who's waiting and what they said, then hand the user the conversation.
+`getCreatorConversation` with a row's `userId` loads the full thread behind it, newest first. Read it before characterizing an exchange or drafting a reply for the human — the queue's last-message snippet is not enough context to speak for a whole conversation.
+
+**You cannot reply from the CLI, and you cannot clear the unread flag.** Both stay in the dashboard — texting a creator back is the highest-consequence action in this area. Surface who's waiting, read the thread, propose the reply if asked, then hand the user the conversation to send it.
 
 ### Everything else: queryData
 
