@@ -7,7 +7,7 @@
 - Filter with `query` (free-text name), `eventTypes` (e.g. `sentText`, `receivedText`, `scan`, `order`, `rewardAwarded`, `rewardRedeemed`, `checkout`, the `*Attribution` types), `progressMinBound`/`progressMaxBound` (visit-count range), `isUnread: true` (members with unanswered inbound texts), `orderBy` (ASC|DESC by event time).
 - Paginate with `limit` (default 100) and `cursor` (pass back the `cursor` from the previous call; an undefined cursor means no more pages).
 
-`listMemberEvents` with a member's `serialNumber` loads their full timeline, newest first — the pair to `searchUsers` the same way `getCreatorConversation` pairs with `listCreatorConversations`. Always pass `eventTypes`: `["sentText","receivedText"]` is the SMS thread, and adding `scan`/`order`/`checkout`/`rewardAwarded`/`rewardRedeemed` interleaves what happened between the messages. Unfiltered it returns the member's entire history unpaginated.
+`getMemberConversation` with a member's `serialNumber` loads their thread, newest first — the pair to `searchUsers` the same way `getCreatorConversation` pairs with `listCreatorConversations`. Always pass `eventTypes`: `["sentText","receivedText"]` is the SMS thread, and adding `scan`/`order`/`checkout`/`rewardAwarded`/`rewardRedeemed` interleaves what happened between the messages. Unfiltered it returns the member's entire history unpaginated.
 
 **Replying by SMS is NOT exposed, deliberately.** The send primitive enforces opt-out, quiet-hours, dedup, and rate limits *downstream* (not at the endpoint), and opt-in is currently gated only by a UI control. If a reply capability is ever exposed, it must run with confirmation and must not bypass those guardrails. For now, tell the user that replying to guests is done in the app.
 
