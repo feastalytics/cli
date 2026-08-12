@@ -79,7 +79,9 @@ The ads that bring applicants in are CLI-drivable end to end:
 
 `listCreatorConversations` is the "who is waiting on a reply" queue: every creator's SMS thread with `hasUnread`, the last message body and direction, and a derived `visitStatus` chip that's more reliable than reading raw columns.
 
-**You cannot reply from the CLI, and you cannot clear the unread flag.** Both stay in the dashboard — texting a creator back is the highest-consequence action in this area. Surface who's waiting and what they said, then hand the user the conversation.
+`getCreatorConversation` with a row's `userId` loads the full thread behind it, newest first. Read it before characterizing an exchange or drafting a reply for the human — the queue's last-message snippet is not enough context to speak for a whole conversation.
+
+**You cannot reply from the CLI, and you cannot clear the unread flag.** Both stay in the dashboard — texting a creator back is the highest-consequence action in this area. Surface who's waiting, read the thread, propose the reply if asked, then hand the user the conversation to send it.
 
 ### Everything else: queryData
 
