@@ -29,10 +29,10 @@ For the *words* in the ads, read `facebook.md` first — copywriting is its own 
 
 Bookkeeping that must happen once the ads exist travels *inside* the publish as `effects`, and the worker runs it as part of the job — because a follow-up call you're supposed to remember is a follow-up call that gets missed, silently.
 
-- **A recruitment publish must declare `linkRecruitmentOffer`** with its `offerId` and `creativeIds` — the server refuses the publish without it. The effect stamps the creatives as published (no separate `markCreativesPublished` call needed), stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live.
+- **A recruitment publish must declare `linkRecruitmentOffer`** with its `offerId` and `creativeIds` — the server refuses the publish without it. The effect stamps the creatives as published, stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live.
 - **`linkFeastCampaign`** records the published Meta campaign onto a Feast campaign, which is what makes its ads panel and KPIs see the spend.
 
-`markCreativesPublished` is the fallback for ads created outside `publishAds`, or for repairing a publish whose effect reported `error`.
+An effect that reports `error` in the job is a case for the dashboard, not for patching around — surface it to the user.
 
 ### Which template
 

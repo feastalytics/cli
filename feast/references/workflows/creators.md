@@ -59,8 +59,6 @@ The ads that bring applicants in are CLI-drivable end to end:
 3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect** — the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live.
 4. Copy rules for the ad live in `facebook.md` (`recruitmentAdCopy` — the creator-facing half; conflating it with guest copy is the classic failure).
 
-`markCreativesPublished` is only the fallback for recording ads created outside `publishAds` or repairing an effect that reported `error`.
-
 ### The decision loop
 
 1. `listCreatorApplications` — the approval queue, newest first, across every location. Takes no arguments. Use this rather than querying the data model: it carries **`instagramFollowerCount`**, which is usually the deciding factor and isn't reachable any other way.
