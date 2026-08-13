@@ -1880,6 +1880,119 @@ export const CLI_MANIFEST: CliManifest = {
                                   "resetProgress"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "setCustomProperty"
+                                  },
+                                  "setCustomProperty": {
+                                    "type": "object",
+                                    "properties": {
+                                      "propertyId": {
+                                        "type": "string"
+                                      },
+                                      "operation": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "set"
+                                              },
+                                              "set": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "booleanValue": {
+                                                    "type": [
+                                                      "boolean",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "isDateValue": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                      },
+                                                      {
+                                                        "type": "null"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "localDayOfYear": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "numberValue": {
+                                                    "type": [
+                                                      "number",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "stringValue": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "set"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "increment"
+                                              },
+                                              "increment": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "amount": {
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "amount"
+                                                ],
+                                                "additionalProperties": false,
+                                                "description": "Number properties only. Added to the current value, or to 0."
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "increment"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "propertyId",
+                                      "operation"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "setCustomProperty"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -3657,6 +3770,119 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "resetProgress"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "setCustomProperty"
+                                  },
+                                  "setCustomProperty": {
+                                    "type": "object",
+                                    "properties": {
+                                      "propertyId": {
+                                        "type": "string"
+                                      },
+                                      "operation": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "set"
+                                              },
+                                              "set": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "booleanValue": {
+                                                    "type": [
+                                                      "boolean",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "isDateValue": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                      },
+                                                      {
+                                                        "type": "null"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "localDayOfYear": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "numberValue": {
+                                                    "type": [
+                                                      "number",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "stringValue": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "set"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "increment"
+                                              },
+                                              "increment": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "amount": {
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "amount"
+                                                ],
+                                                "additionalProperties": false,
+                                                "description": "Number properties only. Added to the current value, or to 0."
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "increment"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "propertyId",
+                                      "operation"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "setCustomProperty"
                                 ],
                                 "additionalProperties": false
                               }
@@ -5700,6 +5926,32 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "listIgMedia",
+      "domain": "ads",
+      "description": "List recent posts from the Instagram business account linked to a Facebook Page, for use as igMedia creative references in planAds templates. Returns the instagramUserId to put on the igMedia creative ref plus up to 50 recent posts with id, caption, thumbnail, mediaType, permalink and timestamp. Takes a pageId from ads_get_user_pages; a Page with no linked Instagram business account returns instagramAccount null.",
+      "type": "query",
+      "path": [
+        "api",
+        "ads",
+        "facebook",
+        "listIgMedia"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "pageId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "pageId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "listMedia",
       "domain": "core",
       "description": "Uploaded media files for the organization, across one or more scopes. Each file is tagged with its scope and a canDelete flag. `cropped` lists the cropped variants under each scope's cropped/ subfolder instead of the base files.",
@@ -5782,6 +6034,33 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "templateId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "markReimbursementPaid",
+      "domain": "creators",
+      "description": "Record that a creator has been paid back for a meal they bought on a reimbursing board. This moves no money — it only writes down that the client already sent it by their own means, so never call it unless the client tells you the payment has actually gone out. The submission must be approved and its reimbursement still pending; a submission with no receipt was never on a reimbursing board and is rejected. Read the receipt total off creators.creatorContentSubmission before recording anything.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "dfy",
+        "markReimbursementPaid"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string"
+          },
+          "reimbursementPaidNote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "submissionId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -5926,7 +6205,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "publishAds",
       "domain": "ads",
-      "description": "Publish a plan produced by planAds. Declare what should be recorded once the ads exist through effects, and the worker runs them as part of the job — a recruitment publish must pass linkRecruitmentOffer with its offerId and creativeIds, which stamps the creatives, stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live; omitting it is refused rather than silently skipped. Doing it afterwards through a separate call is a step that can be missed, and missing it is silent. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued — poll getJob with the returned jobId and jobType to follow it, and read the job's effect outcomes rather than assuming they ran. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
+      "description": "Publish a plan produced by planAds. Declare what should be recorded once the ads exist through effects, and the worker runs them as part of the job — a recruitment publish must pass linkRecruitmentOffer with its offerId and creativeIds, which stamps the creatives, stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live, and a directOffer publish must pass linkFeastCampaign with the campaignId it runs for, which is what puts its spend on the campaign's ads panel and KPIs; omitting either is refused rather than silently skipped. Doing it afterwards through a separate call is a step that can be missed, and missing it is silent. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued — poll getJob with the returned jobId and jobType to follow it, and read the job's effect outcomes rather than assuming they ran. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
       "type": "mutation",
       "path": [
         "api",
@@ -8060,6 +8339,119 @@ export const CLI_MANIFEST: CliManifest = {
                                   "resetProgress"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "setCustomProperty"
+                                  },
+                                  "setCustomProperty": {
+                                    "type": "object",
+                                    "properties": {
+                                      "propertyId": {
+                                        "type": "string"
+                                      },
+                                      "operation": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "set"
+                                              },
+                                              "set": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "booleanValue": {
+                                                    "type": [
+                                                      "boolean",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "isDateValue": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                      },
+                                                      {
+                                                        "type": "null"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "localDayOfYear": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "numberValue": {
+                                                    "type": [
+                                                      "number",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "stringValue": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "set"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "increment"
+                                              },
+                                              "increment": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "amount": {
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "amount"
+                                                ],
+                                                "additionalProperties": false,
+                                                "description": "Number properties only. Added to the current value, or to 0."
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "increment"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "propertyId",
+                                      "operation"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "setCustomProperty"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -9777,6 +10169,119 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "resetProgress"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "setCustomProperty"
+                                  },
+                                  "setCustomProperty": {
+                                    "type": "object",
+                                    "properties": {
+                                      "propertyId": {
+                                        "type": "string"
+                                      },
+                                      "operation": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "set"
+                                              },
+                                              "set": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "booleanValue": {
+                                                    "type": [
+                                                      "boolean",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "isDateValue": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                      },
+                                                      {
+                                                        "type": "null"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "localDayOfYear": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "numberValue": {
+                                                    "type": [
+                                                      "number",
+                                                      "null"
+                                                    ]
+                                                  },
+                                                  "stringValue": {
+                                                    "type": [
+                                                      "string",
+                                                      "null"
+                                                    ]
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "set"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "increment"
+                                              },
+                                              "increment": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "amount": {
+                                                    "type": "number"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "amount"
+                                                ],
+                                                "additionalProperties": false,
+                                                "description": "Number properties only. Added to the current value, or to 0."
+                                              }
+                                            },
+                                            "required": [
+                                              "type",
+                                              "increment"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "propertyId",
+                                      "operation"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "setCustomProperty"
                                 ],
                                 "additionalProperties": false
                               }
@@ -13356,7 +13861,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured and passConfigured false. Omitted fields are left alone. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete.",
+      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete.",
       "type": "mutation",
       "path": [
         "api",
@@ -13394,9 +13899,6 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "passConfigured": {
             "type": "boolean"
-          },
-          "googleMapsLink": {
-            "type": "string"
           },
           "maxBookingDaysOut": {
             "anyOf": [
@@ -13451,7 +13953,8 @@ export const CLI_MANIFEST: CliManifest = {
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "Despite the name, this covers the WHOLE visit, not just the run-up to it: anything creators must know or do before (download an app, book a reservation), during (check in with the host), or after (text a photo of the receipt). The text is injected verbatim into both the pre-visit and post-visit SMS agents' prompts, so write it as instructions to the creator and cover every stage in this one field — there is no separate post-visit instructions field."
           },
           "minFollowerCount": {
             "anyOf": [
@@ -13488,6 +13991,9 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "null"
               }
             ]
+          },
+          "reimbursementEnabled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -15179,6 +15685,43 @@ export const CLI_MANIFEST: CliManifest = {
                                         "required": [
                                           "type",
                                           "lastVisit"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "type": "string",
+                                            "const": "customProperty"
+                                          },
+                                          "customProperty": {
+                                            "type": "object",
+                                            "properties": {
+                                              "propertyId": {
+                                                "type": "string"
+                                              },
+                                              "propertyType": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "boolean",
+                                                  "dayOfYear",
+                                                  "date",
+                                                  "number",
+                                                  "string"
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "propertyId",
+                                              "propertyType"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "customProperty"
                                         ],
                                         "additionalProperties": false
                                       }
