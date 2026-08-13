@@ -57,7 +57,7 @@ The ads that bring applicants in are CLI-drivable end to end:
 1. `createRecruitmentCreatives` with the `campaignId` — it resolves (or creates) the campaign's recruitment offer itself, which is what groups the creatives and carries the monthly sourcing cap. Each run calls an image model per missing type; `force` deletes and regenerates the whole set, so don't pass it casually.
 2. `listCreatives` — each creative's `imageKey` is the reference `planAds` takes as a `libraryAsset`; `staleCreativeIds` flags creatives generated from an older version of their offer.
 3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect** — the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live.
-4. Copy rules for the ad live in `facebook.md` (`recruitmentAdCopy` — the creator-facing half; conflating it with guest copy is the classic failure).
+4. Copy rules for the ad live in `ad-copy-creator.md` (`recruitmentAdCopy`; conflating it with guest copy is the classic failure).
 
 ### The decision loop
 

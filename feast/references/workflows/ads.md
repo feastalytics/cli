@@ -4,7 +4,7 @@
 
 Publishing is CLI-drivable end to end: resolve a template, plan, publish, activate. The planner is the only door in — **never hand-assemble Meta campaign parameters**; `publishAds` re-derives everything from the template variables and refuses anything else.
 
-For the *words* in the ads, read `facebook.md` first — copywriting is its own discipline with its own failure modes.
+For the *words* in the ads, read the copywriting file for your audience first — `ad-copy-guest.md` for guest-facing offer ads, `ad-copy-creator.md` for creator recruitment. Copywriting is its own discipline with its own failure modes.
 
 ### The model: template → plan → publish → activate
 
@@ -36,8 +36,8 @@ An effect that reports `error` in the job is a case for the dashboard, not for p
 
 ### Which template
 
-- **`directOffer`** — guest-facing offer ads for a campaign. Copy rules: the `adCopy` half of `facebook.md`.
-- **`recruitment`** — creator-recruitment ads. An always-on trickle with an enforced budget floor and ceiling. Creatives come from `createRecruitmentCreatives` → `listCreatives` (pass each creative's `imageKey` as a `libraryAsset` reference); copy rules: the `recruitmentAdCopy` half of `facebook.md`; program context: `creators.md`.
+- **`directOffer`** — guest-facing offer ads for a campaign. Copy rules: `ad-copy-guest.md`.
+- **`recruitment`** — creator-recruitment ads. An always-on trickle with an enforced budget floor and ceiling. Creatives come from `createRecruitmentCreatives` → `listCreatives` (pass each creative's `imageKey` as a `libraryAsset` reference); copy rules: `ad-copy-creator.md`; program context: `creators.md`.
 - **`addAds`** — add fresh creatives to an ad set that is already running. Copy the settings the new ads must match from an existing ad via `ads_get_ad_entities` — its description carries the exact field-by-field recipe, and Meta will happily publish a mismatched ad rather than reject it.
 
 ### Reading and steering what's live
@@ -47,4 +47,4 @@ An effect that reports `error` in the job is a case for the dashboard, not for p
 - `ads_activate_entity` — go-live for structures Feastalytics did *not* publish. No cascade: activate top-down and check `willDeliver`; a child under a paused parent is live in name only. For campaigns Feastalytics published, `setAdCampaignStatus` cascades and is the right tool.
 - `ads_get_datasets` / `ads_create_dataset` — pixel checks and creation. The pixel a campaign should optimise against is the one its funnel actually fires (from the layout config), not whichever pixel looks plausible on the account. After creating one, write its id back with `updateBrandIdentity` — creation alone connects nothing.
 
-> **Not exposed:** ad-copy generation (write it yourself — `facebook.md`), creative *content* editing on Meta (immutable there), and publishing creator content as partnership ads.
+> **Not exposed:** ad-copy generation (write it yourself — `ad-copy-guest.md` / `ad-copy-creator.md`), creative *content* editing on Meta (immutable there), and publishing creator content as partnership ads.
