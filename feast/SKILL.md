@@ -100,14 +100,19 @@ Many tasks are multi-step and have a required ordering the app normally enforces
 | Creating, cloning or configuring a campaign; promotions | `references/workflows/campaigns.md` |
 | Anything touching automations — creating, editing, simulating, promoting a draft | `references/workflows/automations.md` |
 | Editing funnel screens, applying a funnel template, staging a new screen | `references/workflows/funnels.md` |
-| Writing Meta ad copy — guest-facing or creator recruitment | `references/workflows/facebook.md` |
+| Writing guest-facing Meta ad copy (`adCopy`) | `references/workflows/ad-copy-guest.md` |
+| Writing creator-recruitment ad copy (`recruitmentAdCopy`) | `references/workflows/ad-copy-creator.md` |
 | Publishing, pausing, budgeting or diagnosing Meta ads | `references/workflows/ads.md` |
 | Creator sourcing — approving applicants, reviewing content, creatives, payouts | `references/workflows/creators.md` |
 | Members-program rewards; reading or saving the wallet pass configuration | `references/workflows/members-program.md` |
 | Working the onboarding taskboard; brand identity; phone, media, invites, billing | `references/workflows/onboarding.md` |
 | Searching guests/members; querying anything via the data catalog | `references/workflows/guests.md` |
 
-Read more than one when a task spans them — a new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`, and publishing a recruitment ad means `creators.md` plus `facebook.md` and `ads.md`.
+Every row names one file, and one file is the whole answer for that row — pick the row that matches what you're doing and read only it. The two ad-copy rows are mutually exclusive: you are writing to guests or to creators, never both in one piece of copy.
+
+Read more than one file when a task genuinely spans steps — a new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`. Read each one as you reach that step rather than gathering them up front: a file stays in context for the rest of the session, so one you open speculatively is re-read on every later turn.
+
+When the ask is a question rather than a change — where something lives, what a field means, which link to send — read the single file the table names and answer from it.
 
 Some things are deliberately **not exposed**: replying to a guest or a creator by SMS, firing an automation at a live member, pass image generation, ad-copy generation (write it yourself), and publishing creator content as partnership ads. The workflow files say which. Don't fabricate a call for a workflow whose tools aren't listed by `feast tools` — tell the user that part isn't available yet.
 
