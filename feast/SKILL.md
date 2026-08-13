@@ -9,41 +9,7 @@ Drive the Feastalytics platform from the terminal. The `feast` CLI exposes the s
 
 The CLI is the source of truth for *which* tools exist and *what* they accept — always discover that at runtime rather than assuming, because the tool set grows as new endpoints are tagged. Your job is to pick the right tool, scope it to the right organization, and hand it valid input.
 
-## Prerequisites
-
-The `feast` CLI must be installed and on PATH:
-
-```bash
-npm install -g @feastalytics/cli    # or run ad-hoc with: npx @feastalytics/cli <command>
-```
-
-Authenticate once — tokens are cached in `~/.config/feast-cli/credentials.json` and refreshed automatically:
-
-```bash
-feast login                        # opens a browser to authorize (default)
-feast login --password [username]  # headless / CI: username + password prompt, no browser
-```
-
-If a command reports you're not logged in or the session expired, re-run `feast login`.
-
-## Staying current
-
-Neither the CLI nor this skill updates itself. When a command prints an update notice on stderr:
-
-```
-Update available: feast 0.1.1 → 0.2.0
-```
-
-update both, then tell the user in one line that you did:
-
-```bash
-npm install -g @feastalytics/cli@latest      # only if `feast` is already on PATH from a global install
-npx skills add feastalytics/cli -g -a '*' -y # refresh this skill from the repo
-```
-
-If you've been invoking the CLI through `npx` rather than a global install, skip the `npm install -g` and use `npx @feastalytics/cli@latest <command>` for the rest of the session instead — `npx` reuses a cached copy otherwise.
-
-Update the skill whenever you update the CLI: the two ship from the same repo but on different triggers, so a new CLI version usually means this skill's guidance has moved too. If the global install fails on permissions, don't retry with `sudo` — tell the user and fall back to `npx @feastalytics/cli@latest`.
+Some environments hand you the CLI already installed, already authenticated, and pinned to one organization. If `feast tools` runs, you're set — otherwise, installing, logging in, and staying current are in `references/setup.md`.
 
 ## The core loop: discover → describe → call
 
@@ -59,17 +25,9 @@ Always `describe` an unfamiliar tool before calling it — the schema tells you 
 
 ## Organizations: never let the API guess
 
-Most tools act on one organization. A user often belongs to several, so which one you target matters and must be explicit.
+Most tools act on one organization, and which one must be explicit: pass it with `--org <organizationId>`. Acting on the wrong restaurant is worse than stopping to ask, so the CLI refuses rather than guessing when the target is ambiguous.
 
-```bash
-feast whoami                # shows the logged-in user and every org (with names) they can act on
-```
-
-Pass the target org with `--org <organizationId>`:
-
-- If the user names an org, resolve it to its id with `feast whoami` and pass that id.
-- If the user belongs to exactly one org, the CLI uses it automatically — no flag needed.
-- If they belong to more than one and you omit `--org`, the CLI refuses and lists the orgs rather than silently picking one. That's intentional: acting on the wrong org is worse than stopping to ask. When this happens, surface the list to the user and confirm which one they mean.
+If you weren't given an organization id, or a command reports you belong to several, `references/setup.md` has how to resolve one.
 
 ## Reads vs. writes
 
@@ -129,7 +87,7 @@ That file has the dashboard routes with their panel and tab names, the guest-fac
 User: "add a Free Dessert reward members can redeem for 100 points in my Plum Vietnamese org."
 
 ```bash
-feast whoami                                     # find the Plum Vietnamese org id
+feast whoami                                     # only if you weren't given the org id already
 feast describe createMembersProgramReward        # learn the input shape (type: item vs name)
 feast call listMembersProgramRewards --org <orgId>   # avoid duplicating an existing reward or catalog item
 feast call createMembersProgramReward --org <orgId> --input '{"type":"name","name":"Free Dessert","pointsCost":100}'
@@ -139,7 +97,7 @@ The pattern generalizes: identify the org, learn the tool, resolve any reference
 
 ## When something fails
 
-- "Not logged in / session expired" → `feast login` (or `feast login --password [username]` in a headless/CI context).
-- "You belong to multiple organizations" → pick one with `--org`, using `feast whoami` to get the id.
+- "Not logged in / session expired", or `feast` isn't on PATH → `references/setup.md`.
+- "You belong to multiple organizations" → pick one with `--org`; `references/setup.md` has how to find the id.
 - "Input does not match the tool schema" → re-read `feast describe <tool>` and fix the named fields.
 - A tool you expected isn't listed by `feast tools` → it may not be exposed yet; don't fabricate a call, tell the user.
