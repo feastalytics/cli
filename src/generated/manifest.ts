@@ -6776,7 +6776,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "simulateAutomations",
       "domain": "automations",
-      "description": "Dry-run automations against a synthetic event timeline and see what would fire — no real sends or side effects. First call: omit `events` and pass `flowId`, and the server auto-seeds a timeline from that flow's triggers (a viewCampaign event when the flow has a campaign, then the first eligible trigger event 15s later; receiveAutomation, reply and viewCampaign are never seeded) and returns it as `eventsUsed`. To branch-test or continue the journey, copy `eventsUsed`, edit or append to it, and pass the whole array back as `events`. Either `events` or `flowId` is required. Pass a draft's operations as `edits` to preview unsaved changes. Returns `scheduledTexts` plus `eventsUsed`.",
+      "description": "Dry-run automations against a synthetic event timeline and see what would fire — no real sends or side effects. First call: omit `events` and pass `flowId`, and the server auto-seeds a timeline from that flow's triggers (a viewCampaign event when the flow has a campaign, then the first eligible trigger event 15s later; receiveAutomation, reply and viewCampaign are never seeded) and returns it as `eventsUsed`. To branch-test or continue the journey, copy `eventsUsed`, edit or append to it, and pass the whole array back as `events`. Events are strictly validated: each is `{type, [type]: <full record for that type>}` and a missing required field is rejected, so edit a returned event rather than hand-writing one. Valid types: receiveAutomation, checkout, buttonClick, reply, signUp, importedCustomer, addPass, visit, viewCampaign, offerRedemption, offerExpiration, formSubmission, invalidScan, gotReferred, referred, subscriptionRenewal, formPropertySubmission. Either `events` or `flowId` is required. Pass a draft's operations as `edits` to preview unsaved changes. Returns `scheduledTexts` plus `eventsUsed`.",
       "type": "mutation",
       "path": [
         "api",
@@ -6826,8 +6826,1321 @@ export const CLI_MANIFEST: CliManifest = {
           "events": {
             "type": "array",
             "items": {
-              "type": "object",
-              "additionalProperties": {}
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "receiveAutomation"
+                    },
+                    "receiveAutomation": {
+                      "type": "object",
+                      "properties": {
+                        "automationId": {
+                          "type": "string"
+                        },
+                        "serialNumber": {
+                          "type": "string"
+                        },
+                        "textSid": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "timeSent": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "stateNonce": {
+                          "type": "string"
+                        },
+                        "invocationSource": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "campaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "variantId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "automationId",
+                        "serialNumber",
+                        "timeSent",
+                        "stateNonce",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "receiveAutomation"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User receives an automation text message"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "checkout"
+                    },
+                    "checkout": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "amount_subtotal": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "amount_total": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "amount_fee": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "status": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "client_reference_id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "client_secret": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "created": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "currency": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "customerId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "customer_email": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "customer_name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "customer_phone": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "expires_at": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "paymentStatus": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "no_payment_required",
+                                "paid",
+                                "unpaid"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "paymentLink": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "serialNumber": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "locationId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "campaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "itemId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "promoId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "sessionId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "quantity": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "amountRefunded": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "checkout"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User completes a checkout session"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "buttonClick"
+                    },
+                    "buttonClick": {
+                      "type": "object",
+                      "properties": {
+                        "sessionId": {
+                          "type": "string"
+                        },
+                        "eventName": {
+                          "type": "string"
+                        },
+                        "eventTime": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "buttonId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "eventType": {
+                          "type": "string",
+                          "enum": [
+                            "pageView",
+                            "buttonClick"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        },
+                        "nextScreenId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "timeUntilNextScreenMs": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "screenSequenceIdx": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "sessionId",
+                        "eventName",
+                        "eventTime",
+                        "eventType",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "buttonClick"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User clicks a button in a pass or campaign"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "reply"
+                    },
+                    "reply": {
+                      "type": "object",
+                      "properties": {
+                        "sid": {
+                          "type": "string"
+                        },
+                        "from": {
+                          "type": "string"
+                        },
+                        "accountSid": {
+                          "type": "string"
+                        },
+                        "apiVersion": {
+                          "type": "string"
+                        },
+                        "body": {
+                          "type": "string"
+                        },
+                        "dateCreated": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "dateSent": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "dateUpdated": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "direction": {
+                          "type": "string",
+                          "enum": [
+                            "outbound-api",
+                            "inbound",
+                            "outbound-reply",
+                            "outbound-call"
+                          ]
+                        },
+                        "errorCode": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "errorMessage": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "to": {
+                          "type": "string"
+                        },
+                        "messagingServiceSid": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "numMedia": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "numSegments": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "price": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "priceUnit": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "queued",
+                                "sending",
+                                "sent",
+                                "failed",
+                                "delivered",
+                                "undelivered",
+                                "receiving",
+                                "received",
+                                "accepted",
+                                "scheduled",
+                                "read",
+                                "partially_delivered",
+                                "canceled"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "serialNumber": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "campaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "automationId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "variantId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "messageType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INFLUENCER_AI_AGENT",
+                                "INFLUENCER_SCHEDULED",
+                                "TEXT_AUTOMATION"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "sid",
+                        "from",
+                        "accountSid",
+                        "apiVersion",
+                        "body",
+                        "dateCreated",
+                        "dateUpdated",
+                        "direction",
+                        "to"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "reply"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User replies to an automation text message"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "signUp"
+                    },
+                    "signUp": {
+                      "type": "object",
+                      "properties": {
+                        "serialNumber": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "phoneNumber": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "timeAdded": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "progress": {
+                          "type": "number"
+                        },
+                        "lastVisit": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "optIn": {
+                          "type": "boolean"
+                        },
+                        "testUser": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "memberNumber": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "source": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "isInProgram": {
+                          "type": "boolean"
+                        },
+                        "isAndroid": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        },
+                        "importedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "serialNumber",
+                        "firstName",
+                        "lastName",
+                        "phoneNumber",
+                        "timeAdded",
+                        "progress",
+                        "optIn",
+                        "isInProgram",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "signUp"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User signs up for the loyalty program"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "importedCustomer"
+                    },
+                    "importedCustomer": {
+                      "$ref": "#/properties/events/items/anyOf/4/properties/signUp"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "importedCustomer"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Customer was added via a CSV import (not an organic sign-up)"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "addPass"
+                    },
+                    "addPass": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "apple"
+                            },
+                            "apple": {
+                              "type": "object",
+                              "properties": {
+                                "passTypeIdentifier": {
+                                  "type": "string"
+                                },
+                                "serialNumber": {
+                                  "type": "string"
+                                },
+                                "eventTime": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "eventType": {
+                                  "type": "string"
+                                },
+                                "organizationId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "passTypeIdentifier",
+                                "serialNumber",
+                                "eventTime",
+                                "eventType"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "apple"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "google"
+                            },
+                            "google": {
+                              "type": "object",
+                              "properties": {
+                                "nonce": {
+                                  "type": "string"
+                                },
+                                "serialNumber": {
+                                  "type": "string"
+                                },
+                                "classId": {
+                                  "type": "string"
+                                },
+                                "objectId": {
+                                  "type": "string"
+                                },
+                                "expTime": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "eventType": {
+                                  "type": "string",
+                                  "enum": [
+                                    "save",
+                                    "del"
+                                  ]
+                                },
+                                "creationTime": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "organizationId": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "nonce",
+                                "serialNumber",
+                                "classId",
+                                "objectId",
+                                "expTime",
+                                "eventType",
+                                "creationTime"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "google"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "addPass"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User adds a pass to their wallet (Apple or Google)"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "visit"
+                    },
+                    "visit": {
+                      "type": "object",
+                      "properties": {
+                        "serialNumber": {
+                          "type": "string"
+                        },
+                        "timeScanned": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "orderId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "locationId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "isValid": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "isInfluencer": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "unlinkable": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "avoidDeduplication": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "managerId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "toastOrderNumber": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "invalidReason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "serialNumber",
+                        "timeScanned",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "visit"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User visits a location and scans their pass"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "viewCampaign"
+                    },
+                    "viewCampaign": {
+                      "type": "object",
+                      "properties": {
+                        "sessionId": {
+                          "type": "string"
+                        },
+                        "eventTime": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "serialNumber": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "campaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "mixpanelVisitorId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "referrer": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "isTest": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "sessionId",
+                        "eventTime",
+                        "url",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "viewCampaign"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User views a campaign page"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "offerRedemption"
+                    },
+                    "offerRedemption": {
+                      "type": "object",
+                      "properties": {
+                        "rewardId": {
+                          "type": "string"
+                        },
+                        "serialNumber": {
+                          "type": "string"
+                        },
+                        "timeAwarded": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "timeRedeemed": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "timeVoided": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "campaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "promoId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "isPrepaid": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "redeemedByManagerId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "source": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "rewardId",
+                        "serialNumber",
+                        "timeAwarded"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "offerRedemption"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User redeems an offer/reward"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "offerExpiration"
+                    },
+                    "offerExpiration": {
+                      "type": "object",
+                      "properties": {
+                        "rewardId": {
+                          "type": "string"
+                        },
+                        "timeUpdated": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "expirationDate": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        },
+                        "serialNumber": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "rewardId",
+                        "timeUpdated",
+                        "organizationId",
+                        "serialNumber"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "offerExpiration"
+                  ],
+                  "additionalProperties": false,
+                  "description": "An offer/reward expires"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "formSubmission"
+                    },
+                    "formSubmission": {
+                      "type": "object",
+                      "properties": {
+                        "submissionId": {
+                          "type": "string"
+                        },
+                        "propertyId": {
+                          "type": "string"
+                        },
+                        "serialNumber": {
+                          "type": "string"
+                        },
+                        "formId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "sessionId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        },
+                        "timeSubmitted": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "booleanValue": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        },
+                        "isoDatetimeValue": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "isDateValue": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "localDayOfYear": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "numberValue": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "stringValue": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "submissionId",
+                        "propertyId",
+                        "serialNumber",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "formSubmission"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User submits a form property"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "invalidScan"
+                    },
+                    "invalidScan": {
+                      "$ref": "#/properties/events/items/anyOf/7/properties/visit"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "invalidScan"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User scans their pass but the scan is invalid (e.g., minimum spend not met)"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "gotReferred"
+                    },
+                    "gotReferred": {
+                      "type": "object",
+                      "properties": {
+                        "sessionId": {
+                          "type": "string"
+                        },
+                        "timeAttributed": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "serialNumber": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "feastCampaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "referrerSerialNumber": {
+                          "type": "string"
+                        },
+                        "campaignId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "sessionId",
+                        "timeAttributed",
+                        "referrerSerialNumber",
+                        "organizationId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "gotReferred"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User was referred by someone and signed up"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "referred"
+                    },
+                    "referred": {
+                      "$ref": "#/properties/events/items/anyOf/13/properties/gotReferred"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "referred"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User's referral link was used by someone who signed up"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "subscriptionRenewal"
+                    },
+                    "subscriptionRenewal": {
+                      "$ref": "#/properties/events/items/anyOf/9/properties/offerRedemption"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "subscriptionRenewal"
+                  ],
+                  "additionalProperties": false,
+                  "description": "User's subscription renewed and rewards were created"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "formPropertySubmission"
+                    },
+                    "formPropertySubmission": {
+                      "$ref": "#/properties/events/items/anyOf/11/properties/formSubmission"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "formPropertySubmission"
+                  ],
+                  "additionalProperties": false,
+                  "description": "A form property is submitted for the guest"
+                }
+              ]
             }
           },
           "serialNumber": {
