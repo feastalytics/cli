@@ -5190,7 +5190,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCreatorConversation",
       "domain": "creators",
-      "description": "One creator's full SMS thread, newest first — what the dashboard's creator chat view renders. userId comes from listCreatorConversations, which is the queue; this is the read you make before summarizing an exchange or drafting a reply for the human to send, because the queue only carries the last message. Each row has the body, direction (from/to the creator's number), and timestamps. Returns empty when the creator has no phone number on file. Read-only: sending the reply and marking the thread read stay in the dashboard.",
+      "description": "One creator's full SMS thread, newest first — what the dashboard's creator chat view renders. userId comes from listCreatorConversations, which is the queue; this is the read you make before summarizing an exchange or drafting a reply for the human to send, because the queue only carries the last message. Each row has the body, direction (from/to the creator's number), and timestamps. Returns empty when the creator has no phone number on file. Read-only: send the reply with sendText and {type:'creator', userId}; marking the thread read stays in the dashboard.",
       "type": "query",
       "path": [
         "api",
@@ -5334,7 +5334,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getMemberConversation",
       "domain": "membersProgram",
-      "description": "One member's SMS thread and activity, newest first — what the dashboard's chat page renders, and the pair to searchUsers the way getCreatorConversation pairs with listCreatorConversations. serialNumber comes from searchUsers. eventTypes: ['sentText','receivedText'] is the conversation; adding scan, order, checkout, rewardAwarded or rewardRedeemed interleaves what happened between the messages. Unfiltered it fans out to every event source and returns the member's whole history unpaginated, so pass eventTypes unless you really want it all. Read-only: replying to a guest stays in the dashboard.",
+      "description": "One member's SMS thread and activity, newest first — what the dashboard's chat page renders, and the pair to searchUsers the way getCreatorConversation pairs with listCreatorConversations. serialNumber comes from searchUsers. eventTypes: ['sentText','receivedText'] is the conversation; adding scan, order, checkout, rewardAwarded or rewardRedeemed interleaves what happened between the messages. Unfiltered it fans out to every event source and returns the member's whole history unpaginated, so pass eventTypes unless you really want it all. Read-only: reply to the member with sendText and {type:'guest', serialNumber}.",
       "type": "query",
       "path": [
         "api",
@@ -5810,7 +5810,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorConversations",
       "domain": "creators",
-      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read the full thread behind a row with getCreatorConversation and its userId. Read-only: replying to a creator and marking a conversation read both stay in the dashboard.",
+      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read the full thread behind a row with getCreatorConversation and its userId, and reply with sendText and {type:'creator', userId}. Read-only: marking a conversation read stays in the dashboard.",
       "type": "query",
       "path": [
         "api",
@@ -6735,6 +6735,80 @@ export const CLI_MANIFEST: CliManifest = {
             ]
           }
         },
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "sendText",
+      "domain": "messaging",
+      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also parks that creator's AI agent for five minutes so it does not talk over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "text",
+        "sendMessage"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "creator"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type",
+                  "userId"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "guest"
+                  },
+                  "serialNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type",
+                  "serialNumber"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1600
+          },
+          "mediaUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "to",
+          "message"
+        ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
