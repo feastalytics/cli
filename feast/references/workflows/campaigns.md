@@ -13,7 +13,15 @@ Fully doable via the CLI. The server does the heavy lifting (id generation, defa
    - `"reservation"` — no extra config.
    - `"simpleRewards"` — needs `simpleRewardsConfig` with a `promotionName` and an image. Pass a public `imageUrl` string (the CLI can't do the app's file-upload path).
    - `"prepay"` — needs `prepayConfig` with `promotionName`, `price`, and an image (`imageUrl`).
-4. (optional) `applyFunnelTemplate` — the **acquisition** half: the funnel screens a guest sees. Requires a fresh campaign whose funnel is unset; resolves the referrer from the campaign.
+4. (optional) the funnel — the **acquisition** half: the funnel screens a guest sees. Same list → pick → apply shape as automations:
+   - `listFunnelTemplates` with the `campaignId` — the template catalog with per-campaign `eligible`/`ineligibleReason`, a `recommended` id, and each template's guest `journey`. Read this before applying; never guess a template id.
+   - Pick by what the guest should experience, not by whether the offer has a price:
+     - `offer-basic` — Sign Up goes straight to the offer wallet. **No payment step.** The template for any offer redeemed in person, priced or not.
+     - `offer-prepay` / `offer-direct-prepay` — a Stripe payment screen is part of the funnel. Only eligible when the promotion has `canPrePay: true` **and** a `price`; anything else is rejected with `PRECONDITION_FAILED`.
+     - `reservation-offer-basic` / `reservation-offer-prepay` / `reservation-offer-direct-prepay` / `reservation-only` — the reservation variants of the same split.
+   - `applyFunnelTemplate` with `{ "campaignId": ..., "templateId": ... }`. Requires a fresh campaign whose funnel is unset; resolves the referrer from the campaign.
+   - The promotion's `canPrePay` flag does **not** change what a template builds — it only gates eligibility. A "no prepay" request means `offer-basic` (or another no-payment template), full stop.
+   - After applying, confirm with `listFunnelScreens` that the journey matches intent — for a no-prepay offer there must be no `payment` screen.
 5. (optional) `applyAutomationTemplate` — the **retention** half: the follow-up messaging. Provisions the campaign's flow *and* its automations in one call, so you don't hand-build a flow for this path. Preview options first with `listAutomationTemplates` / `listTemplateAutomations`.
 
 Steps 4 and 5 are the two independent halves of a working campaign — the funnel (what the guest sees) and the automations (the messaging that follows). A fully working campaign has a funnel with no screen errors and at least one automation flow.
