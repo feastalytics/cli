@@ -341,7 +341,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "applyFunnelTemplate",
       "domain": "campaigns",
-      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Uses the campaign's existing promotion/imageUrl when the funnel template needs them. For reservation-prepay funnels pass funnelType: 'prepay' AND isReservationFunnel: true — it is not inferred from funnelType. skipSignUp: true builds the funnel without the sign-up screen.",
+      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Pass a templateId from listFunnelTemplates: offer-basic (Sign Up routes straight to the offer wallet — no payment step; use this for offers redeemed in person), offer-prepay / offer-direct-prepay (Sign Up / landing routes to a Stripe payment screen), reservation-offer-basic (Sign Up routes to reservation-or-wallet), reservation-offer-prepay / reservation-offer-direct-prepay (payment then reservation), reservation-only. The promotion's canPrePay flag does NOT change what gets built — prepay templates always insert the payment screen, and are rejected unless the promotion has canPrePay: true and a price. The legacy funnelType/skipSignUp/isReservationFunnel input is deprecated but still accepted.",
       "type": "mutation",
       "path": [
         "api",
@@ -350,31 +350,60 @@ export const CLI_MANIFEST: CliManifest = {
         "chooseFunnelTemplate"
       ],
       "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "campaignId": {
-            "type": "string"
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "campaignId": {
+                "type": "string"
+              },
+              "templateId": {
+                "type": "string",
+                "enum": [
+                  "offer-basic",
+                  "offer-prepay",
+                  "offer-direct-prepay",
+                  "reservation-offer-basic",
+                  "reservation-offer-prepay",
+                  "reservation-offer-direct-prepay",
+                  "reservation-only"
+                ]
+              }
+            },
+            "required": [
+              "campaignId",
+              "templateId"
+            ],
+            "additionalProperties": false
           },
-          "funnelType": {
-            "type": "string",
-            "enum": [
-              "reservation",
-              "prepay",
-              "simpleRewards"
-            ]
-          },
-          "skipSignUp": {
-            "type": "boolean"
-          },
-          "isReservationFunnel": {
-            "type": "boolean"
+          {
+            "type": "object",
+            "properties": {
+              "campaignId": {
+                "type": "string"
+              },
+              "funnelType": {
+                "type": "string",
+                "enum": [
+                  "reservation",
+                  "prepay",
+                  "simpleRewards"
+                ]
+              },
+              "skipSignUp": {
+                "type": "boolean"
+              },
+              "isReservationFunnel": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "campaignId",
+              "funnelType"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "campaignId",
-          "funnelType"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -5822,7 +5851,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorSubmissions",
       "domain": "creators",
-      "description": "Creator content submissions, newest first. 'submitted' and 'revision_requested' together are the review queue. Each row carries the `submissionId` for decideCreatorSubmission. Submissions are outside the queryData catalog, so this is the only way to read them.",
+      "description": "Creator content submissions, newest first. 'submitted' is the review queue; 'revision_requested' is waiting on the creator to resubmit. Each row carries the `submissionId` for decideCreatorSubmission. Submissions are outside the queryData catalog, so this is the only way to read them.",
       "type": "query",
       "path": [
         "api",
@@ -5920,6 +5949,31 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "referrer"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "listFunnelTemplates",
+      "domain": "campaigns",
+      "description": "Lists the funnel templates that can be applied to a campaign, with per-template eligibility for this campaign and a recommended template. Each template describes the guest journey (ordered screens) and whether it collects payment. Prepay templates insert a Stripe payment screen and are only eligible when the campaign's promotion has canPrePay: true and a price; the promotion's canPrePay flag does NOT change what a template builds — pick a non-payment template (offer-basic) for offers redeemed in person. Use before applyFunnelTemplate.",
+      "type": "query",
+      "path": [
+        "api",
+        "campaigns",
+        "app",
+        "listFunnelTemplates"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaignId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -6742,7 +6796,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "sendText",
       "domain": "messaging",
-      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also parks that creator's AI agent for five minutes so it does not talk over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
+      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. The third form, {type:'unknownSender', phoneNumber}, answers someone who texted in without being either — it is the only form that names a raw number, and it is refused unless that number has an inbound message to this organization on file. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also parks that creator's AI agent for five minutes so it does not talk over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
       "type": "mutation",
       "path": [
         "api",
@@ -6787,6 +6841,24 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type",
                   "serialNumber"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "unknownSender"
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type",
+                  "phoneNumber"
                 ],
                 "additionalProperties": false
               }
