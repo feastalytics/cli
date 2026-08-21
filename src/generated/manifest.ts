@@ -341,7 +341,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "applyFunnelTemplate",
       "domain": "campaigns",
-      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Pass a templateId from listFunnelTemplates: offer-basic (Sign Up routes straight to the offer wallet — no payment step; use this for offers redeemed in person), offer-prepay / offer-direct-prepay (Sign Up / landing routes to a Stripe payment screen), reservation-offer-basic (Sign Up routes to reservation-or-wallet), reservation-offer-prepay / reservation-offer-direct-prepay (payment then reservation), reservation-only. The promotion's canPrePay flag does NOT change what gets built — prepay templates always insert the payment screen, and are rejected unless the promotion has canPrePay: true and a price. The legacy funnelType/skipSignUp/isReservationFunnel input is deprecated but still accepted.",
+      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Pass a templateId from listFunnelTemplates: offer-basic (Sign Up routes straight to the offer wallet — no payment step; use this for offers redeemed in person), offer-prepay / offer-direct-prepay (Sign Up / landing routes to a Stripe payment screen), reservation-offer-basic (Sign Up routes to reservation-or-wallet), reservation-offer-prepay / reservation-offer-direct-prepay (payment then reservation), reservation-only. The promotion's canPrePay flag does NOT change what gets built — prepay templates always insert the payment screen, and are rejected unless the promotion has canPrePay: true and a price.",
       "type": "mutation",
       "path": [
         "api",
@@ -350,60 +350,29 @@ export const CLI_MANIFEST: CliManifest = {
         "chooseFunnelTemplate"
       ],
       "inputJsonSchema": {
-        "anyOf": [
-          {
-            "type": "object",
-            "properties": {
-              "campaignId": {
-                "type": "string"
-              },
-              "templateId": {
-                "type": "string",
-                "enum": [
-                  "offer-basic",
-                  "offer-prepay",
-                  "offer-direct-prepay",
-                  "reservation-offer-basic",
-                  "reservation-offer-prepay",
-                  "reservation-offer-direct-prepay",
-                  "reservation-only"
-                ]
-              }
-            },
-            "required": [
-              "campaignId",
-              "templateId"
-            ],
-            "additionalProperties": false
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "properties": {
-              "campaignId": {
-                "type": "string"
-              },
-              "funnelType": {
-                "type": "string",
-                "enum": [
-                  "reservation",
-                  "prepay",
-                  "simpleRewards"
-                ]
-              },
-              "skipSignUp": {
-                "type": "boolean"
-              },
-              "isReservationFunnel": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "campaignId",
-              "funnelType"
-            ],
-            "additionalProperties": false
+          "templateId": {
+            "type": "string",
+            "enum": [
+              "offer-basic",
+              "offer-prepay",
+              "offer-direct-prepay",
+              "reservation-offer-basic",
+              "reservation-offer-prepay",
+              "reservation-offer-direct-prepay",
+              "reservation-only"
+            ]
           }
+        },
+        "required": [
+          "campaignId",
+          "templateId"
         ],
+        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -6796,7 +6765,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "sendText",
       "domain": "messaging",
-      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. The third form, {type:'unknownSender', phoneNumber}, answers someone who texted in without being either — it is the only form that names a raw number, and it is refused unless that number has an inbound message to this organization on file. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also parks that creator's AI agent for five minutes so it does not talk over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
+      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. The third form, {type:'unknownSender', phoneNumber}, answers someone who texted in without being either — it is the only form that names a raw number, and it is refused unless that number has an inbound message to this organization on file. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also dismisses any reply the AI agent has staged for that creator and re-runs the agent with your message in context, so it never talks over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
       "type": "mutation",
       "path": [
         "api",
@@ -14412,7 +14381,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete.",
+      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately.",
       "type": "mutation",
       "path": [
         "api",
@@ -14545,6 +14514,17 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "reimbursementEnabled": {
             "type": "boolean"
+          },
+          "maxCreatorsPerMonth": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -16364,6 +16344,12 @@ export const CLI_MANIFEST: CliManifest = {
                 }
               },
               "secondaryFields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/sections/properties/headerFields/items"
+                }
+              },
+              "backFields": {
                 "type": "array",
                 "items": {
                   "$ref": "#/properties/sections/properties/headerFields/items"
