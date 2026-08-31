@@ -341,7 +341,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "applyFunnelTemplate",
       "domain": "campaigns",
-      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Pass a templateId from listFunnelTemplates: offer-basic (Sign Up routes straight to the offer wallet — no payment step; use this for offers redeemed in person), offer-prepay / offer-direct-prepay (Sign Up / landing routes to a Stripe payment screen), reservation-offer-basic (Sign Up routes to reservation-or-wallet), reservation-offer-prepay / reservation-offer-direct-prepay (payment then reservation), reservation-only. The promotion's canPrePay flag does NOT change what gets built — prepay templates always insert the payment screen, and are rejected unless the promotion has canPrePay: true and a price. The legacy funnelType/skipSignUp/isReservationFunnel input is deprecated but still accepted.",
+      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Pass a templateId from listFunnelTemplates: offer-basic (Sign Up routes straight to the offer wallet — no payment step; use this for offers redeemed in person), offer-prepay / offer-direct-prepay (Sign Up / landing routes to a Stripe payment screen), reservation-offer-basic (Sign Up routes to reservation-or-wallet), reservation-offer-prepay / reservation-offer-direct-prepay (payment then reservation), reservation-only. The promotion's canPrePay flag does NOT change what gets built — prepay templates always insert the payment screen, and are rejected unless the promotion has canPrePay: true and a price.",
       "type": "mutation",
       "path": [
         "api",
@@ -350,60 +350,71 @@ export const CLI_MANIFEST: CliManifest = {
         "chooseFunnelTemplate"
       ],
       "inputJsonSchema": {
-        "anyOf": [
-          {
-            "type": "object",
-            "properties": {
-              "campaignId": {
-                "type": "string"
-              },
-              "templateId": {
-                "type": "string",
-                "enum": [
-                  "offer-basic",
-                  "offer-prepay",
-                  "offer-direct-prepay",
-                  "reservation-offer-basic",
-                  "reservation-offer-prepay",
-                  "reservation-offer-direct-prepay",
-                  "reservation-only"
-                ]
-              }
-            },
-            "required": [
-              "campaignId",
-              "templateId"
-            ],
-            "additionalProperties": false
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string"
           },
-          {
-            "type": "object",
-            "properties": {
-              "campaignId": {
-                "type": "string"
-              },
-              "funnelType": {
-                "type": "string",
-                "enum": [
-                  "reservation",
-                  "prepay",
-                  "simpleRewards"
-                ]
-              },
-              "skipSignUp": {
-                "type": "boolean"
-              },
-              "isReservationFunnel": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "campaignId",
-              "funnelType"
-            ],
-            "additionalProperties": false
+          "templateId": {
+            "type": "string",
+            "enum": [
+              "offer-basic",
+              "offer-prepay",
+              "offer-direct-prepay",
+              "reservation-offer-basic",
+              "reservation-offer-prepay",
+              "reservation-offer-direct-prepay",
+              "reservation-only"
+            ]
           }
+        },
+        "required": [
+          "campaignId",
+          "templateId"
         ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "awardReward",
+      "domain": "membersProgram",
+      "description": "Give one member a reward they can redeem, the way the dashboard's Give Reward button does. This is a real grant that lands in the guest's wallet pass — it is not the same as createMembersProgramReward, which only defines a reward the program offers. serialNumber identifies the member (get one from searchUsers) and itemId the catalog item they get; both are checked against this organization and a wrong id is rejected rather than granted. Expiry is optional and a reward with none never expires: expiresInDays sets it to the end of that day in the restaurant's timezone, which is what a guest reads '14 days' to mean, and expiresAt takes an exact ISO 8601 instant — pass one or the other. locationId restricts redemption to one participating location and is otherwise left open. Awarding recomputes the member's progress, which also re-evaluates their automations, so a flow triggered by earning a reward will fire. There is no undo and no idempotency key, so a retried call grants a second reward.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "membersProgram",
+        "awardReward"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "serialNumber": {
+            "type": "string",
+            "minLength": 1
+          },
+          "itemId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresInDays": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "serialNumber",
+          "itemId"
+        ],
+        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -4968,7 +4979,8 @@ export const CLI_MANIFEST: CliManifest = {
               "organizationFilePublic",
               "organizationFilePrivate",
               "creativeLibrary",
-              "creativeLibraryBroll"
+              "creativeLibraryBroll",
+              "creativeLibraryVoiceover"
             ]
           },
           "key": {
@@ -5338,7 +5350,8 @@ export const CLI_MANIFEST: CliManifest = {
               "organizationFilePublic",
               "organizationFilePrivate",
               "creativeLibrary",
-              "creativeLibraryBroll"
+              "creativeLibraryBroll",
+              "creativeLibraryVoiceover"
             ]
           },
           "fileName": {
@@ -5827,7 +5840,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorApplications",
       "domain": "creators",
-      "description": "Creator applications waiting on an approve/deny decision, newest first, across every location. Each row carries the `eventId` for updateCreatorVisit plus who applied, where, when, and their handles and follower count. That follower count is usually the deciding factor and is not reachable through queryData, so start here rather than querying creatorVisitApplication when working the approval queue.",
+      "description": "Creator applications waiting on an approve/deny decision, newest first, across every location. Each row carries the `eventId` for updateCreatorVisit plus who applied, where, when, and their handles and follower count. That follower count is usually the deciding factor and is not reachable through queryData, so start here rather than querying creatorVisitApplication when working the approval queue. Each row also carries the creative brief already assigned to that visit as `strategyId`/`strategyTitle` and its `campaignId`/`campaignName`, all null when no brief is assigned yet — assign one with assignVisitStrategy before approving, because the approval text links whatever brief the visit carries at that moment.",
       "type": "query",
       "path": [
         "api",
@@ -6028,7 +6041,8 @@ export const CLI_MANIFEST: CliManifest = {
                 "organizationFilePublic",
                 "organizationFilePrivate",
                 "creativeLibrary",
-                "creativeLibraryBroll"
+                "creativeLibraryBroll",
+                "creativeLibraryVoiceover"
               ]
             },
             "minItems": 1
@@ -6796,7 +6810,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "sendText",
       "domain": "messaging",
-      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. The third form, {type:'unknownSender', phoneNumber}, answers someone who texted in without being either — it is the only form that names a raw number, and it is refused unless that number has an inbound message to this organization on file. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also parks that creator's AI agent for five minutes so it does not talk over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
+      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. The third form, {type:'unknownSender', phoneNumber}, answers someone who texted in without being either — it is the only form that names a raw number, and it is refused unless that number has an inbound message to this organization on file. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also dismisses any reply the AI agent has staged for that creator and re-runs the agent with your message in context, so it never talks over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
       "type": "mutation",
       "path": [
         "api",
@@ -14357,7 +14371,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreatorVisit",
       "domain": "creators",
-      "description": "Update one creator visit: change its time or record its outcome. `status` accepts approved, denied, pending_approval, confirmed, visited, missed, issue, cancelled. status: 'approved' runs the real approval — THIS TEXTS THE CREATOR IMMEDIATELY and consumes the location's monthly creator sourcing allowance, which auto-pauses recruitment once reached; 'denied' texts a decline and is not reversible from here. Approving a row that is no longer actionable is a no-op and returns changed: false. Pass sideEffects: false to make any update silent — same field writes, but no creator text, no allowance spend, no post-approval automation. With sideEffects on (the default), setting startTime to a date texts the creator a confirmation and alerts the approver; setting startTime to null clears the time and texts the creator asking for a new one; of the remaining statuses only 'cancelled' texts the creator — the rest are plain record writes. Get `eventId` from listCreatorApplications.",
+      "description": "Update one creator visit: change its time or record its outcome. `status` accepts approved, denied, pending_approval, confirmed, visited, missed, issue, cancelled. status: 'approved' runs the real approval — THIS TEXTS THE CREATOR IMMEDIATELY and consumes the location's monthly creator sourcing allowance, which auto-pauses recruitment once reached; 'denied' texts a decline; approving a denied row reverses it — the creator gets a \"we changed our mind\" text and the scheduled texts are re-armed. Approving a row that is no longer actionable is a no-op and returns changed: false. Pass sideEffects: false to make any update silent — same field writes, but no creator text, no allowance spend, no post-approval automation. With sideEffects on (the default), setting startTime to a date texts the creator a confirmation and alerts the approver; setting startTime to null clears the time and texts the creator asking for a new one; of the remaining statuses only 'cancelled' texts the creator — the rest are plain record writes. Pass dryRun: true to get back the exact creator text(s) the same call would send — nothing is written or sent; use it to show the operator a preview before the real call. Get `eventId` from listCreatorApplications.",
       "type": "mutation",
       "path": [
         "api",
@@ -14400,6 +14414,10 @@ export const CLI_MANIFEST: CliManifest = {
           "sideEffects": {
             "type": "boolean",
             "default": true
+          },
+          "dryRun": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -14412,7 +14430,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete.",
+      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately.",
       "type": "mutation",
       "path": [
         "api",
@@ -14427,7 +14445,7 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "foodCreditAmountCents": {
             "type": "integer",
-            "minimum": 5000
+            "minimum": 2500
           },
           "landingPageConfirmed": {
             "type": "boolean"
@@ -14545,6 +14563,17 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "reimbursementEnabled": {
             "type": "boolean"
+          },
+          "maxCreatorsPerMonth": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -14952,6 +14981,153 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "wasSkipped": {
                 "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "dataAudit": {
+            "type": "object",
+            "properties": {
+              "pos": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "square",
+                      "toast-api",
+                      "toast-csv"
+                    ]
+                  },
+                  "isComplete": {
+                    "type": "boolean"
+                  },
+                  "toastCsv": {
+                    "type": "object",
+                    "properties": {
+                      "fileName": {
+                        "type": "string"
+                      },
+                      "key": {
+                        "type": "string"
+                      },
+                      "uploadedAt": {
+                        "type": "string"
+                      },
+                      "firstDate": {
+                        "type": "string"
+                      },
+                      "lastDate": {
+                        "type": "string"
+                      },
+                      "dayCount": {
+                        "type": "number"
+                      },
+                      "missingNetSalesCents": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "fileName",
+                      "key",
+                      "uploadedAt"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "toastCsvs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/dataAudit/properties/pos/properties/toastCsv"
+                    }
+                  },
+                  "salesCoverage": {
+                    "type": "object",
+                    "properties": {
+                      "firstDate": {
+                        "type": "string"
+                      },
+                      "lastDate": {
+                        "type": "string"
+                      },
+                      "dayCount": {
+                        "type": "number"
+                      },
+                      "gaps": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start": {
+                              "type": "string"
+                            },
+                            "end": {
+                              "type": "string"
+                            },
+                            "days": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "start",
+                            "end",
+                            "days"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "years": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "year": {
+                              "type": "number"
+                            },
+                            "dayCount": {
+                              "type": "number"
+                            },
+                            "months": {
+                              "type": "array",
+                              "items": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          "required": [
+                            "year",
+                            "dayCount",
+                            "months"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "firstDate",
+                      "lastDate",
+                      "dayCount",
+                      "gaps",
+                      "years"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              "resultsCall": {
+                "type": "object",
+                "properties": {
+                  "isComplete": {
+                    "type": "boolean"
+                  },
+                  "firstBookedAt": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -16364,6 +16540,12 @@ export const CLI_MANIFEST: CliManifest = {
                 }
               },
               "secondaryFields": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/sections/properties/headerFields/items"
+                }
+              },
+              "backFields": {
                 "type": "array",
                 "items": {
                   "$ref": "#/properties/sections/properties/headerFields/items"
