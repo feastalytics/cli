@@ -23,6 +23,8 @@ feast call <tool> --org <organizationId> --input '<json>'
 
 Always `describe` an unfamiliar tool before calling it — the schema tells you the exact required fields, and the CLI validates your `--input` against it locally before sending anything, so a bad payload fails fast with a clear message instead of a confusing server error.
 
+That schema is also the boundary for what's worth asking the user about. Before sending a clarifying question, check whether the tool you're about to call has a field for the answer — a question about something the schema can't accept (a limit, a repeat rule, anything not in `describe`'s output) wastes a message and never gets used. Only ask about what the call in front of you can actually configure.
+
 ## Organizations: never let the API guess
 
 Most tools act on one organization, and which one must be explicit: pass it with `--org <organizationId>`. Acting on the wrong restaurant is worse than stopping to ask, so the CLI refuses rather than guessing when the target is ambiguous.
