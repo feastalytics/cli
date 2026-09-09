@@ -2033,6 +2033,32 @@ export const CLI_MANIFEST: CliManifest = {
                                   "setCustomProperty"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "sendWalletPush"
+                                  },
+                                  "sendWalletPush": {
+                                    "type": "object",
+                                    "properties": {
+                                      "message": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "message"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "sendWalletPush"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -3925,6 +3951,32 @@ export const CLI_MANIFEST: CliManifest = {
                                   "setCustomProperty"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "sendWalletPush"
+                                  },
+                                  "sendWalletPush": {
+                                    "type": "object",
+                                    "properties": {
+                                      "message": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "message"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "sendWalletPush"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -4387,6 +4439,9 @@ export const CLI_MANIFEST: CliManifest = {
                     ],
                     "additionalProperties": false
                   },
+                  "secondary": {
+                    "$ref": "#/properties/theme/properties/palette/properties/primary"
+                  },
                   "mode": {
                     "type": "string",
                     "enum": [
@@ -4411,9 +4466,15 @@ export const CLI_MANIFEST: CliManifest = {
                     "properties": {
                       "default": {
                         "type": "string"
+                      },
+                      "paper": {
+                        "type": "string"
                       }
                     },
                     "additionalProperties": false
+                  },
+                  "divider": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false
@@ -4705,7 +4766,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createInfluencerPayout",
       "domain": "creators",
-      "description": "Charges the organization's card to pay a creator's content bonus. NEVER call this on your own initiative or as part of an automated flow — every call needs the client's explicit, fresh approval to pay this specific creator, given to you directly; a standing instruction or an inferred intent does not count. The endpoint enforces its own preconditions and refuses otherwise: the visit must have a content submission approved as a paid ad (decideCreatorSubmission with approvalType 'ad' — organic approvals earn no payout), and no payout may already exist for the visit in any active status — one payout per visit, so a second call while one is pending, funding, onboarding, or paid is rejected. The bonus amount comes from the location's board config, grossed up so the org covers the Stripe fee. After the charge, Stripe webhooks carry it to the creator (FUNDED → onboarding if needed → PAID) with no further action from you; follow progress in queryData creators.creatorPayout.",
+      "description": "Charges the organization's card to pay a creator's content bonus. NEVER call this on your own initiative or as part of an automated flow — every call needs the client's explicit, fresh approval to pay this specific creator, given to you directly; a standing instruction or an inferred intent does not count. The endpoint enforces its own preconditions and refuses otherwise: the visit must have a content submission approved as a paid ad (decideCreatorSubmission with approvalType 'ad' — organic approvals earn no payout), and no payout may already exist for the visit in any active status — one payout per visit, so a second call while one is pending, funding, onboarding, or paid is rejected. A visit whose only attempts are FAILED or REFUNDED may be retried; the retry voids the earlier attempt's open Stripe invoice first and recomputes the amount from the current board config. The bonus amount comes from the location's board config, grossed up so the org covers the Stripe fee. After the charge, Stripe webhooks carry it to the creator (FUNDED → onboarding if needed → PAID) with no further action from you; follow progress in queryData creators.creatorPayout.",
       "type": "mutation",
       "path": [
         "api",
@@ -5110,7 +5171,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getAutomationDraft",
       "domain": "automations",
-      "description": "Read an automation draft — its staged operations, the flows it touches, and the preview links that show those changes highlighted. Use the returned `operations` as `edits` on simulateAutomations to preview what the draft would do.",
+      "description": "Read an automation draft — its staged operations, the flows it touches, the resulting automations after those operations are merged onto current live state, and the preview links that show those changes highlighted. `resultingAutomations` is what each touched automation will actually look like if the draft is saved — always check it for fields that silently changed or disappeared, not just the fields the operations explicitly mention. Use the returned `operations` as `edits` on simulateAutomations to preview what the draft would do.",
       "type": "query",
       "path": [
         "api",
@@ -5799,13 +5860,13 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCampaigns",
       "domain": "core",
-      "description": "The organization's acquisition campaigns, newest first. Start here to resolve a campaignId: the `id` field (a UUID) is what every other campaign tool takes, NOT the nested Meta campaign id. Also carries each campaign's name, shorthand (used in reservation links), publish state, and referrers. Read one campaign's full configuration with getCampaign.",
+      "description": "The organization's acquisition campaigns, newest first, as summaries. Start here to resolve a campaignId: the `id` field (a UUID) is what every other campaign tool takes, NOT the nested Meta campaign id. Also carries each campaign's name, shorthand (used in reservation links), publish state, and referrers. Read one campaign's full configuration — promotions, ad copy, banner and image config — with getCampaign.",
       "type": "query",
       "path": [
         "api",
         "campaigns",
         "app",
-        "list"
+        "listSummaries"
       ],
       "inputJsonSchema": null
     },
@@ -9017,6 +9078,32 @@ export const CLI_MANIFEST: CliManifest = {
                                   "setCustomProperty"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "sendWalletPush"
+                                  },
+                                  "sendWalletPush": {
+                                    "type": "object",
+                                    "properties": {
+                                      "message": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "message"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "sendWalletPush"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -10849,6 +10936,32 @@ export const CLI_MANIFEST: CliManifest = {
                                   "setCustomProperty"
                                 ],
                                 "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "sendWalletPush"
+                                  },
+                                  "sendWalletPush": {
+                                    "type": "object",
+                                    "properties": {
+                                      "message": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "message"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "sendWalletPush"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
                           }
@@ -11070,7 +11183,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "stageFunnelEdit",
       "domain": "funnel",
-      "description": "Stage a single renderable edit onto a funnel draft. The edit is validated against the current screen but not saved to production.",
+      "description": "Stage a single renderable edit onto a funnel draft. The edit is validated against the current screen but not saved to production. Returns a summary of the draft, not its edits — use getFunnelDraft to read them back, or listFunnelScreens with the draftId to see the funnel with the edits applied.",
       "type": "mutation",
       "path": [
         "api",
@@ -11845,6 +11958,24 @@ export const CLI_MANIFEST: CliManifest = {
                                       },
                                       "collectEmail": {
                                         "type": "boolean"
+                                      },
+                                      "properties": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "propertyId": {
+                                              "type": "string"
+                                            },
+                                            "required": {
+                                              "type": "boolean"
+                                            }
+                                          },
+                                          "required": [
+                                            "propertyId"
+                                          ],
+                                          "additionalProperties": false
+                                        }
                                       }
                                     },
                                     "additionalProperties": false
@@ -11856,7 +11987,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "signUpForm"
                                 ],
                                 "additionalProperties": false,
-                                "description": "Sign up form widget with MemberInfoForm. Submit buttons are controlled by other renderables."
+                                "description": "Sign up form widget with MemberInfoForm. Submit buttons are controlled by other renderables. Optionally collects additional custom properties alongside the member's name, phone and email; those values are written against the new member as form submissions before any sign up automation runs."
                               },
                               {
                                 "type": "object",
@@ -13085,6 +13216,9 @@ export const CLI_MANIFEST: CliManifest = {
                         ],
                         "additionalProperties": false
                       },
+                      "secondary": {
+                        "$ref": "#/properties/config/properties/theme/properties/palette/properties/primary"
+                      },
                       "mode": {
                         "type": "string",
                         "enum": [
@@ -13109,9 +13243,15 @@ export const CLI_MANIFEST: CliManifest = {
                         "properties": {
                           "default": {
                             "type": "string"
+                          },
+                          "paper": {
+                            "type": "string"
                           }
                         },
                         "additionalProperties": false
+                      },
+                      "divider": {
+                        "type": "string"
                       }
                     },
                     "additionalProperties": false
@@ -14466,6 +14606,16 @@ export const CLI_MANIFEST: CliManifest = {
               "null"
             ]
           },
+          "bookingNotificationEmails": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 254,
+              "format": "email"
+            },
+            "maxItems": 20,
+            "description": "Additional email addresses for scheduled, rescheduled, confirmed and cancelled visit emails and Calendar invitations. No Feast account is required. Send an empty array to remove all email-only recipients; omit to preserve them. Requires the organization's booking notification feature to be enabled."
+          },
           "passConfigured": {
             "type": "boolean"
           },
@@ -14523,7 +14673,19 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "null"
               }
             ],
-            "description": "Despite the name, this covers the WHOLE visit, not just the run-up to it: anything creators must know or do before (download an app, book a reservation), during (check in with the host), or after (text a photo of the receipt). The text is injected verbatim into both the pre-visit and post-visit SMS agents' prompts, so write it as instructions to the creator and cover every stage in this one field — there is no separate post-visit instructions field."
+            "description": "Instructions sent to the creator by the SMS agent. Despite the name, this covers the whole visit: before (download an app), during (check in with the host), or after (text a receipt). This text is injected into both pre-visit and post-visit SMS prompts. Keep staff-only information in staffBookingNotes instead. Omit to preserve; send null to clear."
+          },
+          "staffBookingNotes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Internal notes included in restaurant booking emails and Calendar events. Never sent to creators or included in the SMS agent's instructions. Use this for staff comp policies, menu suggestions and other team-facing booking details. Omit to preserve; send null to clear."
           },
           "minFollowerCount": {
             "anyOf": [
@@ -14996,7 +15158,8 @@ export const CLI_MANIFEST: CliManifest = {
                     "enum": [
                       "square",
                       "toast-api",
-                      "toast-csv"
+                      "toast-csv",
+                      "spoton"
                     ]
                   },
                   "isComplete": {
@@ -15303,9 +15466,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "boolean"
               },
               "isReadOnly": {
-                "type": "boolean"
-              },
-              "isContactCardEnabled": {
                 "type": "boolean"
               },
               "staffInstructions": {
