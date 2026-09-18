@@ -4766,7 +4766,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createInfluencerPayout",
       "domain": "creators",
-      "description": "Charges the organization's card to pay a creator's content bonus. NEVER call this on your own initiative or as part of an automated flow — every call needs the client's explicit, fresh approval to pay this specific creator, given to you directly; a standing instruction or an inferred intent does not count. The endpoint enforces its own preconditions and refuses otherwise: the visit must have a content submission approved as a paid ad (decideCreatorSubmission with approvalType 'ad' — organic approvals earn no payout), and no payout may already exist for the visit in any active status — one payout per visit, so a second call while one is pending, funding, onboarding, or paid is rejected. A visit whose only attempts are FAILED or REFUNDED may be retried; the retry voids the earlier attempt's open Stripe invoice first and recomputes the amount from the current board config. The bonus amount comes from the location's board config, grossed up so the org covers the Stripe fee. After the charge, Stripe webhooks carry it to the creator (FUNDED → onboarding if needed → PAID) with no further action from you; follow progress in queryData creators.creatorPayout.",
+      "description": "Charges the organization's card to pay a creator's content bonus. NEVER call this on your own initiative or as part of an automated flow — every call needs the client's explicit, fresh approval to pay this specific creator, given to you directly; a standing instruction or an inferred intent does not count. The endpoint enforces its own preconditions and refuses otherwise: the visit must have a content submission approved as a paid ad (decideCreatorSubmission with approvalType 'ad' — organic approvals earn no payout), and no payout may already exist for the visit in any active status — one payout per visit, so a second call while one is pending, funding, onboarding, or paid is rejected. A visit whose only attempts are FAILED or REFUNDED may be retried; the retry voids the earlier attempt's open Stripe invoice first and recomputes the default amount the same way. The bonus amount defaults to the one stamped on the submission when it was approved (falling back to the location's board config), and is grossed up so the org covers the Stripe fee. Pass amountCents only when the client explicitly asks to pay this one creator a different amount; it is written back to the submission so reporting matches what was paid. After the charge, Stripe webhooks carry it to the creator (FUNDED → onboarding if needed → PAID) with no further action from you; follow progress in queryData creators.creatorPayout.",
       "type": "mutation",
       "path": [
         "api",
@@ -4779,6 +4779,12 @@ export const CLI_MANIFEST: CliManifest = {
           "eventId": {
             "type": "string",
             "description": "The creator visit's eventId (creatorVisitApplication.eventId) whose approved paid-ad submission is being paid out."
+          },
+          "amountCents": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 500000,
+            "description": "One-time bonus amount in cents for this payout only, before the Stripe fee gross-up. Omit to pay the default amount. Does not change the board config."
           }
         },
         "required": [
@@ -11938,7 +11944,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "form"
                                 ],
                                 "additionalProperties": false,
-                                "description": "Form with input fields that prevents duplicate submissions and shows previous values if already submitted. **IMPORTANT RESTRICTION**: This component can ONLY be used in screens that come AFTER the signup screen. Signups only occur on the MEMBERS_PASS screen (screenId: 'members-pass'). Do NOT use form components in any screen that appears before or is the MEMBERS_PASS screen in the funnel flow."
+                                "description": "Form with input fields that prevents duplicate submissions and shows previous values if already submitted. **IMPORTANT RESTRICTION**: This component can ONLY be used in screens that come AFTER the signup screen. Signups happen on screens with a signUpForm widget. Do NOT use form components in any screen that appears before or is a screen with a signUpForm in the funnel flow."
                               },
                               {
                                 "type": "object",
@@ -14570,7 +14576,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately.",
+      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately. agentPaused: true turns the creator AI agent off for the location — no automated creator texts (AI replies, visit reminders, content follow-ups) until it is set back to false; texts sent by people still deliver.",
       "type": "mutation",
       "path": [
         "api",
@@ -14736,6 +14742,9 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "null"
               }
             ]
+          },
+          "agentPaused": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -15417,7 +15426,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateOrganization",
       "domain": "core",
-      "description": "Update the organization record. Omitted fields are left alone, but staffInstructions is replaced wholesale rather than merged — send every key you want to keep. minimumSpendValue is in dollars; timezone is an IANA zone. staffInstructions.scan completes the Members Program Visits POS setup task, and .prepaid is additionally required for Campaign POS setup when the promotion allows pre-pay. restaurantType, isArchived and isReadOnly are admin-only and rejected otherwise.",
+      "description": "Update the organization record. Omitted fields are left alone, but staffInstructions is replaced wholesale rather than merged — send every key you want to keep. minimumSpendValue is in dollars; timezone is an IANA zone. staffInstructions.scan completes the Members Program Visits POS setup task, and .prepaid is additionally required for Campaign POS setup when the promotion allows pre-pay. restaurantType, isArchived and isReadOnly are admin-only and rejected otherwise. periodCalendar sets how Impact and revenue plans group weeks into periods: {type: 'fiscal', fiscal: {pattern: '4-4-5' | '4-5-4' | '5-4-4' | '13x4', yearEndWeekday: 'sunday' through 'saturday', yearEndRule: 'nearestDec31' | 'lastInDecember'}}; null resets it to 13 four-week periods ending on the Sunday nearest Dec 31.",
       "type": "mutation",
       "path": [
         "api",
@@ -15437,6 +15446,70 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": [
                   "string",
                   "null"
+                ]
+              },
+              "periodCalendar": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "fiscal"
+                          },
+                          "fiscal": {
+                            "type": "object",
+                            "properties": {
+                              "pattern": {
+                                "type": "string",
+                                "enum": [
+                                  "4-4-5",
+                                  "4-5-4",
+                                  "5-4-4",
+                                  "13x4"
+                                ]
+                              },
+                              "yearEndWeekday": {
+                                "type": "string",
+                                "enum": [
+                                  "sunday",
+                                  "monday",
+                                  "tuesday",
+                                  "wednesday",
+                                  "thursday",
+                                  "friday",
+                                  "saturday"
+                                ]
+                              },
+                              "yearEndRule": {
+                                "type": "string",
+                                "enum": [
+                                  "nearestDec31",
+                                  "lastInDecember"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "pattern",
+                              "yearEndWeekday",
+                              "yearEndRule"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "fiscal"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               },
               "scanRefractoryPeriodMs": {
