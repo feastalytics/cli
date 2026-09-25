@@ -5262,9 +5262,22 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getCampaignBenchmarks",
+      "domain": "campaigns",
+      "description": "The definition and target band of every campaign metric id that getCampaignKpis and getCampaignBreakdown return. One entry per id: { id, label, unit, description, formula, benchmark }, where unit is count, percent (0-100), usd (dollars), days or multiple (ROAS, 2 = 2x), and benchmark is { min, good, great } in that unit or null when the metric has no target band. Grade a value as green at or above good, yellow at or above min, red below min; great is a stretch level (null for ROAS). The bands are fleet percentiles (P25/P50/P75 of campaigns with over 500 visitors) rounded to clean numbers, not per-organization; ROAS is anchored at 1x break-even. Call once and reuse; the table does not change per campaign.",
+      "type": "query",
+      "path": [
+        "api",
+        "campaigns",
+        "app",
+        "benchmarks"
+      ],
+      "inputJsonSchema": null
+    },
+    {
       "id": "getCampaignBreakdown",
       "domain": "campaigns",
-      "description": "A campaign's metrics broken down by channel, Facebook campaign, ad set, ad, referrer and creator, as a tree of nodes, loaded a batch at a time. Pass node refs, get back each node's metrics plus the refs of its children (identifiers only, no metrics). Load children by passing those refs back in.\n\nStart from { type: \"campaign\", campaign: { campaignId } }, where campaignId is the Feast campaign id from listCampaigns. It returns the campaign totals and its channel refs. The tree is: campaign → channel (facebook, influencer, tiktok, google, misc, referral, unknown) → per channel: facebook → fbCampaign → fbAdset → fbAd; google → googleCampaign; tiktok → tiktokCampaign; misc → miscSource; referral → referrer; influencer → creator. A null id inside a ref is the \"Unknown\" bucket for sessions that could not be matched. Refs from different campaigns can be mixed in one call (max 100).\n\nMetrics use start/end as the session window. Units: sessions, visitors, signups, impressions, reach are counts; *Rate, thumbStopRatio, holdRate and uniqueClickthrough are percentages (0-100); spend, cpm, revenue, costPerSignup, revenuePerSignup are USD; averageTimeToShow is days from signup to first scan. A missing metric key means the metric does not apply to that node (for example spend on a Google row); null means it applies but could not be computed (no denominator, or Facebook was unreachable, see details.facebook.error). Facebook delivery metrics are read live from Meta.",
+      "description": "A campaign's metrics broken down by channel, Facebook campaign, ad set, ad, referrer and creator, as a tree of nodes, loaded a batch at a time. Pass node refs, get back each node's metrics plus the refs of its children (identifiers only, no metrics). Load children by passing those refs back in.\n\nStart from { type: \"campaign\", campaign: { campaignId } }, where campaignId is the Feast campaign id from listCampaigns. It returns the campaign totals and its channel refs. The tree is: campaign → channel (facebook, influencer, tiktok, google, misc, referral, unknown) → per channel: facebook → fbCampaign → fbAdset → fbAd; google → googleCampaign; tiktok → tiktokCampaign; misc → miscSource; referral → referrer; influencer → creator. Variants split the campaign by pass instead of by session: the campaign node lists them in details.campaign.variants (empty when the campaign has no variants), and { type: \"variant\", variant: { campaignId, variantId } } with variantId null is the default variant; variant nodes carry only signups, pass registration and show rate, time to show, revenue and revenue per signup. A null id inside a ref is the \"Unknown\" bucket for sessions that could not be matched. Refs from different campaigns can be mixed in one call (max 100).\n\nMetrics use start/end as the session window. Units: sessions, visitors, signups, impressions, reach are counts; *Rate, thumbStopRatio, holdRate and uniqueClickthrough are percentages (0-100); spend, cpm, revenue, costPerSignup, revenuePerSignup are USD; averageTimeToShow is days from signup to first scan. A missing metric key means the metric does not apply to that node (for example spend on a Google row); null means it applies but could not be computed (no denominator, or Facebook was unreachable, see details.facebook.error). Facebook delivery metrics are read live from Meta.",
       "type": "query",
       "path": [
         "api",
@@ -5605,6 +5618,36 @@ export const CLI_MANIFEST: CliManifest = {
                     "creator"
                   ],
                   "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "variant"
+                    },
+                    "variant": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "variantId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "variantId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "variant"
+                  ],
+                  "additionalProperties": false
                 }
               ]
             },
@@ -5641,7 +5684,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaignKpis",
       "domain": "campaigns",
-      "description": "Performance metrics for an acquisition campaign. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta campaignId. Returns { id, type, value, unit } per metric, where unit is COUNT, PERCENTAGE (0-1) or CURRENCY (cents). Covers ad performance (spend, impressions, hook rate (thumb stop), hold rate, CTR — sourced from synced Facebook data, so ROAS is revenue divided by spend), the funnel, automations, and results. Metrics whose value would be zero are omitted rather than returned as 0 — notably spend, so an absent spend metric means no spend OR no sync yet, never a confirmed zero.",
+      "description": "Performance metrics for an acquisition campaign. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta campaignId. Returns { id, type, value, unit } per metric. Metric ids are the same camelCase ids getCampaignBreakdown uses (signupRate, thumbStopRatio, uniqueClickthrough, revenue, ...), and units match it too: count, percent (0-100), usd (dollars). Rate metrics with a target band carry benchmark: { min, good, great } in the same unit (see getCampaignBenchmarks for the full table and grading rule). Covers ad performance (spend, impressions, hook rate (thumb stop), hold rate, CTR — sourced from synced Facebook data, so ROAS is revenue divided by spend), the funnel, automations, and results. Metrics whose value would be zero are omitted rather than returned as 0 — notably spend, so an absent spend metric means no spend OR no sync yet, never a confirmed zero.",
       "type": "query",
       "path": [
         "api",
