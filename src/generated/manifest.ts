@@ -178,6 +178,32 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "ads_get_custom_audiences",
+      "domain": "ads",
+      "description": "List the custom audiences on an ad account, for the customAudienceIds and excludedCustomAudienceIds template variables. isReadyForUse false means Meta will not deliver to it, usually for too few matched people, so an ad set targeting it reaches nobody, and the size bounds are approximate and go stale while an audience is being updated. An audience belongs to the ad account, so the ids from one account are rejected by another. Nothing here says how fresh the underlying list is: a customer-list audience is a snapshot of whatever was last uploaded, and timeUpdated is when that happened.",
+      "type": "query",
+      "path": [
+        "api",
+        "ads",
+        "facebook",
+        "getCustomAudiences"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "adAccountId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "adAccountId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "ads_get_datasets",
       "domain": "ads",
       "description": "List the datasets (Meta pixels) on an ad account, with lastFiredTime so you can see which are receiving events. This is for checking a pixel rather than choosing one: the pixelId a campaign should optimise against is the pixel its funnel actually fires, which comes from the organization's layout config. A pixel picked from this list because it looks plausible may receive no traffic from that funnel.",
@@ -5236,9 +5262,386 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getCampaignBreakdown",
+      "domain": "campaigns",
+      "description": "A campaign's metrics broken down by channel, Facebook campaign, ad set, ad, referrer and creator, as a tree of nodes, loaded a batch at a time. Pass node refs, get back each node's metrics plus the refs of its children (identifiers only, no metrics). Load children by passing those refs back in.\n\nStart from { type: \"campaign\", campaign: { campaignId } }, where campaignId is the Feast campaign id from listCampaigns. It returns the campaign totals and its channel refs. The tree is: campaign → channel (facebook, influencer, tiktok, google, misc, referral, unknown) → per channel: facebook → fbCampaign → fbAdset → fbAd; google → googleCampaign; tiktok → tiktokCampaign; misc → miscSource; referral → referrer; influencer → creator. A null id inside a ref is the \"Unknown\" bucket for sessions that could not be matched. Refs from different campaigns can be mixed in one call (max 100).\n\nMetrics use start/end as the session window. Units: sessions, visitors, signups, impressions, reach are counts; *Rate, thumbStopRatio, holdRate and uniqueClickthrough are percentages (0-100); spend, cpm, revenue, costPerSignup, revenuePerSignup are USD; averageTimeToShow is days from signup to first scan. A missing metric key means the metric does not apply to that node (for example spend on a Google row); null means it applies but could not be computed (no denominator, or Facebook was unreachable, see details.facebook.error). Facebook delivery metrics are read live from Meta.",
+      "type": "query",
+      "path": [
+        "api",
+        "campaigns",
+        "app",
+        "breakdown"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "refs": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "campaign"
+                    },
+                    "campaign": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "campaignId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "campaign"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "channel"
+                    },
+                    "channel": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "facebook",
+                            "influencer",
+                            "tiktok",
+                            "google",
+                            "misc",
+                            "referral",
+                            "unknown"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "channel"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "channel"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "fbCampaign"
+                    },
+                    "fbCampaign": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "fbCampaignId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "fbCampaignId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "fbCampaign"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "fbAdset"
+                    },
+                    "fbAdset": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "fbCampaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        },
+                        "fbAdsetId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "fbCampaignId",
+                        "fbAdsetId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "fbAdset"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "fbAd"
+                    },
+                    "fbAd": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "fbCampaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        },
+                        "fbAdsetId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        },
+                        "fbAdId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "fbCampaignId",
+                        "fbAdsetId",
+                        "fbAdId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "fbAd"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "googleCampaign"
+                    },
+                    "googleCampaign": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "googleCampaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "googleCampaignId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "googleCampaign"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "tiktokCampaign"
+                    },
+                    "tiktokCampaign": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "utmCampaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "utmCampaignId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "tiktokCampaign"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "miscSource"
+                    },
+                    "miscSource": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "source": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "miscSource"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "referrer"
+                    },
+                    "referrer": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "referrerSerialNumber": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "referrerSerialNumber"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "referrer"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "creator"
+                    },
+                    "creator": {
+                      "type": "object",
+                      "properties": {
+                        "campaignId": {
+                          "$ref": "#/properties/refs/items/anyOf/0/properties/campaign/properties/campaignId"
+                        },
+                        "promoCode": {
+                          "$ref": "#/properties/refs/items/anyOf/2/properties/fbCampaign/properties/fbCampaignId"
+                        }
+                      },
+                      "required": [
+                        "campaignId",
+                        "promoCode"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "creator"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attributionWindow": {
+            "type": "string",
+            "enum": [
+              "infinite",
+              "7day",
+              "14day"
+            ],
+            "default": "infinite"
+          }
+        },
+        "required": [
+          "refs",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "getCampaignKpis",
       "domain": "campaigns",
-      "description": "Performance metrics for an acquisition campaign. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta campaignId. Returns { id, type, value, unit } per metric, where unit is COUNT, PERCENTAGE (0-1) or CURRENCY (cents). Covers ad performance (spend, impressions, thumb stop, hold rate, CTR — sourced from synced Facebook data, so ROAS is revenue divided by spend), the funnel, automations, and results. Metrics whose value would be zero are omitted rather than returned as 0 — notably spend, so an absent spend metric means no spend OR no sync yet, never a confirmed zero.",
+      "description": "Performance metrics for an acquisition campaign. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta campaignId. Returns { id, type, value, unit } per metric, where unit is COUNT, PERCENTAGE (0-1) or CURRENCY (cents). Covers ad performance (spend, impressions, hook rate (thumb stop), hold rate, CTR — sourced from synced Facebook data, so ROAS is revenue divided by spend), the funnel, automations, and results. Metrics whose value would be zero are omitted rather than returned as 0 — notably spend, so an absent spend metric means no spend OR no sync yet, never a confirmed zero.",
       "type": "query",
       "path": [
         "api",
@@ -5347,7 +5750,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Read a location's creator program settings — dining credit, creator bonus, follower minimum, scheduling mode and booking limits — plus its recruitment offers. Returns config: null when the location has no program yet. Read this before writing recruitment copy: the credit and bonus amounts you are supposed to quote live here and nowhere else. Get a locationId from queryData interface.location.",
+      "description": "Read a location's creator program settings (dining credit, creator bonus, follower minimum and booking limits) plus its recruitment offers. Returns config: null when the location has no program yet. Read this before writing recruitment copy: the credit and bonus amounts you are supposed to quote live here and nowhere else. Get a locationId from queryData interface.location.",
       "type": "query",
       "path": [
         "api",
@@ -5919,7 +6322,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorConversations",
       "domain": "creators",
-      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read the full thread behind a row with getCreatorConversation and its userId, and reply with sendText and {type:'creator', userId}. Read-only: marking a conversation read stays in the dashboard.",
+      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, `visitLocationIds` (every location they have a visit at, in any status), and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read the full thread behind a row with getCreatorConversation and its userId, and reply with sendText and {type:'creator', userId}. Read-only: marking a conversation read stays in the dashboard.",
       "type": "query",
       "path": [
         "api",
@@ -14117,6 +14520,9 @@ export const CLI_MANIFEST: CliManifest = {
               "isReservationFunnel": {
                 "type": "boolean"
               },
+              "excludeFromTextBlasts": {
+                "type": "boolean"
+              },
               "isCreating": {
                 "type": "boolean"
               },
@@ -14576,7 +14982,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert — there is no separate create tool, and the config is keyed by locationId, one per location — so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit — it changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. schedulingMode gets no default, so set it on the first call or the Design creator program task stays incomplete: self_schedule_approval lets approved creators book themselves, apply_only collects applications for you to schedule. Note the launch check is looser than the task check — launchInfluencerCampaign only requires landingPageConfirmed and a positive credit, so a program can go live while its setup task still reads incomplete. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately. agentPaused: true turns the creator AI agent off for the location — no automated creator texts (AI replies, visit reminders, content follow-ups) until it is set back to false; texts sent by people still deliver.",
+      "description": "Create or update a location's creator program. This is an upsert. There is no separate create tool, and the config is keyed by locationId, one per location, so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. Every program is apply-only: creators apply, the approver reviews them, and the creator AI agent texts approved creators to book the visit. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit. It changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. The Design creator program task needs a positive credit and landingPageConfirmed. launchInfluencerCampaign checks the same two. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately. agentPaused: true turns the creator AI agent off for the location: no automated creator texts (AI replies, visit reminders, content follow-ups) until it is set back to false; texts sent by people still deliver.",
       "type": "mutation",
       "path": [
         "api",
@@ -14598,13 +15004,6 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "calendarConfigured": {
             "type": "boolean"
-          },
-          "schedulingMode": {
-            "type": "string",
-            "enum": [
-              "self_schedule_approval",
-              "apply_only"
-            ]
           },
           "approverUserId": {
             "type": [
