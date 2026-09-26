@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import {
   environmentAccessToken,
   resolveActingContext,
@@ -23,6 +24,13 @@ import {
   toolInputJsonSchema,
   validateToolInput,
 } from "./registry";
+import {
+  defaultSkillsDir,
+  fetchSkill,
+  listSkills,
+  shortVersion,
+  writeSkill,
+} from "./skills";
 
 const USAGE = `Usage: feast <command> [options]
 
@@ -34,6 +42,12 @@ Commands:
   tools [--domain <domain>] [--json]    List available tools
   describe <tool>                       Show a tool's description and input JSON schema
   call <tool> [options]                 Invoke a tool
+  skill list                            List the skills you can install
+  skill install <name> [options]        Install a skill into ~/.claude/skills/<name>
+
+Skill install options:
+  --dir <path>              Install into this directory instead of ~/.claude/skills/<name>
+  --force                   Replace a directory that feast did not install
 
 Call options:
   --org <organizationId>    Organization to act on (required unless you belong to exactly one)
@@ -61,7 +75,14 @@ interface ParsedArgs {
 function parseArgs(argv: string[]): ParsedArgs {
   const positional: string[] = [];
   const flags: { [key: string]: string | boolean } = {};
-  const valueFlags = new Set(["org", "role", "input", "input-file", "domain"]);
+  const valueFlags = new Set([
+    "org",
+    "role",
+    "input",
+    "input-file",
+    "domain",
+    "dir",
+  ]);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
     if (!arg.startsWith("--")) {
@@ -303,6 +324,44 @@ async function commandCall(args: ParsedArgs): Promise<void> {
   console.info(JSON.stringify(result ?? null, null, 2));
 }
 
+async function commandSkill(args: ParsedArgs): Promise<void> {
+  const [subcommand, name] = args.positional;
+  const orgFlag = args.flags["org"] as string | undefined;
+  const roleFlag = args.flags["role"] as string | undefined;
+  if (subcommand === "list") {
+    const entries = await listSkills(orgFlag, roleFlag);
+    if (entries.length === 0) {
+      console.info("No skills are published for your organization yet.");
+      return;
+    }
+    for (const entry of entries) {
+      console.info(
+        `${entry.name}  ${entry.displayTitle}  (version ${shortVersion(entry.version)})`
+      );
+      console.info(`    ${entry.description.split("\n")[0]}`);
+    }
+    return;
+  }
+  if (subcommand === "install") {
+    if (name == null) {
+      throw new Error("Usage: feast skill install <name> [--dir <path>] [--force]");
+    }
+    const bundle = await fetchSkill(name, orgFlag, roleFlag);
+    const targetDir =
+      (args.flags["dir"] as string | undefined) ??
+      path.join(defaultSkillsDir(), bundle.name);
+    const result = writeSkill(bundle, targetDir, args.flags["force"] === true);
+    console.info(
+      `${result.replaced ? "Updated" : "Installed"} ${bundle.name} (version ${shortVersion(bundle.version)}, ${result.written} files) in ${result.dir}`
+    );
+    console.info(
+      "Claude Code picks it up on the next session. For claude.ai, zip that directory and upload it under Settings > Capabilities > Skills."
+    );
+    return;
+  }
+  throw new Error("Usage: feast skill <list|install <name>>");
+}
+
 export async function runCli(argv: string[]): Promise<void> {
   const [command, ...rest] = argv;
   const args = parseArgs(rest);
@@ -325,6 +384,9 @@ export async function runCli(argv: string[]): Promise<void> {
       break;
     case "call":
       await commandCall(args);
+      break;
+    case "skill":
+      await commandSkill(args);
       break;
     default:
       console.info(USAGE);

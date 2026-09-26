@@ -44,6 +44,17 @@ If you've been invoking the CLI through `npx` rather than a global install, skip
 
 Update the skill whenever you update the CLI: the two ship from the same repo but on different triggers, so a new CLI version usually means this skill's guidance has moved too.
 
+## Playbook skills
+
+Feastalytics publishes further skills that build on this one (campaign diagnosis and other playbooks). They come from the API, not from GitHub:
+
+```bash
+feast skill list                       # what is published for your organization
+feast skill install feast-playbooks    # install or refresh one into ~/.claude/skills/
+```
+
+Install what `feast skill list` offers when the user asks for a playbook this skill does not cover, and re-run the install when the CLI prints an update notice.
+
 ## Which organization
 
 Most tools act on one organization. A user often belongs to several, so which one you target matters and must be explicit.
