@@ -88,6 +88,17 @@ npx skills add feastalytics/cli -g -a '*' -y
 
 To refresh from a local checkout instead of GitHub, run `npx skills add ./feast -g -a '*' -y` from the repo root.
 
+### Playbook skills from Feastalytics
+
+Feastalytics also publishes playbook skills that build on this one. They are served by the API to logged-in users and installed by the CLI itself, so no GitHub access is needed:
+
+```bash
+feast skill list                       # what is published, with versions
+feast skill install feast-playbooks    # writes ~/.claude/skills/feast-playbooks/
+```
+
+`--dir <path>` installs somewhere else (zip that directory to upload it to claude.ai under Settings > Capabilities > Skills). A re-install replaces the previous copy; `--force` is required to replace a directory the CLI did not create. Skills belong to the organization you act on, so pass `--org` when you belong to several.
+
 ## Environment
 
 - `FEAST_API_URL` — override the API base URL (e.g. a local dev server)
