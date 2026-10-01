@@ -64,6 +64,34 @@ Most tools act on one organization, and you may belong to several. Pass `--org <
 
 Mutations additionally require `--org`, verify the server-resolved org, and prompt for confirmation (`--yes` to skip in scripts).
 
+## MCP server
+
+`feast mcp` runs a local [MCP](https://modelcontextprotocol.io) server over stdio with every tool `feast tools` lists, for agents that speak MCP instead of shelling out. It uses the same login, so run `feast login` first.
+
+Claude Code:
+
+```bash
+claude mcp add feast -- npx -y @feastalytics/cli@latest mcp
+```
+
+Claude Desktop, Cursor, and other clients that take a JSON config:
+
+```json
+{
+  "mcpServers": {
+    "feast": { "command": "npx", "args": ["-y", "@feastalytics/cli@latest", "mcp"] }
+  }
+}
+```
+
+How it maps to the CLI:
+
+- Each tool keeps its CLI id and input schema, plus an `organizationId` argument in place of `--org`. The same rule applies: it may be left out only when you belong to exactly one organization.
+- An extra `listOrganizations` tool returns your organizations, names, and roles (the `whoami` equivalent).
+- Read tools are marked `readOnlyHint`, so clients can run them without asking. Every write is left unmarked, so clients ask before running it, and the server checks the API resolved the requested organization before sending it.
+- Input is validated against the tool's schema locally, exactly as `feast call` does.
+- `FEAST_ACCESS_TOKEN`, `FEAST_ORGANIZATION_ID`, and `FEAST_PREFERRED_ROLE` work here too; set them in the server's `env`.
+
 ## Agent skill
 
 The `feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate the CLI. Install it into your agent(s):

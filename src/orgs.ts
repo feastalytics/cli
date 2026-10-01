@@ -1,5 +1,6 @@
 import { decodeJwtPayload } from "./auth";
 import { CLI_MANIFEST } from "./generated/manifest";
+import { callProcedure, createHttpCaller } from "./http";
 
 export interface OrgRole {
   organizationId: string;
@@ -87,4 +88,49 @@ export function resolvePreferredRole(
     arn: formRoleArn(chosen.organizationId, chosen.role),
     orgRole: chosen,
   };
+}
+
+export async function loadOrganizationNames(
+  accessToken: string
+): Promise<Map<string, string>> {
+  const namesByOrgId = new Map<string, string>();
+  try {
+    const client = createHttpCaller({ accessToken });
+    const organizations = await client.api.user.organizations.query();
+    for (const entry of organizations ?? []) {
+      const id = entry?.organization?.organizationId;
+      const name = entry?.organization?.name;
+      if (id != null && name != null) {
+        namesByOrgId.set(id, name);
+      }
+    }
+  } catch {
+    return namesByOrgId;
+  }
+  return namesByOrgId;
+}
+
+export async function verifyOrganization(
+  client: any,
+  expectedOrganizationId: string
+): Promise<{ id: string; name?: string }> {
+  const result = await callProcedure(
+    client,
+    ["api", "organization", "loadCurrentOrganization"],
+    "query",
+    {}
+  );
+  const organization = result?.organization ?? result;
+  const resolvedId = organization?.organizationId ?? organization?.id;
+  if (resolvedId == null) {
+    throw new Error(
+      "Could not verify the resolved organization; aborting before any write"
+    );
+  }
+  if (resolvedId !== expectedOrganizationId) {
+    throw new Error(
+      `Organization mismatch: requested ${expectedOrganizationId} but the API resolved ${resolvedId}. Aborting.`
+    );
+  }
+  return { id: resolvedId, name: organization?.name };
 }
