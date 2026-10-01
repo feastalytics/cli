@@ -15,7 +15,12 @@ import { browserLogin } from "./browserLogin";
 import { getWebBaseUrl } from "./config";
 import { getCredentialsPath } from "./credentials";
 import { callProcedure, createHttpCaller } from "./http";
-import { listOrgRoles } from "./orgs";
+import { runMcpServer } from "./mcp";
+import {
+  listOrgRoles,
+  loadOrganizationNames,
+  verifyOrganization,
+} from "./orgs";
 import { promptHidden, promptText } from "./prompt";
 import {
   buildToolRegistry,
@@ -42,6 +47,7 @@ Commands:
   tools [--domain <domain>] [--json]    List available tools
   describe <tool>                       Show a tool's description and input JSON schema
   call <tool> [options]                 Invoke a tool
+  mcp                                   Run an MCP server over stdio with every tool
   skill list                            List the skills you can install
   skill install <name> [options]        Install a skill into ~/.claude/skills/<name>
 
@@ -164,26 +170,6 @@ async function commandWhoami(args: ParsedArgs): Promise<void> {
   }
 }
 
-async function loadOrganizationNames(
-  accessToken: string
-): Promise<Map<string, string>> {
-  const namesByOrgId = new Map<string, string>();
-  try {
-    const client = createHttpCaller({ accessToken });
-    const organizations = await client.api.user.organizations.query();
-    for (const entry of organizations ?? []) {
-      const id = entry?.organization?.organizationId;
-      const name = entry?.organization?.name;
-      if (id != null && name != null) {
-        namesByOrgId.set(id, name);
-      }
-    }
-  } catch {
-    return namesByOrgId;
-  }
-  return namesByOrgId;
-}
-
 function commandTools(args: ParsedArgs): void {
   const domainFilter = args.flags["domain"] as string | undefined;
   const tools = buildToolRegistry().filter(
@@ -254,31 +240,6 @@ function readCallInput(args: ParsedArgs): unknown {
   } catch (error) {
     throw new Error(`Input is not valid JSON: ${errorMessage(error)}`);
   }
-}
-
-async function verifyOrganization(
-  client: any,
-  expectedOrganizationId: string
-): Promise<{ id: string; name?: string }> {
-  const result = await callProcedure(
-    client,
-    ["api", "organization", "loadCurrentOrganization"],
-    "query",
-    {}
-  );
-  const organization = result?.organization ?? result;
-  const resolvedId = organization?.organizationId ?? organization?.id;
-  if (resolvedId == null) {
-    throw new Error(
-      "Could not verify the resolved organization; aborting before any write"
-    );
-  }
-  if (resolvedId !== expectedOrganizationId) {
-    throw new Error(
-      `Organization mismatch: requested ${expectedOrganizationId} but the API resolved ${resolvedId}. Aborting.`
-    );
-  }
-  return { id: resolvedId, name: organization?.name };
 }
 
 async function commandCall(args: ParsedArgs): Promise<void> {
@@ -384,6 +345,9 @@ export async function runCli(argv: string[]): Promise<void> {
       break;
     case "call":
       await commandCall(args);
+      break;
+    case "mcp":
+      await runMcpServer();
       break;
     case "skill":
       await commandSkill(args);
