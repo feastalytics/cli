@@ -4418,7 +4418,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createBrandIdentity",
       "domain": "core",
-      "description": "Create the restaurant's branded website: a subdomain, its layout config, and a full default screen tree. Gates everything funnel-shaped downstream, since screens are addressed by referrer. referrer is the subdomain label only — letters and numbers, no dots — and is lowercased; it is claimed across all organizations, so a name another restaurant already uses is rejected. Get logoUrl from getMediaUploadUrl. Confirm the name and subdomain with the customer first; this is their branding decision.",
+      "description": "Create the restaurant's branded website: a subdomain, its layout config, and a full default screen tree. Gates everything funnel-shaped downstream, since screens are addressed by referrer. referrer is the subdomain label only — letters and numbers, no dots — and is lowercased; it is claimed across all organizations, so a name another restaurant already uses is rejected. Only an admin can create one when the organization already has a site. Get logoUrl from getMediaUploadUrl. Confirm the name and subdomain with the customer first; this is their branding decision.",
       "type": "mutation",
       "path": [
         "api",
@@ -5793,7 +5793,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Read a location's creator program settings (dining credit, creator bonus, follower minimum and booking limits) plus its recruitment offers. Returns config: null when the location has no program yet. Read this before writing recruitment copy: the credit and bonus amounts you are supposed to quote live here and nowhere else. Get a locationId from queryData interface.location.",
+      "description": "Read a location's creator program settings (dining credit, creator bonus, follower minimum and booking limits) plus its recruitment offers (the ad creative). The location's live recruitment Meta campaign, ad set and status are on config (recruitmentFacebookCampaignId, recruitmentFacebookAdSetId, recruitmentStatus), not on the offers. Returns config: null when the location has no program yet. Read this before writing recruitment copy: the credit and bonus amounts you are supposed to quote live here and nowhere else. Get a locationId from queryData interface.location.",
       "type": "query",
       "path": [
         "api",
@@ -6786,7 +6786,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "publishAds",
       "domain": "ads",
-      "description": "Publish a plan produced by planAds. Declare what should be recorded once the ads exist through effects, and the worker runs them as part of the job — a recruitment publish must pass linkRecruitmentOffer with its offerId and creativeIds, which stamps the creatives, stamps the offer that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live, and a directOffer publish must pass linkFeastCampaign with the campaignId it runs for, which is what puts its spend on the campaign's ads panel and KPIs; omitting either is refused rather than silently skipped. Doing it afterwards through a separate call is a step that can be missed, and missing it is silent. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued — poll getJob with the returned jobId and jobType to follow it, and read the job's effect outcomes rather than assuming they ran. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
+      "description": "Publish a plan produced by planAds. Declare what should be recorded once the ads exist through effects, and the worker runs them as part of the job. A recruitment publish must pass linkRecruitmentOffer with its offerId and creativeIds, which stamps the creatives and the offer, links the location's creator board that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live, and a directOffer publish must pass linkFeastCampaign with the campaignId it runs for, which is what puts its spend on the campaign's ads panel and KPIs; omitting either is refused rather than silently skipped. Doing it afterwards through a separate call is a step that can be missed, and missing it is silent. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued: poll getJob with the returned jobId and jobType to follow it, and read the job's effect outcomes rather than assuming they ran. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
       "type": "mutation",
       "path": [
         "api",
@@ -7415,7 +7415,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "setAdCampaignStatus",
       "domain": "ads",
-      "description": "Start or pause a Meta campaign that was published from Feastalytics. ACTIVE cascades to every ad set and ad, because campaigns are published paused at all three levels and a campaign-only activate would spend nothing. Activating spends real money — confirm with the human first, and check the preflight counts in the response.",
+      "description": "Start or pause a Meta campaign that was published from Feastalytics, including a location's creator recruitment campaign (its status is saved on the location's creator program too, and a manual change cancels any pending monthly-cap reactivation). ACTIVE cascades to every ad set and ad, because campaigns are published paused at all three levels and a campaign-only activate would spend nothing. Activating spends real money: confirm with the human first, and check the preflight counts in the response.",
       "type": "mutation",
       "path": [
         "api",
@@ -13802,6 +13802,12 @@ export const CLI_MANIFEST: CliManifest = {
                   "cid": {
                     "type": "string"
                   },
+                  "name": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
                   "latitude": {
                     "type": "number"
                   },
@@ -14966,7 +14972,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreatorVisit",
       "domain": "creators",
-      "description": "Update one creator visit: change its time or record its outcome. `status` accepts approved, denied, pending_approval, confirmed, visited, missed, issue, cancelled. status: 'approved' runs the real approval — THIS TEXTS THE CREATOR IMMEDIATELY and consumes the location's monthly creator sourcing allowance, which auto-pauses recruitment once reached; 'denied' texts a decline; approving a denied row reverses it — the creator gets a \"we changed our mind\" text and the scheduled texts are re-armed. Approving a row that is no longer actionable is a no-op and returns changed: false. Pass sideEffects: false to make any update silent — same field writes, but no creator text, no allowance spend, no post-approval automation. With sideEffects on (the default), setting startTime to a date texts the creator a confirmation and alerts the approver; setting startTime to null clears the time and texts the creator asking for a new one; of the remaining statuses only 'cancelled' texts the creator — the rest are plain record writes. Pass dryRun: true to get back the exact creator text(s) the same call would send — nothing is written or sent; use it to show the operator a preview before the real call. Get `eventId` from listCreatorApplications.",
+      "description": "Update one creator visit: change its time or record its outcome. `status` accepts approved, denied, pending_approval, confirmed, visited, missed, issue, cancelled. status: 'approved' runs the real approval: THIS TEXTS THE CREATOR IMMEDIATELY and consumes the location's monthly creator sourcing allowance, which auto-pauses recruitment once reached; 'denied' texts a decline; approving a denied row reverses it: the creator gets a \"we changed our mind\" text and the scheduled texts are re-armed. Approving a row that is no longer actionable is a no-op and returns changed: false. Pass sideEffects: false to make any update silent: same field writes, but no creator text, no allowance spend, no post-approval automation. A pending application never has a visit time: startTime (a date or null) is rejected while the row is pending_approval and in any call that passes status: 'approved' (approve first, then set or clear the time in a second call), and status: 'pending_approval' clears any existing time itself, so do not pass startTime with it. With sideEffects on (the default), setting startTime to a date texts the creator a confirmation and alerts the approver; setting startTime to null clears the time and texts the creator asking for a new one; of the remaining statuses only 'cancelled' texts the creator, the rest are plain record writes. Pass dryRun: true to get back the exact creator text(s) the same call would send; nothing is written or sent, so use it to show the operator a preview before the real call. Get `eventId` from listCreatorApplications.",
       "type": "mutation",
       "path": [
         "api",
@@ -15025,7 +15031,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert. There is no separate create tool, and the config is keyed by locationId, one per location, so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, calendarConfigured, passConfigured and reimbursementEnabled false. Omitted fields are left alone. Every program is apply-only: creators apply, the approver reviews them, and the creator AI agent texts approved creators to book the visit. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit. It changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. The Design creator program task needs a positive credit and landingPageConfirmed. launchInfluencerCampaign checks the same two. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately. agentPaused: true turns the creator AI agent off for the location: no automated creator texts (AI replies, visit reminders, content follow-ups) until it is set back to false; texts sent by people still deliver.",
+      "description": "Create or update a location's creator program. This is an upsert. There is no separate create tool, and the config is keyed by locationId, one per location, so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, passConfigured and reimbursementEnabled false. Omitted fields are left alone. Every program is apply-only: creators apply, the approver reviews them, and the creator AI agent texts approved creators to book the visit. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit. It changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. The Design creator program task needs a positive credit and landingPageConfirmed. launchInfluencerCampaign checks the same two. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately. agentPaused: true turns the creator AI agent off for the location: no automated creator texts (AI replies, visit reminders, content follow-ups) until it is set back to false; texts sent by people still deliver.",
       "type": "mutation",
       "path": [
         "api",
@@ -15043,9 +15049,6 @@ export const CLI_MANIFEST: CliManifest = {
             "minimum": 2500
           },
           "landingPageConfirmed": {
-            "type": "boolean"
-          },
-          "calendarConfigured": {
             "type": "boolean"
           },
           "approverUserId": {
@@ -15066,6 +15069,10 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "passConfigured": {
             "type": "boolean"
+          },
+          "calendarConfigured": {
+            "type": "boolean",
+            "description": "Ignored. Kept while older clients still send it."
           },
           "maxBookingDaysOut": {
             "anyOf": [
@@ -15187,6 +15194,45 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "agentPaused": {
             "type": "boolean"
+          },
+          "recruitmentFacebookCampaignId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Meta campaign of this location's creator recruitment ad. Set it after publishing the location's ad; it is what the monthly sourcing cap, the spend panel and the ad status read. Only this location's program is written. Omit to preserve; send null to clear."
+          },
+          "recruitmentFacebookAdSetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The ad set of this location's recruitment campaign. Omit to preserve; send null to clear."
+          },
+          "recruitmentStatus": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "paused"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The saved status of this location's recruitment campaign. This does not start or pause anything on Meta; use setAdCampaignStatus for that. Omit to preserve; send null to clear."
           }
         },
         "required": [
@@ -16016,7 +16062,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updatePassConfiguration",
       "domain": "passBuilder",
-      "description": "Save the organization's wallet pass configuration. This is a full-document save, not a patch — anything you omit is dropped, so read with getPassConfiguration, modify, and send the whole document back. Each save appends a new version, and when sections, features or locations change from the previous version every pass already in a guest's wallet is re-pushed.",
+      "description": "Save the organization's wallet pass configuration. This is a full-document save, not a patch — anything you omit is dropped, so read with getPassConfiguration, modify, and send the whole document back. Each save appends a new version, and when sections, features, locations or passStyle change from the previous version every pass already in a guest's wallet is re-pushed. passStyle is the Apple pass style (eventTicket, storeCard, generic, coupon) every one of the organization's passes is built with; unset means eventTicket. Omit passStyle to keep the current one, or send null to clear it.",
       "type": "mutation",
       "path": [
         "api",
@@ -17449,6 +17495,22 @@ export const CLI_MANIFEST: CliManifest = {
               "locations"
             ],
             "additionalProperties": false
+          },
+          "passStyle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "eventTicket",
+                  "storeCard",
+                  "generic",
+                  "coupon"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "metadata": {
             "type": "object",
