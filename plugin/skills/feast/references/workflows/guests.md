@@ -26,7 +26,7 @@ The recipient is always named by id, never by phone number, and the type must ma
 
 - `describeData` with no arguments returns the index of every queryable object type plus the full query grammar; narrowed by schema or object type it returns full column detail (type, enum values, nullability, description, and the link names `pivot` and `join` take). Pass `includeGrammar: false` once you have the grammar. Never guess column names.
 - `queryData` is read-only and always scoped to the organization; never filter on organizationId yourself.
-- Writing a query: `commands` run in order (`filter`, `pivot`, `join`, `aggregate`), and `pivot` and `join` must come before any `aggregate`. A filter leaf is one column, written as the column name prefixed with `$`; combine leaves with `{ "type": "and" | "or", "filters": [...] }`. Use `{ "strings": [...] }` for any-of rather than a large `or`. Pass `args.fields` to return only the columns you need on wide object types, and page by passing the returned `nextCursor` back as `args.cursor` (no `nextCursor` means no more rows).
+- Writing a query: `commands` run in order (`filter`, `pivot`, `join`, `aggregate`), and `pivot` and `join` must come before any `aggregate`. A filter leaf is one column, written as the column name prefixed with `$`; combine leaves with `{ "type": "and" | "or", "filters": [...] }`. Use `{ "strings": [...] }` for any-of rather than a large `or`. Send `args.fields` to return only the columns you need on wide object types, and page by sending the returned `nextCursor` back as `args.cursor` (no `nextCursor` means no more rows).
 - Example, opted-in members with more than 5 visits, newest first:
   ```json
   { "schemaName": "core", "objectTypeName": "guest",
