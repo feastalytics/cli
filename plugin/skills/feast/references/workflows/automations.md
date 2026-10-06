@@ -89,14 +89,14 @@ When an automation's trigger is `receiveAutomation`, ask the user whether it sho
 
 ### Text-content best practices (rules when creating, checklist when reviewing)
 
-1. **Descriptive names**: "Day 2: Visit Reminder with Pass Link", not "Reminder 1".
-2. **Lead with the pass link**: the first post-signup text MUST include the guest's wallet pass link, written with the `passLink` text variable (see the variables below).
-3. **Always `https://`** on every link (carriers block bare/protocol-less links).
+1. **Descriptive names**: "Day 2: Visit Reminder with Wallet Link", not "Reminder 1".
+2. **Lead with the wallet link**: the first post-signup text MUST include the link that adds the guest's card to Apple or Google Wallet, written with the `passLink` text variable (see the variables below).
+3. **Every link starts with https**: carriers block links written without it.
 4. **Mobile Google Maps links only**: `https://maps.app.goo.gl/...`, never desktop `maps.google.com`.
 5. **Correct reservation links**: `https://{subdomain}.feastalytics.com/i/{shorthand}/reservation` using the *current* campaign's shorthand (from `listCampaigns`) and a valid subdomain. Never reuse another campaign's link.
-6. **Personalize** with the `firstName` variable; **vary** tone/wording across automations; **re-share** useful info (pass link, hours, maps, reservation) in reminders; keep **empty lines** between blocks for readability.
+6. **Personalize** with the `firstName` variable; **vary** tone/wording across automations; **re-share** useful info (wallet link, hours, maps, reservation) in reminders; keep **empty lines** between blocks for readability.
 7. **Align offer expirations with open hours**: never expire an offer while the restaurant is closed.
 
-**Text variables.** A text action fills these in per guest when it sends. Write each one as its name wrapped in double curly braces (two opening braces, the name, two closing braces), exactly as spelled: `firstName`, `lastName`, `memberNumber`, `serialNumber`, `progress`, `passLink` (the guest's wallet pass), `referralLink` (the campaign referral link), `googleMapsLink`, `membersProgramLink`, `visitCount`, `offer`. Any other name is sent to the guest as literal text.
+**Text variables.** A text action fills these in per guest when it sends. Write each one as its name wrapped in double curly braces (two opening braces, the name, two closing braces), exactly as spelled: `firstName`, `lastName`, `memberNumber`, `serialNumber`, `progress`, `passLink` (the guest's wallet link), `referralLink` (the campaign referral link), `googleMapsLink`, `membersProgramLink`, `visitCount`, `offer`. Any other name is sent to the guest as literal text.
 
 ---
