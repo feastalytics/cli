@@ -73,6 +73,8 @@ The ads that bring applicants in are tool-drivable end to end:
 
 ### Paying the bonus
 
+Over the MCP server `createInfluencerPayout` is not available: the client pays creator bonuses in the dashboard, so point them there. On the CLI it remains available, as follows.
+
 `createInfluencerPayout` with `{ "eventId": "..." }` charges the organization's card and starts the creator's bonus on its way. **Never call it on your own initiative**: every call needs the client's explicit, fresh approval to pay this specific creator; a standing instruction doesn't count. The endpoint enforces its own preconditions (a submission approved with `approvalType: "ad"`, no payout already active for the visit: one per visit). The amount defaults to the bonus stamped on the submission when it was approved (falling back to the board config), grossed up to cover the Stripe fee; pass `amountCents` only when the client explicitly asks to pay this one creator a different amount. It applies to this payout only, is written back to the submission so reporting matches what was paid, and leaves the board config unchanged. A visit whose only attempts are FAILED or REFUNDED may be retried, which voids the earlier attempt's open invoice first. After the charge, Stripe webhooks carry it to the creator with no further action from you. Follow progress in `queryData` `creators.creatorPayout`, joined to the visit on `visitEventId`.
 
 ### Reimbursing boards

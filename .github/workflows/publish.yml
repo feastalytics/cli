@@ -43,7 +43,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       # Creates the bump commit + tag locally only. If a later step fails,
-      # nothing has been pushed, so main stays clean.
+      # nothing has been pushed, so main stays clean. npm's `version` lifecycle
+      # script (package.json) copies the new version into both plugin manifests
+      # (.claude-plugin/plugin.json, plugin.json) and stages them, so they land
+      # in the same release commit.
       - name: Bump version
         id: bump
         run: |

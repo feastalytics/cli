@@ -6,6 +6,15 @@ Ships with an [agent skill](#agent-skill) so Claude Code, Codex, and other agent
 
 ## Install
 
+Feastalytics ships as a plugin (the `feast` skill plus the hosted MCP server at `https://mcp.feast-api.com/mcp`), as a standalone skill, and as this CLI. The MCP server signs you in with OAuth the first time you connect; there is no client id or API key to enter.
+
+- **Claude Code**: `/plugin marketplace add feastalytics/cli`, then `/plugin install feastalytics@feast`.
+- **claude.ai and Claude Desktop**: add a custom connector with the URL `https://mcp.feast-api.com/mcp`. A directory listing is to follow.
+- **ChatGPT**: `npm run build:chatgpt` writes `dist/feastalytics-chatgpt.zip` (the root `plugin.json`, `mcp.json` and `skills/`).
+- **Skill only** (Claude Code, Codex, Cursor and other agents): `npx skills add feastalytics/cli`.
+
+### CLI
+
 ```bash
 npm install -g @feastalytics/cli
 ```
@@ -66,7 +75,7 @@ Mutations additionally require `--org` and print the server-resolved org before 
 
 ## Agent skill
 
-The `feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate Feastalytics through its tools, either this CLI or the hosted MCP server at `https://mcp.feast-api.com/mcp` (same tools, same names). Install it into your agent(s):
+The `skills/feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate Feastalytics through its tools, either this CLI or the hosted MCP server at `https://mcp.feast-api.com/mcp` (same tools, same names). Install it into your agent(s):
 
 ```bash
 npx skills add feastalytics/cli
@@ -86,7 +95,7 @@ npx skills add feastalytics/cli -g -a '*' -y
 - `-a '*'` re-links **all** agents (Claude Code, Codex, …) so each picks up the new version.
 - `-y` skips the confirmation prompts.
 
-To refresh from a local checkout instead of GitHub, run `npx skills add ./feast -g -a '*' -y` from the repo root.
+To refresh from a local checkout instead of GitHub, run `npx skills add . -g -a '*' -y` from the repo root.
 
 ### Playbook skills from Feastalytics
 
