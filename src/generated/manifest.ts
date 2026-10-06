@@ -6903,30 +6903,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "purchaseAndConfigurePhoneNumber",
-      "domain": "core",
-      "description": "Buys a real number from Twilio for the organization and bills the account. Nothing here undoes that. Pick a number geographically close to the restaurant: guests answer a local area code and read a distant one as spam, so search by the restaurant's own postal code or coordinates, never a guessed area code. If you don't know where the restaurant is, establish it first from its POS location, its Google Place, or by asking. Don't buy until you do.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "onboarding",
-        "purchaseAndConfigurePhoneNumber"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "phoneNumber": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "phoneNumber"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "queryData",
       "domain": "data",
       "description": "Run a read-only query against the data catalog. Call describeData first for object types and exact column names; do not guess columns. Results are already scoped to the organization, so never filter on organizationId. Page by passing the returned nextCursor back as args.cursor.",
@@ -7137,62 +7113,6 @@ export const CLI_MANIFEST: CliManifest = {
           "draftId"
         ],
         "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "searchAvailablePhoneNumbers",
-      "domain": "core",
-      "description": "Lists Twilio numbers available to buy for texting guests. Free and read-only. Search by the restaurant's own postal code or latitude/longitude: proximity matters, and a guessed area code lands a number in the wrong town.",
-      "type": "query",
-      "path": [
-        "api",
-        "onboarding",
-        "searchAvailablePhoneNumbers"
-      ],
-      "inputJsonSchema": {
-        "anyOf": [
-          {
-            "type": "object",
-            "properties": {
-              "areaCode": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "areaCode"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "postalCode": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "postalCode"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "latitude": {
-                "type": "number"
-              },
-              "longitude": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "latitude",
-              "longitude"
-            ],
-            "additionalProperties": false
-          }
-        ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -15271,9 +15191,6 @@ export const CLI_MANIFEST: CliManifest = {
           "completionStatus": {
             "type": "object",
             "properties": {
-              "preProductOnboardingComplete": {
-                "type": "boolean"
-              },
               "postProductOnboardingComplete": {
                 "type": "boolean"
               }
