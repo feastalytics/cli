@@ -1,10 +1,10 @@
 # Feastalytics domain model
 
-Background for constructing tool input correctly. This is the conceptual map; the authoritative field list for any tool always comes from `feast describe <tool>`.
+Background for constructing tool input correctly. This is the conceptual map; the authoritative field list for any tool always comes from its input schema.
 
 ## Organizations
 
-The top-level tenant. Nearly every tool is scoped to one organization via `--org`. An org has one or more POS locations (Toast/Square/Clover); many tools that operate on menus or offers need a `locationId`, which you get from `getOrganization` (it returns the org's `locations`) — not the organization id.
+The top-level tenant. Nearly every tool is scoped to one organization (see Organizations in `SKILL.md`). An org has one or more POS locations (Toast/Square/Clover); many tools that operate on menus or offers need a `locationId`, which you get from `getOrganization` (it returns the org's `locations`), not the organization id.
 
 ## Campaigns (acquisition)
 
@@ -13,7 +13,7 @@ A campaign is an acquisition effort. It bundles:
 - **automations** (see below) scoped to that campaign,
 - **promotions/offers** attached to it.
 
-Typical flow: `createCampaign` (set `isCreating: true` if you'll finish it with `populateCampaign`), then `populateCampaign`, then choose a funnel template. `cloneCampaign` duplicates an existing one (funnel + automations + offers) — it needs the source campaign id and a `referrer` (a subdomain from the org's `subdomains2`).
+Typical flow: `createCampaign`, then always `populateCampaign` (a new campaign stays hidden from the dashboard until it is populated), then choose a funnel template. `cloneCampaign` duplicates an existing one (funnel, automations and offers); it needs the source campaign id and a `referrer` (a subdomain from the org's `subdomains2`).
 
 ## Automations and flows
 
@@ -29,16 +29,16 @@ Promotions live on the campaign record (`getCampaign` / `updateCampaign`), and r
 
 ## Members program (retention)
 
-The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (`getPassConfiguration` / `updatePassConfiguration`) — see `workflows/members-program.md`.
+The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (`getPassConfiguration` / `updatePassConfiguration`). See `workflows/members-program.md`.
 
 ## Creator sourcing
 
-Restaurants recruit local content creators to visit and post. One config per location (`getInfluencerBoardConfig`), an approval queue of applications, content review, and bonus payouts — see `workflows/creators.md`. Recruitment *ads* publish through the Meta ads surface (`workflows/ads.md`).
+Restaurants recruit local content creators to visit and post. One config per location (`getInfluencerBoardConfig`), an approval queue of applications, content review, and bonus payouts. See `workflows/creators.md`. Recruitment *ads* publish through the Meta ads surface (`workflows/ads.md`).
 
 ## Meta ads
 
-A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `setAdCampaignStatus`, plus `ads_*` tools for reading and steering what's already on the ad account — see `workflows/ads.md`.
+A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `setAdCampaignStatus`, plus `ads_*` tools for reading and steering what's already on the ad account. See `workflows/ads.md`.
 
 ## The data catalog
 
-`describeData` / `queryData` expose a read-only, org-scoped query surface over the data model — guests, orders, menu items, texts, creator visits, payouts. When no purpose-built tool answers a read question, the catalog usually does; `describeData` with no arguments is the index.
+`describeData` / `queryData` expose a read-only, org-scoped query surface over the data model: guests, orders, menu items, texts, creator visits, payouts. When no purpose-built tool answers a read question, the catalog usually does; `describeData` with no arguments is the index.
