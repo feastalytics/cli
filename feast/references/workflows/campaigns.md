@@ -17,7 +17,7 @@ Fully doable through the tools. The server does the heavy lifting (id generation
    - `listFunnelTemplates` with the `campaignId`: the template catalog with per-campaign `eligible`/`ineligibleReason`, a `recommended` id, and each template's guest `journey`. Read this before applying; never guess a template id.
    - Pick by what the guest should experience, not by whether the offer has a price:
      - `offer-basic`: Sign Up goes straight to the offer wallet. **No payment step.** The template for any offer redeemed in person, priced or not.
-     - `offer-prepay` / `offer-direct-prepay`: a Stripe payment screen is part of the funnel. Only eligible when the promotion has `canPrePay: true` **and** a `price`; anything else is rejected with `PRECONDITION_FAILED`.
+     - `offer-prepay` / `offer-direct-prepay`: a Stripe payment screen is part of the funnel (after Sign Up for `offer-prepay`, straight from the landing page for `offer-direct-prepay`). Only eligible when the promotion has `canPrePay: true` **and** a `price`; anything else is rejected with `PRECONDITION_FAILED`.
      - `reservation-offer-basic` / `reservation-offer-prepay` / `reservation-offer-direct-prepay` / `reservation-only`: the reservation variants of the same split.
    - `applyFunnelTemplate` with `{ "campaignId": ..., "templateId": ... }`. Requires a fresh campaign whose funnel is unset; resolves the referrer from the campaign.
    - The promotion's `canPrePay` flag does **not** change what a template builds; it only gates eligibility. A "no prepay" request means `offer-basic` (or another no-payment template), full stop.
@@ -36,9 +36,33 @@ Setting `isPublished: true` with `updateCampaign` puts the campaign in front of 
 
 A short approval like "save it" or "looks good" is not a go-live instruction when the readiness check has not passed. Report what is missing first.
 
-**Reading a campaign back:** `getCampaign` returns the full config for one campaign (funnel/offer config, referrers, status); `listCampaigns` is the summary list; `getCampaignKpis` is performance metrics. Read with `getCampaign` before any `updateCampaign`.
+**Reading a campaign back:** `getCampaign` returns the full config for one campaign (funnel/offer config, referrers, status); `listCampaigns` is the summary list; performance is covered in "Reading a campaign's performance" below. Read with `getCampaign` before any `updateCampaign`.
+
+**Updating a campaign:** `updateCampaign` takes `{ "campaignId": "...", "update": { ... } }`. The update is merged one level deep: each top-level field you pass replaces the stored value whole. `promotions` is an array, so pass the full list with your change applied, never just the one promotion you edited. Other things to know:
+- `imageUrl` (the offer image) whose url or key contains the word `placeholder` counts as unset, and onboarding keeps asking for an image.
+- Saving a recurring promotion with a `price` creates a live Stripe product and monthly price in the connected account (a changed price creates a new price and archives the old one). After that, the campaign's Stripe account cannot be switched until those promotions are archived; the server rejects the change and says so.
 
 **Cloning:** `cloneCampaign` with `sourceCampaignId`, `newCampaignName`, and a `referrer` (subdomain) duplicates funnel + automations + offers and returns a `newCampaignId`. **Gotcha:** the cloned automations contain the *source* campaign's reservation links. After cloning, review the new campaign's automations and rewrite any reservation link to the new campaign's shorthand. The format is `https://{subdomain}.feastalytics.com/i/{new-shorthand}/reservation`.
+
+---
+
+## Reading a campaign's performance
+
+Three tools, all keyed by the Feast campaign `id` from `listCampaigns` (a UUID), never the Meta campaign id nested inside the campaign. They share one set of camelCase metric ids (`signupRate`, `thumbStopRatio`, `uniqueClickthrough`, `revenue`, ...) and one set of units.
+
+**Units.** `count`; `percent` as 0 to 100 (not 0 to 1); `usd` in dollars (not cents); `days`; `multiple` for ROAS (2 means 2x). In the breakdown: sessions, visitors, signups, impressions and reach are counts; every `*Rate`, `thumbStopRatio`, `holdRate` and `uniqueClickthrough` are percents; spend, cpm, revenue, costPerSignup and revenuePerSignup are USD; averageTimeToShow is days from signup to first scan.
+
+**Headline numbers: `getCampaignKpis`** with `{ "campaignId": "...", "start"?: ..., "end"?: ... }`. Pass both `start` and `end` for a date range; with either missing it covers all time. `"isPrimaryOnly": true` returns only the primary metrics. Returns one `{ id, type, value, unit }` row per metric, covering ad performance (spend, impressions, hook rate, hold rate, CTR, from synced Facebook data, so ROAS is revenue divided by spend), the funnel, automations and results. Rate metrics with a target band also carry `benchmark: { min, good, great }` in the same unit. A metric whose value would be zero is left out rather than returned as 0. So a missing spend row means no spend or no Facebook sync yet, never a confirmed $0.
+
+**Grading: `getCampaignBenchmarks`** (no input) returns `{ id, label, unit, description, formula, benchmark }` for every metric id. Call it once and reuse it; it is the same for every campaign. Grade a value green at or above `good`, yellow at or above `min`, red below `min`; `great` is a stretch level (null for ROAS). `benchmark` is null when a metric has no target band. The bands are fleet percentiles (P25/P50/P75 of campaigns with over 500 visitors), rounded, not per organization; ROAS is anchored at 1x break-even.
+
+**Where the numbers come from: `getCampaignBreakdown`** with `{ "refs": [...], "start": ..., "end": ... }`. `start`/`end` (both required) are the session window. It is a tree loaded a batch at a time: pass node refs, get back each node's metrics plus the refs of its children (identifiers only, no metrics), then pass those refs back in to go a level deeper. Up to 100 refs per call, and refs from different campaigns can be mixed.
+- Start with `{ "type": "campaign", "campaign": { "campaignId": "..." } }`. It returns the campaign totals and its channel refs.
+- The tree: campaign → channel (`facebook`, `influencer`, `tiktok`, `google`, `misc`, `referral`, `unknown`), then per channel: facebook → fbCampaign → fbAdset → fbAd; google → googleCampaign; tiktok → tiktokCampaign; misc → miscSource; referral → referrer; influencer → creator.
+- A `null` id inside a ref is the "Unknown" bucket: sessions that could not be matched to a specific child.
+- **Variants** split the campaign by pass rather than by session. The campaign node lists them in `details.campaign.variants` (empty when the campaign has none). Load one with `{ "type": "variant", "variant": { "campaignId": "...", "variantId": "..." } }`; `variantId: null` is the default variant. Variant nodes carry only signups, pass registration and show rate, time to show, revenue and revenue per signup.
+- **Missing key vs null.** A metric key that is absent means the metric does not apply to that node (spend on a Google row, for example). `null` means it applies but could not be computed: no denominator, or Facebook was unreachable (see `details.facebook.error`).
+- Facebook delivery metrics in the breakdown are read live from Meta, while `getCampaignKpis` reads synced Facebook data, so the two can differ.
 
 ---
 
