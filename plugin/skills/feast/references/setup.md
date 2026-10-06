@@ -30,7 +30,7 @@ If the global install fails on permissions, don't retry with `sudo`. Tell the us
 
 ### Authenticating
 
-Authenticate once. Tokens are cached in `~/.config/feast-cli/credentials.json` and refreshed automatically:
+Authenticate once. The CLI keeps you signed in and refreshes the session itself:
 
 ```bash
 feast login                        # opens a browser to authorize (default)
@@ -64,7 +64,7 @@ Feastalytics publishes further skills that build on this one (campaign diagnosis
 
 ```bash
 feast skill list                       # what is published for your organization
-feast skill install feast-playbooks    # install or refresh one into ~/.claude/skills/
+feast skill install feast-playbooks    # install or refresh one for your agent
 ```
 
 Install what `feast skill list` offers when the user asks for a playbook this skill does not cover, and re-run the install when the CLI prints an update notice.
