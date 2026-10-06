@@ -10,7 +10,7 @@ Feastalytics ships as a plugin (the `feast` skill plus the hosted MCP server at 
 
 - **Claude Code**: `/plugin marketplace add feastalytics/cli`, then `/plugin install feastalytics@feast`.
 - **claude.ai and Claude Desktop**: add a custom connector with the URL `https://mcp.feast-api.com/mcp`. A directory listing is to follow.
-- **ChatGPT**: `npm run build:chatgpt` writes `dist/feastalytics-chatgpt.zip` (the root `plugin.json`, `mcp.json` and `skills/`).
+- **ChatGPT**: `npm run build:chatgpt` writes `dist/feastalytics-chatgpt.zip` (`plugin/plugin.json`, `plugin/mcp.json`, the icon and `plugin/skills/`).
 - **Skill only** (Claude Code, Codex, Cursor and other agents): `npx skills add feastalytics/cli`.
 
 ### CLI
@@ -75,7 +75,7 @@ Mutations additionally require `--org` and print the server-resolved org before 
 
 ## Agent skill
 
-The `skills/feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate Feastalytics through its tools, either this CLI or the hosted MCP server at `https://mcp.feast-api.com/mcp` (same tools, same names). Install it into your agent(s):
+The `plugin/skills/feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate Feastalytics through its tools, either this CLI or the hosted MCP server at `https://mcp.feast-api.com/mcp` (same tools, same names). Install it into your agent(s):
 
 ```bash
 npx skills add feastalytics/cli
