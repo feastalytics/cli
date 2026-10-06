@@ -23,6 +23,9 @@ Automations have a staging tier, and it is the default path. Changes accumulate 
    - `{ "type": "createVariant", "automationId": "<id>", "variantId": "<new-uuid>", "variant": <AutomationVariant> }` and `{ "type": "updateVariant", "automationId": "<id>", "variantId": "<id>", "variant": { "triggers"?, "conditions"?, "actions"?, "time"? } }` add or change an A/B variant of an automation.
    Call it repeatedly to build a change up; ops append in order.
 6. `simulateAutomations` with `{ "flowId": "<id>", "edits": <the draft's operations> }`: dry-run against a synthetic event timeline with **no real sends** and confirm the right automations fire. If the simulation surprises you, stage a correction rather than promoting and patching live.
+   - **First call:** pass `flowId` and omit `events`. The server seeds a timeline from that flow's triggers (a `viewCampaign` event when the flow has a campaign, then the first eligible trigger event 15 seconds later) and returns it as `eventsUsed`.
+   - **Later calls:** to test another day or continue the guest's journey, change `at` on those events or append more, and pass the array back as `events`. Each event is `{ "type": "...", "at": "<ISO 8601 timestamp>" }` plus a few optional fields per type; the server fills in the guest, organization and campaign.
+   - The result is `scheduledTexts` (what would be sent, and when) plus `eventsUsed`.
 7. **Give the user the `previewUrls` from the draft** and let them look before you promote. Each entry is one flow's before/after view. Don't promote unprompted work on the user's behalf; staging exists so a human sees the change first.
 8. `saveAutomationEdits` with `{ "draftId": "<id>" }`: this is the write to production. It refuses if any automation the draft touches was changed by someone else since you staged, naming which; re-stage against the current state rather than retrying.
 

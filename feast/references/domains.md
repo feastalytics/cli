@@ -13,6 +13,8 @@ A campaign is an acquisition effort. It bundles:
 - **automations** (see below) scoped to that campaign,
 - **promotions/offers** attached to it.
 
+`listCampaigns` resolves a `campaignId`: use each summary's `id` (a UUID), not the nested Meta campaign id. Summaries also carry the name, `shorthand` (used in reservation links), publish state and referrers; `getCampaign` has the full configuration.
+
 Typical flow: `createCampaign`, then always `populateCampaign` (a new campaign stays hidden from the dashboard until it is populated), then choose a funnel template. `cloneCampaign` duplicates an existing one (funnel, automations and offers); it needs the source campaign id and a `referrer` (a subdomain from the org's `subdomains2`).
 
 ## Automations and flows

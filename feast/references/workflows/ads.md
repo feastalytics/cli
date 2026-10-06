@@ -16,12 +16,16 @@ For the *words* in the ads, read the copywriting file for your audience first: `
 1. `listAdTemplates`: pick the template, read each variable's `producedBy`.
 2. Gather variables with those tools: `ads_get_ad_accounts`, `ads_get_user_pages`, `ads_get_ig_accounts`, `ads_get_custom_audiences`, `listIgMedia`, `listCreatives`, `getCampaign`, etc. Prefer a Page with `usedByOrganization: true`; the token reaches other businesses' Pages and nothing stops you publishing from the wrong one.
    - `ads_get_custom_audiences` `{ "adAccountId": "..." }` supplies the `customAudienceIds` and `excludedCustomAudienceIds` variables. Skip any audience with `isReadyForUse: false` (Meta will not deliver to it, so an ad set targeting it reaches nobody), and remember audience ids belong to one ad account and are rejected by another.
-   - `listIgMedia` `{ "pageId": "..." }` lists up to 50 recent posts from the Instagram business account linked to that Page, plus the `instagramUserId` that goes on an `igMedia` creative reference. A Page with no linked Instagram business account returns `instagramAccount: null`.
+   - `listIgMedia` `{ "pageId": "..." }` lists up to 50 recent posts (id, caption, thumbnail, mediaType, permalink, timestamp) from the Instagram business account linked to that Page, plus the `instagramUserId` that goes on an `igMedia` creative reference. A Page with no linked Instagram business account returns `instagramAccount: null`.
+   - `ads_get_user_pages` shows each Page's linked Instagram business account when it has one; `ads_get_ig_accounts` `{ "pageId": "..." }` is the full list of identities that Page can run ads as, for the `instagramAccountId` variable (`kind: "pageBacked"` is the identity Meta creates for a Page with no Instagram account, and is valid too).
+   - `ads_get_custom_audiences`: an audience's size bounds are approximate and go stale while Meta is updating it. Nothing says how fresh the underlying list is: a customer-list audience is a snapshot of the last upload, and `timeUpdated` is when that happened.
 3. `planAds`: fix every issue with severity `error` and re-plan. Summarize the resulting tree (campaign name, budget, targeting, ad count) for the user before going further; the plan is the thing they're approving.
 4. `publishAds` with the returned `variables`, `overrides` and `planHash` unchanged, plus:
    - `confirm: true`. The schema demands it; this is the only tool with a schema-level confirm.
-   - an `idempotencyKey` you generate. Reuse the same key when retrying the *same* publish: a duplicate key returns the earlier job instead of publishing twice. Never reuse one for a new publish.
+   - an `idempotencyKey` you generate. Reuse the same key when retrying the *same* publish: a duplicate key is refused with the earlier job's id, so read that job with `getJob` instead of publishing twice. Never reuse one for a new publish.
    - `effects`: see below.
+
+   If the organization resolves differently than when you planned (a `PLAN_STALE` refusal), re-run `planAds` and show the human what changed before publishing again.
 5. Poll `getJob` with the returned `jobId` + `jobType` until `COMPLETED` or `FAILED`. `{ "job": null }` means not landed yet, so keep polling. **Read the job's effect outcomes.** Each declared effect reports `done`, `skipped` or `error` with a human-readable detail, and effect failures do not fail the job (the ads already exist by then), so this is the only place you find out.
 6. `setAdCampaignStatus` to go live, after the user says go. Check the preflight counts in the response. For guest-facing ads linked to a Feast campaign, run the campaign readiness check first (`getTaskboard` with the campaign scope, see "Before a campaign goes live" in `campaigns.md`). Ads that send traffic to a funnel with no automations pay for sign ups that never receive their offer.
 
@@ -38,14 +42,18 @@ An effect that reports `error` in the job is a case for the dashboard, not for p
 
 - **`directOffer`**: guest-facing offer ads for a campaign. Requires the `linkFeastCampaign` effect. Copy rules: `ad-copy-guest.md`.
 - **`recruitment`**: creator-recruitment ads. An always-on trickle with an enforced budget floor and ceiling. Requires the `linkRecruitmentOffer` effect. Creatives come from `createRecruitmentCreatives` → `listCreatives` (pass each creative's `imageKey` as a `libraryAsset` reference); copy rules: `ad-copy-creator.md`; program context: `creators.md`.
-- **`addAds`**: add fresh creatives to an ad set that is already running. Copy the settings the new ads must match from an existing ad via `ads_get_ad_entities`. Its description carries the exact field-by-field recipe, and Meta will happily publish a mismatched ad rather than reject it.
+- **`addAds`**: add fresh creatives to an ad set that is already running. Copy the settings the new ads must match from an existing ad; Meta will happily publish a mismatched ad (pointing somewhere different from its siblings) rather than reject it, so copy the values, never invent them. Call `ads_get_ad_entities` with `level: "ad"` and that `adSetId`, skip ads whose `effectiveStatus` is `DELETED` or `ARCHIVED`, take the first one left, and read from its creative:
+  - `pageId`: `objectStorySpec.page_id`
+  - `instagramAccountId`: `objectStorySpec.instagram_actor_id`, or `instagram_user_id` when that is absent (both spellings occur)
+  - `urlTags`: `urlTags`
+  - `headline`, `primaryText`, `landingUrl`: from whichever of three shapes the ad uses. `assetFeedSpec`, when present, wins: `titles[0].text`, `bodies[0].text`, `link_urls[0].website_url`. Otherwise `objectStorySpec.link_data` for an image ad: `name`, `message`, `link`. Otherwise `objectStorySpec.video_data` for a video ad: `title`, `message`, `call_to_action.value.link`.
 
 ### Reading and steering what's live
 
-- `ads_get_ad_entities`: read campaigns/ad sets/ads on an account, creatives attached. The diagnostic read for everything below.
-- `ads_update_entity`: rename, re-budget, or pause. Budgets are integer cents and **replace** the current value; read first, confirm the number with the human. Creatives are immutable at Meta, so new copy or media means a new ad (the `addAds` template).
-- `ads_activate_entity`: go-live for structures Feastalytics did *not* publish. No cascade: activate top-down and check `willDeliver`; a child under a paused parent is live in name only. For campaigns Feastalytics published, `setAdCampaignStatus` cascades and is the right tool.
-- `ads_get_datasets` / `ads_create_dataset`: pixel checks and creation. The pixel a campaign should optimise against is the one its funnel actually fires (from the layout config), not whichever pixel looks plausible on the account. After creating one, write its id back with `updateBrandIdentity`; creation alone connects nothing.
+- `ads_get_ad_entities`: read campaigns/ad sets/ads on an account, creatives attached. The diagnostic read for everything below. `level` says what comes back; an id at the requested level fetches that one object, and an id from a level above lists that object's children: `campaignId` with `level: "adSet"` returns that campaign's ad sets, and with `level: "ad"` every ad in it across all its ad sets. Where several ids apply, the narrowest wins.
+- `ads_update_entity`: rename, re-budget, or pause; moving a daily budget is how you scale a winner or throttle a loser. Budgets are integer cents and **replace** the current value; read first, confirm the number with the human. Creatives are immutable at Meta, so new copy or media means a new ad (the `addAds` template).
+- `ads_activate_entity`: go-live for structures Feastalytics did *not* publish. No cascade: activate top-down and check `willDeliver`; a child under a paused parent is live in name only. For campaigns Feastalytics published, `setAdCampaignStatus` cascades and is the right tool: those are published paused at all three levels, so activating the campaign alone would spend nothing.
+- `ads_get_datasets` / `ads_create_dataset`: pixel checks and creation. The pixel a campaign should optimise against is the one its funnel actually fires (from the layout config), not whichever pixel looks plausible on the account. After creating one, write its id back with `updateBrandIdentity`; creation alone connects nothing. That layout config value is what makes the funnel fire the pixel and what the onboarding task reads.
 
 ### Reference scripts for video ads
 
