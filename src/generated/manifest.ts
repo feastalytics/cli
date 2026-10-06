@@ -26,7 +26,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_activate_entity",
       "domain": "ads",
-      "description": "Take a Meta campaign, ad set or ad from PAUSED to ACTIVE. This spends real money — call it only after the human has explicitly confirmed they want this live. Pausing is the other tool: ads_update_entity with status PAUSED. Activating a parent does NOT activate its children, so a structure that was published paused has to be activated from the top down — campaign, then ad set, then ad. Activating a child whose parent is still paused succeeds at Meta and delivers nothing, so the response reports pausedAncestors and willDeliver; if willDeliver is false the entity is live in name only and you should say so rather than reporting success. setAdCampaignStatus is the shortcut for a campaign Feastalytics published, because that one cascades to every level at once.",
+      "description": "Take one Meta campaign, ad set or ad from PAUSED to ACTIVE. Spends real money: only after the human explicitly confirms. Does not cascade, so activate top-down; willDeliver false (a paused parent, listed in pausedAncestors) means live in name only, so say so. For a campaign Feastalytics published, use setAdCampaignStatus, which cascades.",
       "type": "mutation",
       "path": [
         "api",
@@ -66,7 +66,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_create_dataset",
       "domain": "ads",
-      "description": "Create a dataset (Meta pixel) on an ad account, for a restaurant that has none. Call ads_get_datasets first: an account usually already has one, a second dataset splits a funnel's events in two, and datasets cannot be deleted. Creating it connects it to nothing — write the returned id to the organization's layout config with updateBrandIdentity, which is what makes the funnel fire it and what the onboarding task reads.",
+      "description": "Create a dataset (Meta pixel) on an ad account. Datasets cannot be deleted and a second one splits a funnel's events, so check ads_get_datasets first. Creating connects nothing: write the returned id to the layout config with updateBrandIdentity.",
       "type": "mutation",
       "path": [
         "api",
@@ -97,7 +97,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_ad_accounts",
       "domain": "ads",
-      "description": "List the ad accounts this organization can publish to. The Meta token reaches every ad account of every business it was connected for, so the list is narrowed to accounts publishAds will accept; includeUnassigned returns the rest for diagnosing a missing account, and those are not publishable.",
+      "description": "List the ad accounts you can publish to. The Meta token reaches every ad account of every business it was connected for, so the list is narrowed to accounts publishAds will accept; includeUnassigned returns the rest for diagnosing a missing account, and those are not publishable.",
       "type": "query",
       "path": [
         "api",
@@ -120,7 +120,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_ad_entities",
       "domain": "ads",
-      "description": "Read the campaigns, ad sets or ads already on an ad account. Ads come back with their creative attached.\n\nlevel says what kind of thing comes back; the ids say where to look. An id at its own level fetches that one object, and at a lower level lists that object's children — so campaignId with level campaign returns that campaign, with level adSet returns its ad sets, and with level ad returns every ad in it across all of its ad sets. Ids can only point downward: an adSetId at level campaign is an error rather than being ignored. Where several apply, the narrowest wins.\n\nTo add new creatives to an ad set that is already running, use this to copy the settings the new ads must match, then publish with the addAds template. Read level ad with that adSetId, skip ads whose effectiveStatus is DELETED or ARCHIVED, take the first one left, and pull from its creative:\n- pageId: objectStorySpec.page_id\n- instagramAccountId: objectStorySpec.instagram_actor_id, or instagram_user_id if that is absent — both spellings occur\n- urlTags: urlTags\n- headline, primaryText and landingUrl live in whichever of three shapes the ad uses. assetFeedSpec, if present, wins: titles[0].text, bodies[0].text, link_urls[0].website_url. Otherwise objectStorySpec.link_data for an image ad: name, message, link. Otherwise objectStorySpec.video_data for a video ad: title, message, call_to_action.value.link.\n\nA mismatch here is not rejected by Meta — it publishes an ad pointing somewhere different from its siblings — so copy the values rather than inventing them.",
+      "description": "Read the campaigns, ad sets or ads on an ad account; ads include their creative. level is what comes back; a campaignId, adSetId or adId narrows to that object or its children (an id below level is an error). Before an addAds publish, copy a live ad's settings as the ads workflow describes.",
       "type": "query",
       "path": [
         "api",
@@ -180,7 +180,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_custom_audiences",
       "domain": "ads",
-      "description": "List the custom audiences on an ad account, for the customAudienceIds and excludedCustomAudienceIds template variables. isReadyForUse false means Meta will not deliver to it, usually for too few matched people, so an ad set targeting it reaches nobody, and the size bounds are approximate and go stale while an audience is being updated. An audience belongs to the ad account, so the ids from one account are rejected by another. Nothing here says how fresh the underlying list is: a customer-list audience is a snapshot of whatever was last uploaded, and timeUpdated is when that happened.",
+      "description": "List the custom audiences on an ad account, for the customAudienceIds and excludedCustomAudienceIds template variables. Skip any with isReadyForUse false: Meta delivers nothing to it. Audience ids belong to one ad account and are rejected by another.",
       "type": "query",
       "path": [
         "api",
@@ -206,7 +206,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_datasets",
       "domain": "ads",
-      "description": "List the datasets (Meta pixels) on an ad account, with lastFiredTime so you can see which are receiving events. This is for checking a pixel rather than choosing one: the pixelId a campaign should optimise against is the pixel its funnel actually fires, which comes from the organization's layout config. A pixel picked from this list because it looks plausible may receive no traffic from that funnel.",
+      "description": "List the datasets (Meta pixels) on an ad account, with lastFiredTime. For checking a pixel, not choosing one: a campaign should optimise against the pixel its funnel fires (from the organization's layout config), or it may get no traffic.",
       "type": "query",
       "path": [
         "api",
@@ -232,7 +232,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_ig_accounts",
       "domain": "ads",
-      "description": "List the Instagram identities a Page can run ads as. kind is business for a real Instagram business account, or pageBacked for the shadow identity Meta creates for a Page without one — both are valid values for the instagramAccountId template variable. Takes a pageId because the ad identity follows the Page.",
+      "description": "List the Instagram identities a Page can run ads as. kind is business for a real Instagram business account, or pageBacked for the shadow identity Meta creates for a Page without one; both are valid for the instagramAccountId template variable. pageId comes from ads_get_user_pages.",
       "type": "query",
       "path": [
         "api",
@@ -258,7 +258,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_user_pages",
       "domain": "ads",
-      "description": "List the Facebook Pages available for advertising. The Meta token also reaches Pages belonging to other businesses, and nothing stops publishAds from using one, so prefer a Page with usedByOrganization true — those are the Pages this organization has already run ads from. instagramBusinessAccountId is included when the Page has one; use ads_get_ig_accounts for the full identity list.",
+      "description": "List the Facebook Pages available for advertising, with any linked Instagram business account. The token also reaches other businesses' Pages and publishAds accepts them, so prefer a Page with usedByOrganization true (one this organization has run ads from).",
       "type": "query",
       "path": [
         "api",
@@ -276,7 +276,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_update_entity",
       "domain": "ads",
-      "description": "Change budget, name or pause state on a Meta campaign, ad set or ad. This is the lever the re-evaluation loop turns: scale a winner or throttle a loser by moving its daily budget. adAccountId must be the account that actually owns the entity, and is rejected otherwise. Budgets are integer cents and replace the current value rather than adjusting it — read the entity with ads_get_ad_entities first, and confirm the new number with the human, because it starts spending differently the moment it lands. An entity carries either a daily or a lifetime budget, never both. status only accepts PAUSED: pausing one ad is what this is for, while going live spends money and belongs to setAdCampaignStatus, which cascades. Creative content cannot be edited at all — Meta creatives are immutable, so new copy or media means a new ad.",
+      "description": "Rename, re-budget or pause a Meta campaign, ad set or ad. Budgets are integer cents and replace the current value, and spend changes the moment it lands: read the entity with ads_get_ad_entities and confirm the new number with the human first. adAccountId must own the entity. status only accepts PAUSED; going live is setAdCampaignStatus or ads_activate_entity. Creatives cannot be edited.",
       "type": "mutation",
       "path": [
         "api",
@@ -367,7 +367,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "applyFunnelTemplate",
       "domain": "campaigns",
-      "description": "Applies a funnel template to an existing campaign that has no funnel set up yet (override.initialScreenId is null). Pass a templateId from listFunnelTemplates: offer-basic (Sign Up routes straight to the offer wallet — no payment step; use this for offers redeemed in person), offer-prepay / offer-direct-prepay (Sign Up / landing routes to a Stripe payment screen), reservation-offer-basic (Sign Up routes to reservation-or-wallet), reservation-offer-prepay / reservation-offer-direct-prepay (payment then reservation), reservation-only. The promotion's canPrePay flag does NOT change what gets built — prepay templates always insert the payment screen, and are rejected unless the promotion has canPrePay: true and a price.",
+      "description": "Builds a campaign's funnel screens from a template. Only works on a campaign with no funnel yet (deleteFunnel resets one). templateId comes from listFunnelTemplates. Prepay templates always add a Stripe payment screen, so use offer-basic for an offer redeemed in person, priced or not.",
       "type": "mutation",
       "path": [
         "api",
@@ -405,7 +405,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "awardReward",
       "domain": "membersProgram",
-      "description": "Give one member a reward they can redeem, the way the dashboard's Give Reward button does. This is a real grant that lands in the guest's wallet pass — it is not the same as createMembersProgramReward, which only defines a reward the program offers. serialNumber identifies the member (get one from searchUsers) and itemId the catalog item they get; both are checked against this organization and a wrong id is rejected rather than granted. Expiry is optional and a reward with none never expires: expiresInDays sets it to the end of that day in the restaurant's timezone, which is what a guest reads '14 days' to mean, and expiresAt takes an exact ISO 8601 instant — pass one or the other. locationId restricts redemption to one participating location and is otherwise left open. Awarding recomputes the member's progress, which also re-evaluates their automations, so a flow triggered by earning a reward will fire. There is no undo and no idempotency key, so a retried call grants a second reward.",
+      "description": "Give one member a reward in their wallet pass now, like the dashboard's Give Reward button (createMembersProgramReward only defines a reward the program offers). serialNumber from searchUsers, itemId from listMembersProgramRewards. Re-evaluates the member's automations, so a flow triggered by earning a reward fires. No undo and no idempotency key: a retried call grants a second reward, so confirm with the user and call once per member.",
       "type": "mutation",
       "path": [
         "api",
@@ -447,7 +447,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "batchEditAutomations",
       "domain": "automations",
-      "description": "Write automation changes straight to production in one atomic batch. PREFER THE DRAFT FLOW: createAutomationDraft plus stageAutomationEdits let a human preview and sign off first, and saveAutomationEdits promotes through this same code path — reach for this tool only when an immediate live write is explicitly wanted. Every automation lives inside a flow, so `create` ops require a flowId and throw without one: call listAutomationFlows to find and reuse a matching flow, or createAutomationFlow to make one. Never invent a flowId. Delete is blocked for automations that already have sends.",
+      "description": "Write automation changes straight to production in one atomic batch; real guests receive the result. Use only when the user explicitly wants an immediate live write; otherwise use the draft loop (createAutomationDraft, stageAutomationEdits, saveAutomationEdits). `create` ops need a flowId from listAutomationFlows or createAutomationFlow. An `update` replaces each field it sends, so send the full current `actions` array.",
       "type": "mutation",
       "path": [
         "api",
@@ -2305,7 +2305,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "cloneCampaign",
       "domain": "campaigns",
-      "description": "Clones an existing campaign including its funnel screens, automations, and offers. Requires sourceCampaignId, newCampaignName, and referrer (subdomain from organization.subdomains2). Cloned automations keep the source campaign's reservation links — after cloning, rewrite any reservation link in the new campaign's automations to the new campaign's shorthand.",
+      "description": "Copies a campaign's funnel screens, automations and offers into a new campaign. referrer is a subdomain from getOrganization (subdomains2). The copied automations keep the source campaign's reservation links; rewrite them to the new campaign's shorthand.",
       "type": "mutation",
       "path": [
         "api",
@@ -2338,7 +2338,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "countParentAutomationRecipients",
       "domain": "automations",
-      "description": "How many distinct members already received an automation — the audience size a receiveAutomation-triggered child would reach if backfilled with applyToHistorical: true. Call this before any backfill, tell the user the number, and warn when it exceeds 1000; only backfill after they confirm. Read-only and safe to call while deciding.",
+      "description": "Count distinct members who already received an automation: the audience a receiveAutomation child reaches if backfilled with applyToHistorical: true. Read-only. Before any backfill, tell the user this number, warn above 1000, and backfill only after they confirm.",
       "type": "query",
       "path": [
         "api",
@@ -2362,7 +2362,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createAutomationDraft",
       "domain": "automations",
-      "description": "Start a draft of automation changes — an off-prod overlay a human can preview and sign off before anything goes live. This is the DEFAULT way to change automations: create a draft, add changes with stageAutomationEdits, share a preview link, promote with saveAutomationEdits. `title` is what the reviewer sees. Optionally seed with `operations` in the format batchEditAutomations takes. Returns the draft including `previewUrls` — links to send for sign-off.",
+      "description": "Start a draft of automation changes for a human to preview before they go live; the default way to change automations. `title` is what the reviewer sees. Optional `operations` use the batchEditAutomations format. Keep the returned draftId (drafts cannot be listed); share `previewUrls` for sign-off.",
       "type": "mutation",
       "path": [
         "api",
@@ -4223,7 +4223,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createAutomationFlow",
       "domain": "automations",
-      "description": "Create an automation flow — the container grouping automations by a shared trigger. Automations always live inside a flow, so find one with listAutomationFlows before creating another.",
+      "description": "Create an automation flow: the container grouping automations by a shared trigger. Automations always live inside a flow, so find one with listAutomationFlows before creating another.",
       "type": "mutation",
       "path": [
         "api",
@@ -4286,7 +4286,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createAvailability",
       "domain": "creators",
-      "description": "Open a window creators can book visits in. A block is either type 'once' with a utcStart and utcEnd, or type 'weekly' with start and end hour/minute, the utcDaysOfWeek it repeats on, and blockUtcStart for when the repetition begins. All times are UTC, and the restaurant thinks in local time — convert before writing. For weekly blocks utcDaysOfWeek is the day of week IN UTC, so an evening local window that crosses midnight UTC lands on the following day: 9pm Friday New York is 02:00 Saturday UTC, and writing Friday there opens the wrong night. Set campaignId as well as locationId: the Set booking windows task only completes when a window carries the first campaign's id, so a window without one works for booking but leaves the task open.",
+      "description": "Open a window creators can book visits in, as a 'once' or 'weekly' block. Times and weekly days are UTC: convert the restaurant's local day and time together (see the creators workflow). Set campaignId as well as locationId, or the Set booking windows task stays open.",
       "type": "mutation",
       "path": [
         "api",
@@ -4418,7 +4418,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createBrandIdentity",
       "domain": "core",
-      "description": "Create the restaurant's branded website: a subdomain, its layout config, and a full default screen tree. Gates everything funnel-shaped downstream, since screens are addressed by referrer. referrer is the subdomain label only — letters and numbers, no dots — and is lowercased; it is claimed across all organizations, so a name another restaurant already uses is rejected. Only an admin can create one when the organization already has a site. Get logoUrl from getMediaUploadUrl. Confirm the name and subdomain with the customer first; this is their branding decision.",
+      "description": "Create the restaurant's branded site: a subdomain (referrer), its layout config and default screens. Funnels are addressed by referrer, so they need one. The subdomain is claimed across all restaurants: confirm the name and subdomain with the customer first. Get logoUrl from getMediaUploadUrl.",
       "type": "mutation",
       "path": [
         "api",
@@ -4640,7 +4640,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createCreativeStrategy",
       "domain": "creators",
-      "description": "Generate a creator strategy. An awareness strategy is built from a fixed template and is saved before this returns, with generationStatus complete and a null jobId. A CTA strategy is generated by an LLM in the background — this returns immediately with generationStatus generating, so poll getCreativeStrategy with the returned strategyId until it reads complete or failed before using the brief. The jobId and jobType that come back track the same run through getJob, but getCreativeStrategy is the simpler poll — reach for getJob only when the strategy reads failed and you want the job's errorMessage. Edit the result with updateCreativeStrategy. Passing a strategyId that is not a draft is rejected rather than overwritten.",
+      "description": "Generate a creator brief (creative strategy). An awareness brief is saved before this returns; a CTA brief generates in the background, so poll getCreativeStrategy with the returned strategyId until generationStatus is complete or failed before using it. Edit it with updateCreativeStrategy.",
       "type": "mutation",
       "path": [
         "api",
@@ -4792,7 +4792,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createInfluencerPayout",
       "domain": "creators",
-      "description": "Charges the organization's card to pay a creator's content bonus. NEVER call this on your own initiative or as part of an automated flow — every call needs the client's explicit, fresh approval to pay this specific creator, given to you directly; a standing instruction or an inferred intent does not count. The endpoint enforces its own preconditions and refuses otherwise: the visit must have a content submission approved as a paid ad (decideCreatorSubmission with approvalType 'ad' — organic approvals earn no payout), and no payout may already exist for the visit in any active status — one payout per visit, so a second call while one is pending, funding, onboarding, or paid is rejected. A visit whose only attempts are FAILED or REFUNDED may be retried; the retry voids the earlier attempt's open Stripe invoice first and recomputes the default amount the same way. The bonus amount defaults to the one stamped on the submission when it was approved (falling back to the location's board config), and is grossed up so the org covers the Stripe fee. Pass amountCents only when the client explicitly asks to pay this one creator a different amount; it is written back to the submission so reporting matches what was paid. After the charge, Stripe webhooks carry it to the creator (FUNDED → onboarding if needed → PAID) with no further action from you; follow progress in queryData creators.creatorPayout.",
+      "description": "Charge the organization's card to pay a creator's content bonus. Never call it on your own initiative or in an automated flow: every call needs the client's explicit, fresh approval to pay this specific creator, and a standing instruction does not count. Needs a submission approved with approvalType 'ad'; one payout per visit. Pass amountCents only when the client asks to pay this creator a different amount. eventId is the visit's eventId.",
       "type": "mutation",
       "path": [
         "api",
@@ -4823,7 +4823,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createMembersProgramReward",
       "domain": "membersProgram",
-      "description": "Create a members program reward over a catalog item. type 'item' promotes an existing item by itemId — get one from listMembersProgramRewards or a catalog query, and prefer it whenever the item already exists in the POS. type 'name' looks the name up across the Feast, Toast, Square and Clover catalogs and creates a new Feast item only if nothing matches; the match is exact, so a near-miss silently creates a duplicate of a menu item the restaurant already has. When several items share a name a Feast one wins, and otherwise you get a CONFLICT listing the candidates so you can pass itemId instead. staffInstructions are stored only on Feast items and are rejected for a POS-sourced one. Pass pointsCost for a reward guests redeem with points; omit it for one granted by an automation. A reward with neither a pointsCost nor an awardReward automation can never reach a guest, so pair it with an automation.",
+      "description": "Create a members program reward over a catalog item. Prefer type 'item' with an existing itemId (from a catalog query). type 'name' matches the name exactly across the Feast and POS catalogs and creates a new Feast item when nothing matches, so a near-miss silently duplicates a menu item.",
       "type": "mutation",
       "path": [
         "api",
@@ -4887,7 +4887,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "description": "Generate the five AI recruitment ad creatives a restaurant runs to source creators. Pass campaignId and the tool resolves the campaign's recruitment offer itself, creating one only if the campaign has none — that offer is what groups the creatives, stamps the Meta campaign onto the strategy, and carries the monthly sourcing cap, so creatives generated without it land in a shared bucket and are attached to nothing. Pass offerId instead only when you already have the exact offer; one of the two is required, because without an offer the creatives would be generated, charged for, and attached to nothing. force regenerates every type, deleting and replacing the existing creatives rather than filling gaps; without it only missing types are generated. Each generation calls an image model per missing type, so force costs a full set.",
+      "description": "Generate the five AI recruitment ad creatives for a location. Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit from getInfluencerBoardConfig.",
       "type": "mutation",
       "path": [
         "api",
@@ -4934,7 +4934,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "decideCreatorSubmission",
       "domain": "creators",
-      "description": "Decide on a creator's content submission. THIS TEXTS THE CREATOR unless skipApprovalText — approving tells them they're done, revision_requested sends your feedbackMessage plus a resubmit link, so write feedbackMessage for the creator to read rather than as an internal note. Approving also queues their bonus payout. approvalType 'ad' means the content may run in paid ads and is rejected when the board's bonus is $0; use 'organic' otherwise. Get submissionIds from listCreatorSubmissions.",
+      "description": "Decide on a creator's content submission. Approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. submissionId from listCreatorSubmissions.",
       "type": "mutation",
       "path": [
         "api",
@@ -4981,7 +4981,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "deleteAutomationFlow",
       "domain": "automations",
-      "description": "Delete an automation flow and the automations inside it. Pass flowId. Blocked if the flow's automations have 20 or more sends — turn the flow off instead of deleting it in that case. This is destructive; prefer disabling over deleting when unsure.",
+      "description": "Delete an automation flow and the automations inside it. Pass flowId. Blocked if the flow's automations have 20 or more sends; turn the flow off instead of deleting it in that case. This is destructive; prefer disabling over deleting when unsure.",
       "type": "mutation",
       "path": [
         "api",
@@ -5091,7 +5091,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "deleteMembersProgramReward",
       "domain": "membersProgram",
-      "description": "Remove a members program reward. This is how an orphan gets cleaned up — a reward no automation's awardReward grants can never reach a guest and holds the members program short of complete. The catalog item is left alone, because it may be a real POS menu item or be used by another reward. Guests who already redeemed keep what they were given; this only stops it being offered again.",
+      "description": "Remove a members program reward so it is no longer offered (the cleanup for an orphan no automation grants). rewardId from listMembersProgramRewards. The catalog item is left alone, and guests who already redeemed keep what they were given.",
       "type": "mutation",
       "path": [
         "api",
@@ -5116,7 +5116,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "describeData",
       "domain": "data",
-      "description": "Describe the queryable data model, then read it with queryData. Call with no arguments first — that returns an index of every queryable object type plus the full query grammar. Narrowing by schema or object type returns full column detail: type, enum values, nullability, description, and the link names you pass to a pivot or join. Prefer the 'interface' schema, whose object types are POS-agnostic and return the same shape whichever POS the organization runs.",
+      "description": "Describe the queryable data model, then read it with queryData. With no arguments it returns an index of every object type plus the query grammar; narrowing by schema or object type returns full column detail, including the link names pivot and join take. Prefer the POS-agnostic 'interface' schema.",
       "type": "query",
       "path": [
         "api",
@@ -5203,7 +5203,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getAutomationDraft",
       "domain": "automations",
-      "description": "Read an automation draft — its staged operations, the flows it touches, the resulting automations after those operations are merged onto current live state, and the preview links that show those changes highlighted. `resultingAutomations` is what each touched automation will actually look like if the draft is saved — always check it for fields that silently changed or disappeared, not just the fields the operations explicitly mention. Use the returned `operations` as `edits` on simulateAutomations to preview what the draft would do.",
+      "description": "Read an automation draft by draftId: its staged `operations`, the flows it touches, `previewUrls`, and `resultingAutomations` (each touched automation as it will look after the save). Check `resultingAutomations` for fields that changed or disappeared, not only the ones the operations mention.",
       "type": "query",
       "path": [
         "api",
@@ -5227,7 +5227,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getBillingStatus",
       "domain": "core",
-      "description": "Whether this organization is paid up, and on what. hasAccess is the one to read for \"can they use the product\": it means paid and not mid-charge. needsPayment is its inverse for the states worth acting on — PENDING, FAILED, or a charge in flight — and is what the dashboard polls to decide whether to block the app behind a payment form. currentTier and subscriptionStatus describe the plan; initialDepositCents is in cents. Read-only: every write here moves real money and stays in the dashboard. existingOrganizations lists *other* organizations billed under the same billing admin, with their names and tiers — they are not this organization, and it is empty for per-organization billing.",
+      "description": "Read-only billing state for the organization. hasAccess answers \"can they use the product\" (paid, no charge in flight); needsPayment flags PENDING, FAILED or a charge in flight. initialDepositCents is in cents. Every billing change stays in the dashboard.",
       "type": "query",
       "path": [
         "api",
@@ -5239,7 +5239,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaign",
       "domain": "campaigns",
-      "description": "Full configuration for one acquisition campaign — name, status, funnel and landing-page config, ad config, offers, settings. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta campaignId. Read this before editing a campaign. For performance metrics use getCampaignKpis.",
+      "description": "Full configuration for one acquisition campaign: name, status, funnel and landing page config, ad config, offers, settings. campaignId is the Feast campaign id from listCampaigns (a UUID), not the nested Meta campaignId. Read before updateCampaign. For performance use getCampaignKpis.",
       "type": "query",
       "path": [
         "api",
@@ -5264,7 +5264,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaignBenchmarks",
       "domain": "campaigns",
-      "description": "The definition and target band of every campaign metric id that getCampaignKpis and getCampaignBreakdown return. One entry per id: { id, label, unit, description, formula, benchmark }, where unit is count, percent (0-100), usd (dollars), days or multiple (ROAS, 2 = 2x), and benchmark is { min, good, great } in that unit or null when the metric has no target band. Grade a value as green at or above good, yellow at or above min, red below min; great is a stretch level (null for ROAS). The bands are fleet percentiles (P25/P50/P75 of campaigns with over 500 visitors) rounded to clean numbers, not per-organization; ROAS is anchored at 1x break-even. Call once and reuse; the table does not change per campaign.",
+      "description": "The definition (label, unit, description, formula) and target band of every metric id that getCampaignKpis and getCampaignBreakdown return. Bands are fleet-wide, not per organization. Call once and reuse; the table is the same for every campaign.",
       "type": "query",
       "path": [
         "api",
@@ -5277,7 +5277,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaignBreakdown",
       "domain": "campaigns",
-      "description": "A campaign's metrics broken down by channel, Facebook campaign, ad set, ad, referrer and creator, as a tree of nodes, loaded a batch at a time. Pass node refs, get back each node's metrics plus the refs of its children (identifiers only, no metrics). Load children by passing those refs back in.\n\nStart from { type: \"campaign\", campaign: { campaignId } }, where campaignId is the Feast campaign id from listCampaigns. It returns the campaign totals and its channel refs. The tree is: campaign → channel (facebook, influencer, tiktok, google, misc, referral, unknown) → per channel: facebook → fbCampaign → fbAdset → fbAd; google → googleCampaign; tiktok → tiktokCampaign; misc → miscSource; referral → referrer; influencer → creator. Variants split the campaign by pass instead of by session: the campaign node lists them in details.campaign.variants (empty when the campaign has no variants), and { type: \"variant\", variant: { campaignId, variantId } } with variantId null is the default variant; variant nodes carry only signups, pass registration and show rate, time to show, revenue and revenue per signup. A null id inside a ref is the \"Unknown\" bucket for sessions that could not be matched. Refs from different campaigns can be mixed in one call (max 100).\n\nMetrics use start/end as the session window. Units: sessions, visitors, signups, impressions, reach are counts; *Rate, thumbStopRatio, holdRate and uniqueClickthrough are percentages (0-100); spend, cpm, revenue, costPerSignup, revenuePerSignup are USD; averageTimeToShow is days from signup to first scan. A missing metric key means the metric does not apply to that node (for example spend on a Google row); null means it applies but could not be computed (no denominator, or Facebook was unreachable, see details.facebook.error). Facebook delivery metrics are read live from Meta.",
+      "description": "A campaign's metrics as a tree (channel, ad, creator, variant). Pass node refs; get back metrics and child refs to drill into. Start from { type: \"campaign\", campaign: { campaignId } } (id from listCampaigns). A missing metric key means it does not apply; null means it could not be computed.",
       "type": "query",
       "path": [
         "api",
@@ -5684,7 +5684,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaignKpis",
       "domain": "campaigns",
-      "description": "Performance metrics for an acquisition campaign. campaignId is the Feast campaign's `id` from listCampaigns (a UUID), NOT the nested Meta campaignId. Returns { id, type, value, unit } per metric. Metric ids are the same camelCase ids getCampaignBreakdown uses (signupRate, thumbStopRatio, uniqueClickthrough, revenue, ...), and units match it too: count, percent (0-100), usd (dollars). Rate metrics with a target band carry benchmark: { min, good, great } in the same unit (see getCampaignBenchmarks for the full table and grading rule). Covers ad performance (spend, impressions, hook rate (thumb stop), hold rate, CTR — sourced from synced Facebook data, so ROAS is revenue divided by spend), the funnel, automations, and results. Metrics whose value would be zero are omitted rather than returned as 0 — notably spend, so an absent spend metric means no spend OR no sync yet, never a confirmed zero.",
+      "description": "Headline metrics for one acquisition campaign, one { id, type, value, unit } row per metric. campaignId is the Feast campaign id from listCampaigns, not the Meta campaignId. Metrics whose value is zero are omitted: no spend row means no spend or no Facebook sync yet, never a confirmed $0.",
       "type": "query",
       "path": [
         "api",
@@ -5744,7 +5744,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCreatorConversation",
       "domain": "creators",
-      "description": "One creator's full SMS thread, newest first — what the dashboard's creator chat view renders. userId comes from listCreatorConversations, which is the queue; this is the read you make before summarizing an exchange or drafting a reply for the human to send, because the queue only carries the last message. Each row has the body, direction (from/to the creator's number), and timestamps. Returns empty when the creator has no phone number on file. Read-only: send the reply with sendText and {type:'creator', userId}; marking the thread read stays in the dashboard.",
+      "description": "One creator's full SMS thread, newest first. userId from listCreatorConversations. Read this before summarizing an exchange or drafting a reply, since the queue only has the last message. Empty when the creator has no phone number. Reply with sendText and {type:'creator', userId}.",
       "type": "query",
       "path": [
         "api",
@@ -5793,7 +5793,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Read a location's creator program settings (dining credit, creator bonus, follower minimum and booking limits) plus its recruitment offers (the ad creative). The location's live recruitment Meta campaign, ad set and status are on config (recruitmentFacebookCampaignId, recruitmentFacebookAdSetId, recruitmentStatus), not on the offers. Returns config: null when the location has no program yet. Read this before writing recruitment copy: the credit and bonus amounts you are supposed to quote live here and nowhere else. Get a locationId from queryData interface.location.",
+      "description": "Read a location's creator program settings (dining credit, creator bonus, follower minimum, booking limits) and its recruitment Meta campaign, ad set and status. config is null when the location has no program. Quote credit and bonus only from here. locationId from queryData interface.location.",
       "type": "query",
       "path": [
         "api",
@@ -5817,7 +5817,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getJob",
       "domain": "core",
-      "description": "Poll one background job by id. Any tool that queues work returns a { jobId, jobType } pair — publishAds and the CTA path of createCreativeStrategy both do — and both values are required here, because a job id alone is not addressable. Returns { job: null } while the row hasn't landed yet, so treat null as in-flight and keep polling; status moves PENDING, RUNNING, then COMPLETED or FAILED with an errorMessage. A publish job's output reports each declared effect as done, skipped or error with a human-readable detail — including whether the program's approver was texted — and that outcome is reported nowhere else, so read it rather than assuming the effects ran. The job's input and per-step generated text are stripped by default; includeFullPayload returns both.",
+      "description": "Poll one background job. Pass both jobId and jobType from the tool that queued it (a job id alone is not addressable). { job: null } means not landed yet: keep polling. status goes PENDING, RUNNING, then COMPLETED or FAILED (with errorMessage). includeFullPayload adds the input and generated text.",
       "type": "query",
       "path": [
         "api",
@@ -5889,7 +5889,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getMemberConversation",
       "domain": "membersProgram",
-      "description": "One member's SMS thread and activity, newest first — what the dashboard's chat page renders, and the pair to searchUsers the way getCreatorConversation pairs with listCreatorConversations. serialNumber comes from searchUsers. eventTypes: ['sentText','receivedText'] is the conversation; adding scan, order, checkout, rewardAwarded or rewardRedeemed interleaves what happened between the messages. Unfiltered it fans out to every event source and returns the member's whole history unpaginated, so pass eventTypes unless you really want it all. Read-only: reply to the member with sendText and {type:'guest', serialNumber}.",
+      "description": "One member's SMS thread and activity, newest first. serialNumber from searchUsers. Pass eventTypes ['sentText','receivedText'] for the conversation; unfiltered it returns the member's whole history, unpaginated. Read-only: reply with sendText.",
       "type": "query",
       "path": [
         "api",
@@ -5949,7 +5949,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getOnboardingForm",
       "domain": "core",
-      "description": "Read the organization's onboarding form — the self-reported answers behind onboarding tasks the system can't observe directly. Returns null when the org has no form yet. Read this before updateOnboardingForm, which replaces nested step objects rather than merging them.",
+      "description": "Read the onboarding form: the self-reported answers behind onboarding tasks the system can't observe directly. Returns null when there is no form. Read this before updateOnboardingForm, which replaces nested step objects rather than merging them.",
       "type": "query",
       "path": [
         "api",
@@ -5974,7 +5974,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getPassConfiguration",
       "domain": "passBuilder",
-      "description": "The organization's live wallet pass configuration — content sections, features, locations, metadata and the current version. Returns null when none has been saved. Read this before changing the pass: updatePassConfiguration is a full-document save, so the returned document is what you modify.",
+      "description": "The live wallet pass configuration: content sections, features, locations, metadata and the current version. Returns null when none has been saved. Read this before changing the pass: updatePassConfiguration is a full-document save, so the returned document is what you modify.",
       "type": "query",
       "path": [
         "api",
@@ -5992,7 +5992,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getTaskboard",
       "domain": "validate",
-      "description": "Everything that needs fixing or finishing for the organization, as one list discriminated by `kind`. kind:'task' entries are onboarding tasks; each carries a completionUrl — a browser page where a human completes it, so include that link when you ask the user to act — and completionInstructions describing exactly what completes it. Prefer completionInstructions over guessing how a task is evaluated. kind:'issue' entries are live-computed misconfigurations (placeholder content, inactive automations, a missing 'Text STOP' opt-out, unawarded rewards, wallet pass and pixel problems), each with a severity, a human message, and a fixHint. Task statuses may lag a recompute by ~30s; this call triggers a refresh. Funnel checks cover only screens reachable from the funnel's start screen.",
+      "description": "Everything that needs fixing or finishing, as one list by `kind`. 'task' entries are onboarding tasks with completionInstructions and a completionUrl to give the user for browser-only steps. 'issue' entries are live misconfigurations with a fixHint. Each call refreshes task statuses (~30s lag).",
       "type": "query",
       "path": [
         "api",
@@ -6165,7 +6165,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "inviteUser",
       "domain": "core",
-      "description": "Invite someone to the organization by email. This sends a real email immediately — an invitation with a 14-day token, or a login reminder if they already have a Feast account, in which case they are added to the organization right away with no acceptance step. Always pass role explicitly: it defaults to OWNER, which grants full access to billing and every setting. VIEWER is read-only and SCANNER is for staff running the scanner app. Re-inviting an email cancels its pending invites and sends a fresh one. Only an OWNER can call this.",
+      "description": "Invite someone to the organization by email. Sends a real email immediately; someone who already has a Feast account joins right away with no acceptance step. Always pass role: it defaults to OWNER, with full billing and settings access. VIEWER is read-only; SCANNER is for staff running the scanner app.",
       "type": "mutation",
       "path": [
         "api",
@@ -6199,7 +6199,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAdTemplates",
       "domain": "ads",
-      "description": "List the Meta ad campaign templates this organization can publish, with the variables each one takes, which plan paths may be overridden, and its budget range. Call this before planAds so you know which variables to supply. Each variable that names a producedBy tool tells you where its value comes from.",
+      "description": "List the Meta ad templates you can publish, with each one's variables, overridable plan paths and budget range. Call it before planAds. A variable that names a producedBy tool tells you where its value comes from.",
       "type": "query",
       "path": [
         "api",
@@ -6212,7 +6212,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAutomationFlows",
       "domain": "automations",
-      "description": "Automation flows for the organization — a flow is the container grouping automations by trigger. Call this first to find the flow an automation belongs in, and only create one if none fits. Scope 'membersProgram' returns flows with no campaign.",
+      "description": "Automation flows. A flow is the container grouping automations by trigger. Call this first to find the flow an automation belongs in, and only create one if none fits. Scope 'membersProgram' returns flows with no campaign.",
       "type": "query",
       "path": [
         "api",
@@ -6244,7 +6244,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAutomations",
       "domain": "automations",
-      "description": "List automations for the organization, ordered by execution priority. Pass { flowId } to return only the automations in that flow — the way to read a single flow's contents before editing it. Omit the input to return every automation in the org.",
+      "description": "List automations, ordered by execution priority. Pass { flowId } to return only the automations in that flow, the way to read a single flow's contents before editing it. Omit the input to return every automation.",
       "type": "query",
       "path": [
         "api",
@@ -6300,7 +6300,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAvailability",
       "domain": "creators",
-      "description": "List every creator booking window for the organization. Takes no arguments and is not scoped to a location or a campaign — filter the results by locationId or campaignId yourself. All times are UTC, and the restaurant thinks in local time — convert before writing. For weekly blocks utcDaysOfWeek is the day of week IN UTC, so an evening local window that crosses midnight UTC lands on the following day: 9pm Friday New York is 02:00 Saturday UTC, and writing Friday there opens the wrong night.",
+      "description": "List every creator booking window in the organization. Takes no arguments; filter by locationId or campaignId yourself. Times and utcDaysOfWeek are UTC, not the restaurant's local time.",
       "type": "query",
       "path": [
         "api",
@@ -6312,7 +6312,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCampaigns",
       "domain": "core",
-      "description": "The organization's acquisition campaigns, newest first, as summaries. Start here to resolve a campaignId: the `id` field (a UUID) is what every other campaign tool takes, NOT the nested Meta campaign id. Also carries each campaign's name, shorthand (used in reservation links), publish state, and referrers. Read one campaign's full configuration — promotions, ad copy, banner and image config — with getCampaign.",
+      "description": "The organization's acquisition campaigns, newest first, as summaries. Use the `id` field (a UUID) as campaignId in every other campaign tool, not the nested Meta campaign id. getCampaign returns one campaign's full configuration.",
       "type": "query",
       "path": [
         "api",
@@ -6325,7 +6325,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatives",
       "domain": "creators",
-      "description": "The generated recruitment creatives for an organization, optionally narrowed to one offer. Each carries an imageKey resolving to the rendered variant that was picked, and selectedImageUrl for the same object as a URL — pass imageKey to planAds as a libraryAsset reference rather than choosing among the composite fields yourself. imageUrl is the base render and is not the ad asset. staleCreativeIds lists creatives generated from an older version of their offer, and is only populated when offerId is given.",
+      "description": "Generated recruitment creatives, optionally for one offer. Pass a creative's imageKey to planAds as a libraryAsset; imageUrl is the base render, not the ad asset. staleCreativeIds (only with offerId) lists creatives made from an older version of their offer.",
       "type": "query",
       "path": [
         "api",
@@ -6353,7 +6353,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorApplications",
       "domain": "creators",
-      "description": "Creator applications waiting on an approve/deny decision, newest first, across every location. Each row carries the `eventId` for updateCreatorVisit plus who applied, where, when, and their handles and follower count. That follower count is usually the deciding factor and is not reachable through queryData, so start here rather than querying creatorVisitApplication when working the approval queue. Each row also carries the creative brief already assigned to that visit as `strategyId`/`strategyTitle` and its `campaignId`/`campaignName`, all null when no brief is assigned yet — assign one with assignVisitStrategy before approving, because the approval text links whatever brief the visit carries at that moment.",
+      "description": "Creator applications awaiting approve or deny, newest first, across every location, with follower counts (not in queryData). Each row has the eventId for updateCreatorVisit and the assigned brief's strategyId; when it is null, have a brief assigned on the Creator approvals page before approving.",
       "type": "query",
       "path": [
         "api",
@@ -6365,7 +6365,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorConversations",
       "domain": "creators",
-      "description": "Every creator's SMS conversation with its unread state — the 'who is waiting on a reply' queue. `hasUnread` means their last message came in after ours and nobody has marked it read; those need a human. Each row carries the last message body, time and direction, the creator's handles, `visitLocationIds` (every location they have a visit at, in any status), and `visitStatus`, a derived stage that is more reliable than reading raw columns off creatorVisitApplication. Read the full thread behind a row with getCreatorConversation and its userId, and reply with sendText and {type:'creator', userId}. Read-only: marking a conversation read stays in the dashboard.",
+      "description": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue. hasUnread rows need a human. Each row has the last message, visitLocationIds and a derived visitStatus. Read a thread with getCreatorConversation (userId); reply with sendText and {type:'creator', userId}.",
       "type": "query",
       "path": [
         "api",
@@ -6412,7 +6412,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listFunnelDrafts",
       "domain": "funnel",
-      "description": "List funnel drafts for the organization as summaries (id, referrer, campaign, status, edit counts), optionally filtered by referrer or status. Use getFunnelDraft for a draft's full edits.",
+      "description": "List funnel drafts as summaries (id, referrer, campaign, status, edit counts), optionally filtered by referrer or status. Use getFunnelDraft for a draft's full edits.",
       "type": "query",
       "path": [
         "api",
@@ -6483,7 +6483,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listFunnelTemplates",
       "domain": "campaigns",
-      "description": "Lists the funnel templates that can be applied to a campaign, with per-template eligibility for this campaign and a recommended template. Each template describes the guest journey (ordered screens) and whether it collects payment. Prepay templates insert a Stripe payment screen and are only eligible when the campaign's promotion has canPrePay: true and a price; the promotion's canPrePay flag does NOT change what a template builds — pick a non-payment template (offer-basic) for offers redeemed in person. Use before applyFunnelTemplate.",
+      "description": "Lists the funnel templates for a campaign: each template's guest journey (ordered screens), whether it collects payment, its eligibility for this campaign, and a recommended id. Read before applyFunnelTemplate; never guess a template id.",
       "type": "query",
       "path": [
         "api",
@@ -6508,7 +6508,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listIgMedia",
       "domain": "ads",
-      "description": "List recent posts from the Instagram business account linked to a Facebook Page, for use as igMedia creative references in planAds templates. Returns the instagramUserId to put on the igMedia creative ref plus up to 50 recent posts with id, caption, thumbnail, mediaType, permalink and timestamp. Takes a pageId from ads_get_user_pages; a Page with no linked Instagram business account returns instagramAccount null.",
+      "description": "List up to 50 recent posts from the Instagram business account linked to a Facebook Page, for igMedia creative references in planAds, with the instagramUserId each reference needs. pageId comes from ads_get_user_pages; a Page with no linked account returns instagramAccount null.",
       "type": "query",
       "path": [
         "api",
@@ -6534,7 +6534,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listMedia",
       "domain": "core",
-      "description": "Uploaded media files for the organization, across one or more scopes. Each file is tagged with its scope and a canDelete flag. `cropped` lists the cropped variants under each scope's cropped/ subfolder instead of the base files.",
+      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. `cropped` lists the cropped variants under each scope's cropped/ subfolder instead of the base files.",
       "type": "query",
       "path": [
         "api",
@@ -6577,7 +6577,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listMembersProgramRewards",
       "domain": "membersProgram",
-      "description": "The organization's members program rewards with their catalog item name, staff instructions, points cost and source. Items are resolved across the Feast, Toast, Square and Clover catalogs, so source tells you which one backs the reward; a null name means the item no longer exists in any of them. A reward with a pointsCost is redeemed by guests spending points; one without is granted by an automation. To find orphans — rewards nothing ever awards — cross-check listAutomations for itemIds in an awardReward action.",
+      "description": "Members program rewards with their catalog item name, staff instructions, points cost and source catalog (Feast, Toast, Square or Clover). A null name means the item no longer exists in any catalog.",
       "type": "query",
       "path": [
         "api",
@@ -6595,7 +6595,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listReferenceScripts",
       "domain": "ads",
-      "description": "The reference ad scripts that Content Studio offers as Concept presets for Bevyl videos. Each entry is distilled from an ad that performed: { id, title, description, videoUrl, structure, keyPhrases, concept }. description says what the reference video shows, videoUrl is a public MP4 preview of it, structure is the ordered high-level beats, keyPhrases are lines to adapt with <placeholders> filled from the campaign's facts, and concept is the exact text Content Studio sends to Bevyl as the concept. Copy the structure and pacing, not the words. The list is the same for every organization.",
+      "description": "List the reference ad scripts Content Studio offers as Concept presets for Bevyl videos, each distilled from an ad that performed: a preview video, its beats, lines to adapt and the concept text sent to Bevyl. Copy the structure and pacing, not the words.",
       "type": "query",
       "path": [
         "api",
@@ -6635,7 +6635,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "markReimbursementPaid",
       "domain": "creators",
-      "description": "Record that a creator has been paid back for a meal they bought on a reimbursing board. This moves no money — it only writes down that the client already sent it by their own means, so never call it unless the client tells you the payment has actually gone out. The submission must be approved and its reimbursement still pending; a submission with no receipt was never on a reimbursing board and is rejected. Read the receipt total off creators.creatorContentSubmission before recording anything.",
+      "description": "Record that the client already paid a creator back for a meal on a reimbursing board. Moves no money: call it only after the client says the payment went out. The submission must be approved with its reimbursement pending. submissionId and receiptTotalCents from listCreatorSubmissions.",
       "type": "mutation",
       "path": [
         "api",
@@ -6662,7 +6662,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "planAds",
       "domain": "ads",
-      "description": "Resolve an ad template and its variables into the exact tree of campaigns, ad sets and ads that would be created on Meta. Creates nothing on Meta and changes no Feastalytics data — it is a mutation only so the variables travel in a request body rather than a URL. Returns the tree, a planHash, the fully defaulted variables, and validation issues. Fix any issue with severity error and plan again; then pass the returned variables, overrides and planHash to publishAds unchanged. Never hand-assemble Meta parameters — publishAds re-derives the tree from these variables and refuses anything else.",
+      "description": "Resolve an ad template and its variables into the exact campaigns, ad sets and ads publishAds would create. Creates nothing. Returns the tree, planHash, defaulted variables and issues; fix severity error issues and re-plan, then pass variables, overrides and planHash to publishAds unchanged.",
       "type": "mutation",
       "path": [
         "api",
@@ -6702,7 +6702,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "populateCampaign",
       "domain": "campaigns",
-      "description": "Finalizes a campaign that was created with isCreating true. Optionally attaches a promotion/offer image to the campaign. Does NOT set up funnel screens — follow with applyFunnelTemplate, or the user picks a template in the funnel editor.",
+      "description": "Finalizes a campaign that was created with isCreating true. Optionally attaches a promotion/offer image to the campaign. Does NOT set up funnel screens; follow with applyFunnelTemplate, or the user picks a template in the funnel editor. contentStrategy: \"tracking_only\" publishes the campaign immediately.",
       "type": "mutation",
       "path": [
         "api",
@@ -6798,7 +6798,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "publishAds",
       "domain": "ads",
-      "description": "Publish a plan produced by planAds. Declare what should be recorded once the ads exist through effects, and the worker runs them as part of the job. A recruitment publish must pass linkRecruitmentOffer with its offerId and creativeIds, which stamps the creatives and the offer, links the location's creator board that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live, and a directOffer publish must pass linkFeastCampaign with the campaignId it runs for, which is what puts its spend on the campaign's ads panel and KPIs; omitting either is refused rather than silently skipped. Doing it afterwards through a separate call is a step that can be missed, and missing it is silent. Pass back the variables, overrides and planHash that planAds returned, unchanged. The server re-derives the tree and refuses to publish if it no longer matches the hash, so re-plan and show the human the difference if that happens. This returns as soon as the work is queued: poll getJob with the returned jobId and jobType to follow it, and read the job's effect outcomes rather than assuming they ran. Everything is created paused; use setAdCampaignStatus to start it. Requires an explicit confirm.",
+      "description": "Publish a planAds plan to Meta, everything paused; setAdCampaignStatus starts spending. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome. Only with the human's explicit approval.",
       "type": "mutation",
       "path": [
         "api",
@@ -6905,7 +6905,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "purchaseAndConfigurePhoneNumber",
       "domain": "core",
-      "description": "Buys a real number from Twilio for the organization and bills the account — nothing here undoes that. Pick a number geographically close to the restaurant: guests answer a local area code and read a distant one as spam, so search by the restaurant's own postal code or coordinates, never a guessed area code. If you don't know where the restaurant is, establish it first from its POS location, its Google Place, or by asking — don't buy until you do.",
+      "description": "Buys a real number from Twilio for the organization and bills the account. Nothing here undoes that. Pick a number geographically close to the restaurant: guests answer a local area code and read a distant one as spam, so search by the restaurant's own postal code or coordinates, never a guessed area code. If you don't know where the restaurant is, establish it first from its POS location, its Google Place, or by asking. Don't buy until you do.",
       "type": "mutation",
       "path": [
         "api",
@@ -6929,7 +6929,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "queryData",
       "domain": "data",
-      "description": "Run a read-only query against the organization's data. Call describeData first for object types and exact column names - do not guess columns.\nResults are always scoped to the calling organization, so never filter on organizationId yourself.\n\nFilter leaves are one column each, written as the column name prefixed with $, combined with {\"type\":\"and\"|\"or\",\"filters\":[...]}. Use {\"strings\":[...]} for any-of rather than a large or. Page by passing the returned nextCursor back as args.cursor.\n\nExample - opted-in members with more than 5 visits, newest first:\n{\"schemaName\":\"core\",\"objectTypeName\":\"guest\",\"commands\":[{\"type\":\"filter\",\"filter\":{\"type\":\"and\",\"filters\":[{\"$optIn\":{\"boolean\":true}},{\"$progress\":{\"number\":5,\"match\":\"GT\"}}]}}],\"args\":{\"limit\":500,\"order\":{\"field\":\"timeAdded\",\"direction\":\"DESC\"},\"fields\":[\"serialNumber\",\"phoneNumber\",\"progress\"]}}",
+      "description": "Run a read-only query against the data catalog. Call describeData first for object types and exact column names; do not guess columns. Results are already scoped to the organization, so never filter on organizationId. Page by passing the returned nextCursor back as args.cursor.",
       "type": "query",
       "path": [
         "api",
@@ -7094,7 +7094,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "saveAutomationEdits",
       "domain": "automations",
-      "description": "Promote an automation draft to production — this writes to live automations and real guests start receiving the result. Refuses if any touched automation changed since the draft was staged, in which case re-stage against the current state. Marks the draft promoted on success.",
+      "description": "Promote an automation draft to production. This writes to live automations and real guests start receiving the result. Refuses if any touched automation changed since the draft was staged, in which case re-stage against the current state. Marks the draft promoted on success.",
       "type": "mutation",
       "path": [
         "api",
@@ -7143,7 +7143,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "searchAvailablePhoneNumbers",
       "domain": "core",
-      "description": "Lists Twilio numbers currently purchasable for texting guests. What matters is proximity to the restaurant, not a memorable area code, so search by the restaurant's own postal code or latitude/longitude — a guessed area code lands you a number in the wrong town. This is a read-only lookup that costs nothing, so call it as often as you need while narrowing down before purchasing.",
+      "description": "Lists Twilio numbers available to buy for texting guests. Free and read-only. Search by the restaurant's own postal code or latitude/longitude: proximity matters, and a guessed area code lands a number in the wrong town.",
       "type": "query",
       "path": [
         "api",
@@ -7199,7 +7199,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "searchGooglePlaces",
       "domain": "core",
-      "description": "Resolve a restaurant to its Google Place ID, which gates Google review and photo scraping. type 'search' takes a query and returns ranked candidates; include the city ('Todays Pizza, Brooklyn NY') because a bare name is usually ambiguous. type 'lookup' takes a placeId and returns that one place with its name, address, website and coordinates — use it to inspect a place already stored on a config. confidentMatch is non-null only when one candidate is unambiguous, either because its website domain matches the config's or because exactly one candidate's name matches the query; when it is null, show the candidates and let the customer pick rather than guessing. Passing referrer biases the search toward that config's saved coordinates. This is read-only — write the result with updateBrandIdentity.",
+      "description": "Resolve a restaurant to its Google Place ID (needed for review and photo scraping). type 'search' takes a query (include the city); type 'lookup' takes a placeId. When confidentMatch is null, show the candidates and let the customer pick. Read-only: save with updateBrandIdentity.",
       "type": "query",
       "path": [
         "api",
@@ -7260,7 +7260,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "searchUsers",
       "domain": "membersProgram",
-      "description": "Search members (loyalty guests) and their activity. Returns a page of the most recent user events, one per member, each carrying the member's serialNumber plus the event type, time and related object. isUnread: true narrows the results to unread inbound texts only, overriding any broader eventTypes; progressMinBound/progressMaxBound bound the visit count. Paginate by passing the returned `cursor` back — an undefined cursor means no more pages. This finds the member; getMemberConversation with their serialNumber loads their SMS thread or full timeline.",
+      "description": "Search members (loyalty guests) by name, visit count, campaign or activity. Returns a page of the most recent event per member, each with the member's serialNumber. isUnread: true lists members with unread inbound texts and overrides eventTypes. Page by passing the returned cursor back.",
       "type": "query",
       "path": [
         "api",
@@ -7335,7 +7335,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "sendText",
       "domain": "messaging",
-      "description": "Send one SMS to one person from the organization's texting number — the reply you would otherwise type into the dashboard chat. `to` names who by id, never by phone number: {type:'creator', userId} for a creator, whose userId comes from listCreatorConversations or getCreatorConversation, or {type:'guest', serialNumber} for a loyalty member, whose serialNumber comes from searchUsers or getMemberConversation. The type is not cosmetic — the two are different people in different tables, and a creator who also holds a pass exists in both, so pass the type that matches the thread you are replying to. The third form, {type:'unknownSender', phoneNumber}, answers someone who texted in without being either — it is the only form that names a raw number, and it is refused unless that number has an inbound message to this organization on file. A creator must have a visit with this organization and a guest must belong to it, or the call is a 404 rather than a text to a stranger. Guest messages support the {{firstName}}-style handlebars text automations use and are rendered before sending; creator messages are sent verbatim. Sending as a creator's human handler also dismisses any reply the AI agent has staged for that creator and re-runs the agent with your message in context, so it never talks over you. High priority, sent immediately — there is no scheduling, no undo, and no bulk form: call it once per recipient.",
+      "description": "Send one SMS to one person from the organization's number, immediately, with no undo or scheduling. Show the user the exact text and get a go-ahead first. `to` is an id, never a phone number: {type:'guest', serialNumber} from searchUsers, or {type:'creator', userId} from listCreatorConversations. Use the type that matches the thread; a creator with a pass exists as both. {type:'unknownSender', phoneNumber} only answers a number that texted in.",
       "type": "mutation",
       "path": [
         "api",
@@ -7427,7 +7427,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "setAdCampaignStatus",
       "domain": "ads",
-      "description": "Start or pause a Meta campaign that was published from Feastalytics, including a location's creator recruitment campaign (its status is saved on the location's creator program too, and a manual change cancels any pending monthly-cap reactivation). ACTIVE cascades to every ad set and ad, because campaigns are published paused at all three levels and a campaign-only activate would spend nothing. Activating spends real money: confirm with the human first, and check the preflight counts in the response.",
+      "description": "Start or pause a Meta campaign published from Feastalytics, including a location's creator recruitment campaign. ACTIVE cascades to every ad set and ad and spends real money: confirm with the human first, then check the preflight counts in the response. On a recruitment campaign the status is saved on the location's creator program, and a manual change cancels any pending monthly-cap reactivation.",
       "type": "mutation",
       "path": [
         "api",
@@ -7461,7 +7461,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "simulateAutomations",
       "domain": "automations",
-      "description": "Dry-run automations against a synthetic event timeline and see what would fire — no real sends or side effects. Each event is `{type, at}` plus a few optional fields; `at` is an ISO 8601 timestamp and the server fills in the guest, organization and campaign. Valid types: signUp, importedCustomer, viewCampaign, addPass, visit, invalidScan, checkout, reply, buttonClick, offerRedemption, offerExpiration, formSubmission, formPropertySubmission, gotReferred, referred, subscriptionRenewal, receiveAutomation. First call: omit `events` and pass `flowId`, and the server auto-seeds a timeline from that flow's triggers (a viewCampaign event when the flow has a campaign, then the first eligible trigger event 15s later) and returns it as `eventsUsed`. To test another day or continue the journey, change `at` on those events or append more, and pass the array back as `events`. Either `events` or `flowId` is required. Pass a draft's operations as `edits` to preview unsaved changes. Returns `scheduledTexts` plus `eventsUsed`.",
+      "description": "Dry-run automations against a synthetic event timeline and see which texts would go out. No real sends. Pass `flowId` alone to auto-seed a timeline from its triggers (returned as `eventsUsed`), or pass `events` to replay your own. Pass a draft's operations as `edits` to preview unsaved changes.",
       "type": "mutation",
       "path": [
         "api",
@@ -9785,7 +9785,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "stageAutomationEdits",
       "domain": "automations",
-      "description": "Add changes to an open automation draft without touching live automations. Takes the same operations batchEditAutomations does, appended in order, so call it repeatedly as you build a change up. Preview by passing the draft's `operations` as `edits` to simulateAutomations, or send the returned `previewUrls` for sign-off. Nothing goes live until saveAutomationEdits runs.",
+      "description": "Append operations (the batchEditAutomations format) to an open automation draft, in order. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up. An `update` replaces each field it sends, so send the full current `actions` array.",
       "type": "mutation",
       "path": [
         "api",
@@ -11647,7 +11647,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "stageFunnelEdit",
       "domain": "funnel",
-      "description": "Stage a single renderable edit onto a funnel draft. The edit is validated against the current screen but not saved to production. Returns a summary of the draft, not its edits — use getFunnelDraft to read them back, or listFunnelScreens with the draftId to see the funnel with the edits applied.",
+      "description": "Stage a single renderable edit onto a funnel draft. The edit is validated against the current screen but not saved to production. Returns a summary of the draft, not its edits: use getFunnelDraft to read them back, or listFunnelScreens with the draftId to see the funnel with the edits applied.",
       "type": "mutation",
       "path": [
         "api",
@@ -12218,9 +12218,6 @@ export const CLI_MANIFEST: CliManifest = {
                                         "items": {
                                           "type": "number"
                                         }
-                                      },
-                                      "bookInFunnel": {
-                                        "type": "boolean"
                                       }
                                     },
                                     "additionalProperties": false
@@ -12232,7 +12229,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "openTable"
                                 ],
                                 "additionalProperties": false,
-                                "description": "OpenTable reservation widget that finds available time slots. When bookInFunnel is true, the reservation is completed in-funnel via SMS 2FA; otherwise it redirects to OpenTable."
+                                "description": "OpenTable reservation widget that finds available time slots and redirects to OpenTable to book."
                               },
                               {
                                 "type": "object",
@@ -13455,7 +13452,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateAutomationFlow",
       "domain": "automations",
-      "description": "Update a flow's metadata (the group that holds automations). Pass flowId plus the new title (required), and optionally description and isCampaignCheckDisabled. Does not touch the automations inside the flow — stage those through the draft loop, or batchEditAutomations for an immediate live write.",
+      "description": "Update a flow's metadata (the group that holds automations). Pass flowId plus the new title (required), and optionally description and isCampaignCheckDisabled. Does not touch the automations inside the flow. Stage those through the draft loop, or batchEditAutomations for an immediate live write.",
       "type": "mutation",
       "path": [
         "api",
@@ -13489,7 +13486,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateAvailability",
       "domain": "creators",
-      "description": "Change an existing booking window, found by availabilityId from listAvailability. Omitted top-level fields are left alone, but block is replaced whole rather than merged — send the complete block, including the fields you are not changing. All times are UTC, and the restaurant thinks in local time — convert before writing. For weekly blocks utcDaysOfWeek is the day of week IN UTC, so an evening local window that crosses midnight UTC lands on the following day: 9pm Friday New York is 02:00 Saturday UTC, and writing Friday there opens the wrong night. Returns nothing; re-read with listAvailability to confirm.",
+      "description": "Change a booking window (availabilityId from listAvailability). block is replaced whole, so send the complete block. Times and weekly days are UTC: convert the local day and time together (see the creators workflow). Returns nothing; re-read with listAvailability to confirm.",
       "type": "mutation",
       "path": [
         "api",
@@ -13621,7 +13618,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateBrandIdentity",
       "domain": "core",
-      "description": "Update the layout config behind a branded site created by createBrandIdentity: business data, theme, tracking pixel IDs, OpenTable links, and the Google Place link. The config object is a partial patch and businessData, trackingIds and googleConfig are deep-merged, so send only the fields you are changing. Setting googleConfig.placeId to a new value enqueues a Google Maps scrape that backfills reviews and photos; changing it on a config that already has one orphans everything scraped under the old place, so confirm with the customer before replacing an existing placeId. Resolve a placeId with searchGooglePlaces first. Changing hostname enqueues a DNS update.",
+      "description": "Update a branded site's config: business data, theme, tracking pixel IDs, OpenTable links, Google Place link. A partial patch; businessData, trackingIds and googleConfig are deep-merged. A new googleConfig.placeId starts a review and photo scrape, and with coordinates can also buy and bill a nearby texting number if the organization has none. Replacing an existing placeId orphans the old place's scraped data, so confirm with the customer first.",
       "type": "mutation",
       "path": [
         "api",
@@ -13888,7 +13885,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCampaign",
       "domain": "campaigns",
-      "description": "Update an existing campaign — pass only the fields you're changing. This tool reaches further than its name suggests: `update` accepts any field on the campaign, so it is also how you publish (isPublished), set the offer image (imageUrl, which must not contain the word 'placeholder' or onboarding treats it as unset), and write a promotion's staffInstructions. Setting a price on a recurring promotion creates live Stripe products and prices in the connected account, and the Stripe account cannot be changed afterwards until those promotions are archived. Publishing is the user's call — confirm before setting isPublished.",
+      "description": "Updates one campaign. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read with getCampaign first. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices.",
       "type": "mutation",
       "path": [
         "api",
@@ -14348,44 +14345,6 @@ export const CLI_MANIFEST: CliManifest = {
                   }
                 ]
               },
-              "bannerConfig": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "simple"
-                      },
-                      "simple": {
-                        "type": "object",
-                        "properties": {
-                          "title": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          },
-                          "imageUrl": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "title",
-                          "description",
-                          "imageUrl"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "simple"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
               "promotions": {
                 "type": "array",
                 "items": {
@@ -14702,18 +14661,6 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "recruitmentAdCopy": {
                 "$ref": "#/properties/update/properties/adCopy"
-              },
-              "viewers": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "editors": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
               }
             },
             "additionalProperties": false
@@ -14730,7 +14677,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreativeStrategy",
       "domain": "creators",
-      "description": "Write a creator strategy — the revision step after createCreativeStrategy, for editing concepts, hooks, scripts and deliverables. Omitting strategyId creates a new strategy instead of editing one, so always pass the id you got back from createCreativeStrategy. This replaces the fields you send rather than merging them: read the strategy first with getCreativeStrategy and send back the full concepts array with your edits applied, or you will drop the concepts you left out.",
+      "description": "Save a creator brief: the revision step after createCreativeStrategy. Omitting strategyId creates a new brief instead of editing one. Sent fields replace stored ones, so read it with getCreativeStrategy and send the full concepts array with your edits.",
       "type": "mutation",
       "path": [
         "api",
@@ -14984,7 +14931,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreatorVisit",
       "domain": "creators",
-      "description": "Update one creator visit: change its time or record its outcome. `status` accepts approved, denied, pending_approval, confirmed, visited, missed, issue, cancelled. status: 'approved' runs the real approval: THIS TEXTS THE CREATOR IMMEDIATELY and consumes the location's monthly creator sourcing allowance, which auto-pauses recruitment once reached; 'denied' texts a decline; approving a denied row reverses it: the creator gets a \"we changed our mind\" text and the scheduled texts are re-armed. Approving a row that is no longer actionable is a no-op and returns changed: false. Pass sideEffects: false to make any update silent: same field writes, but no creator text, no allowance spend, no post-approval automation. A pending application never has a visit time: startTime (a date or null) is rejected while the row is pending_approval and in any call that passes status: 'approved' (approve first, then set or clear the time in a second call), and status: 'pending_approval' clears any existing time itself, so do not pass startTime with it. With sideEffects on (the default), setting startTime to a date texts the creator a confirmation and alerts the approver; setting startTime to null clears the time and texts the creator asking for a new one; of the remaining statuses only 'cancelled' texts the creator, the rest are plain record writes. Pass dryRun: true to get back the exact creator text(s) the same call would send; nothing is written or sent, so use it to show the operator a preview before the real call. Get `eventId` from listCreatorApplications.",
+      "description": "Update one creator visit: approve or deny an application, set or clear its time, move it, or record its outcome. Approving or denying texts the creator immediately, and approving spends the location's monthly creator allowance; setting or clearing startTime and status 'cancelled' also text them. Confirm with the user and preview with dryRun: true first. sideEffects: false writes silently. eventId from listCreatorApplications.",
       "type": "mutation",
       "path": [
         "api",
@@ -15011,6 +14958,9 @@ export const CLI_MANIFEST: CliManifest = {
           "durationMs": {
             "type": "number"
           },
+          "locationId": {
+            "type": "string"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -15022,6 +14972,17 @@ export const CLI_MANIFEST: CliManifest = {
               "missed",
               "issue",
               "cancelled"
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "sideEffects": {
@@ -15043,7 +15004,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program. This is an upsert. There is no separate create tool, and the config is keyed by locationId, one per location, so calling it for a location with no program creates one, seeding a 5000-cent dining credit and leaving landingPageConfirmed, passConfigured and reimbursementEnabled false. Omitted fields are left alone. Every program is apply-only: creators apply, the approver reviews them, and the creator AI agent texts approved creators to book the visit. reimbursementEnabled switches the board from comping the meal to reimbursing a meal the creator paid for, and foodCreditAmountCents becomes the reimbursement cap rather than a dining credit. It changes what creators are promised on the landing page, brief and rights agreement, so never set it without the client asking for it. The Design creator program task needs a positive credit and landingPageConfirmed. launchInfluencerCampaign checks the same two. maxCreatorsPerMonth caps how many creators the location's recruitment ads source each calendar month; when the cap is reached every recruitment campaign at the location pauses automatically until the 1st of the next month, and changing or clearing the cap reconciles the campaigns immediately. agentPaused: true turns the creator AI agent off for the location: no automated creator texts (AI replies, visit reminders, content follow-ups) until it is set back to false; texts sent by people still deliver.",
+      "description": "Create or update a location's creator program (an upsert, one per locationId; omitted fields are left alone). Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. locationId from queryData interface.location.",
       "type": "mutation",
       "path": [
         "api",
@@ -15257,7 +15218,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateMembersProgramReward",
       "domain": "membersProgram",
-      "description": "Correct a members program reward in place, instead of creating a second one. pointsCost replaces the current value; pass null to clear it, which converts a reward guests redeem with points into one an automation grants. Omitting a field leaves it alone. staffInstructions is stored on the reward's catalog item and is rejected for a POS-sourced item, where the column does not exist. Find the rewardId with listMembersProgramRewards.",
+      "description": "Correct a members program reward in place instead of creating a second one. rewardId from listMembersProgramRewards. Omitted fields are left alone; pointsCost: null clears it, turning a points reward into one only an automation grants.",
       "type": "mutation",
       "path": [
         "api",
@@ -15296,7 +15257,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateOnboardingForm",
       "domain": "core",
-      "description": "Update the onboarding form — the self-reported answers behind onboarding tasks the system can't observe directly, such as the launch date, funnel direction and the per-step isComplete markers. Top-level keys you omit are left alone, but nested step objects are REPLACED rather than merged, so read getOnboardingForm first and send back the whole step you're editing. `data` is the exception and is merged. Setting pos.details.type to \"other\" provisions a manual-entry POS location as a side effect. Task statuses recompute asynchronously, so getTaskboard can briefly lag this call.",
+      "description": "Update the onboarding form (self-reported answers behind tasks the system can't observe). Nested step objects are replaced, not merged: read getOnboardingForm first and send the whole step (`data` is merged). pos.details.type \"other\" creates a manual-entry POS location.",
       "type": "mutation",
       "path": [
         "api",
@@ -15897,11 +15858,7 @@ export const CLI_MANIFEST: CliManifest = {
             "properties": {
               "type": {
                 "type": "string",
-                "enum": [
-                  "retention",
-                  "acquisition",
-                  "both"
-                ]
+                "const": "both"
               },
               "retention": {
                 "type": "object",
@@ -15926,7 +15883,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateOrganization",
       "domain": "core",
-      "description": "Update the organization record. Omitted fields are left alone, but staffInstructions is replaced wholesale rather than merged — send every key you want to keep. minimumSpendValue is in dollars; timezone is an IANA zone. staffInstructions.scan completes the Members Program Visits POS setup task, and .prepaid is additionally required for Campaign POS setup when the promotion allows pre-pay. restaurantType, isArchived and isReadOnly are admin-only and rejected otherwise. periodCalendar sets how Impact and revenue plans group weeks into periods: {type: 'fiscal', fiscal: {pattern: '4-4-5' | '4-5-4' | '5-4-4' | '13x4', yearEndWeekday: 'sunday' through 'saturday', yearEndRule: 'nearestDec31' | 'lastInDecember'}}; null resets it to 13 four-week periods ending on the Sunday nearest Dec 31.",
+      "description": "Update the organization record: name, timezone, minimum spend, staff instructions, reporting period calendar. Omitted fields are left alone, but staffInstructions is replaced whole, so send every key you want to keep. minimumSpendValue is in dollars.",
       "type": "mutation",
       "path": [
         "api",
@@ -16074,7 +16031,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updatePassConfiguration",
       "domain": "passBuilder",
-      "description": "Save the organization's wallet pass configuration. This is a full-document save, not a patch — anything you omit is dropped, so read with getPassConfiguration, modify, and send the whole document back. Each save appends a new version, and when sections, features, locations or passStyle change from the previous version every pass already in a guest's wallet is re-pushed. passStyle is the Apple pass style (eventTicket, storeCard, generic, coupon) every one of the organization's passes is built with; unset means eventTicket. Omit passStyle to keep the current one, or send null to clear it.",
+      "description": "Save the wallet pass configuration. A full-document save, not a patch: anything omitted is dropped, so read getPassConfiguration, modify it, and send the whole document back. A change to sections, features, locations or passStyle re-pushes every pass already in a guest's wallet. Omit passStyle to keep the current style.",
       "type": "mutation",
       "path": [
         "api",
