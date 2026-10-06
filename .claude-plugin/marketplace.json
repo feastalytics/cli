@@ -1,0 +1,15 @@
+{
+  "name": "feast",
+  "description": "Feastalytics plugins for operating a restaurant organization from Claude.",
+  "owner": {
+    "name": "Feastalytics",
+    "url": "https://feastalytics.com"
+  },
+  "plugins": [
+    {
+      "name": "feastalytics",
+      "source": "./",
+      "description": "The feast skill and the hosted Feastalytics MCP server."
+    }
+  ]
+}

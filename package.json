@@ -8,7 +8,8 @@
   },
   "files": [
     "dist",
-    "feast"
+    "!dist/*.zip",
+    "skills"
   ],
   "author": "Feastalytics",
   "license": "UNLICENSED",
@@ -28,7 +29,9 @@
     "dev": "tsx src/cli.ts",
     "feast": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "version": "node scripts/sync-plugin-version.mjs && git add .claude-plugin/plugin.json plugin.json",
+    "build:chatgpt": "sh scripts/build-chatgpt-zip.sh"
   },
   "devDependencies": {
     "@trpc/client": "^10.45.2",

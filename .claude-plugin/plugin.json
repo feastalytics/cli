@@ -1,0 +1,32 @@
+{
+  "name": "feastalytics",
+  "displayName": "Feastalytics",
+  "version": "0.1.17",
+  "description": "Operate a Feastalytics restaurant organization (campaigns, automations, funnels, members program, wallet pass, creator sourcing, Meta ads, texting, onboarding and data queries) through the hosted Feastalytics MCP server and the feast skill.",
+  "author": {
+    "name": "Feastalytics",
+    "url": "https://feastalytics.com"
+  },
+  "homepage": "https://feastalytics.com",
+  "repository": "https://github.com/feastalytics/cli",
+  "license": "UNLICENSED",
+  "keywords": [
+    "restaurants",
+    "marketing",
+    "feastalytics",
+    "mcp"
+  ],
+  "documentationUrl": "https://feastalytics.com/ai",
+  "supportUrl": "https://feastalytics.com/support",
+  "privacyPolicyUrl": "https://feastalytics.com/legal/privacy",
+  "termsOfServiceUrl": "https://feastalytics.com/legal/eula",
+  "skills": [
+    "./skills/feast"
+  ],
+  "mcpServers": {
+    "feast": {
+      "type": "http",
+      "url": "https://mcp.feast-api.com/mcp"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 ---
 name: feast
-description: Operate a Feastalytics organization (campaigns, automations, funnels, members-program rewards, the wallet pass, creator sourcing, Meta ads, texting, onboarding, and read-only data queries) through the Feastalytics tools, either the `feast` CLI or the Feastalytics MCP server. Use this skill whenever the user wants to inspect or change Feastalytics data outside the dashboard: "list my campaigns", "create an automation for org X", "approve this creator", "publish the recruitment ad", "text this guest back", "query my guests", "update the members program", or any request to script, batch or automate Feastalytics operations. Reach for it even when the user doesn't name the CLI or the MCP server: if the task is reading or changing Feastalytics data, these are the tools.
+description: >-
+  Operate a Feastalytics organization (campaigns, automations, funnels, members-program rewards, the wallet pass, creator sourcing, Meta ads, texting, onboarding, and read-only data queries) through the Feastalytics tools, either the `feast` CLI or the Feastalytics MCP server. Use this skill whenever the user wants to inspect or change Feastalytics data outside the dashboard: "list my campaigns", "create an automation for org X", "approve this creator", "publish the recruitment ad", "text this guest back", "query my guests", "update the members program", or any request to script, batch or automate Feastalytics operations. Reach for it even when the user doesn't name the CLI or the MCP server: if the task is reading or changing Feastalytics data, these are the tools.
 ---
 
 # Feast
@@ -53,10 +54,9 @@ That last point matters most for the tools that reach the real world rather than
 
 - `sendText` texts a guest or creator immediately, one person per call, with no scheduling and no undo.
 - Approving or denying a creator visit (`updateCreatorVisit`) or deciding a submission (`decideCreatorSubmission`) texts that person. `updateCreatorVisit` can preview its texts with `dryRun: true` or skip them with `sideEffects: false`; `decideCreatorSubmission` can skip its text with `skipApprovalText`.
-- Paying a creator's bonus (`createInfluencerPayout`) charges the organization's card.
+- Paying a creator's bonus (`createInfluencerPayout`, on the CLI) charges the organization's card. Over the MCP server that tool is not available, so the client pays bonuses in the dashboard.
 - `awardReward` puts a real reward in a member's wallet pass, and a retried call grants a second one.
 - `inviteUser` sends a real email.
-- Buying a phone number bills the account.
 - Publishing a campaign puts it live, and pricing a recurring promotion creates real Stripe products.
 - Activating a Meta campaign spends real ad budget.
 - Saving automation edits changes what guests receive.
