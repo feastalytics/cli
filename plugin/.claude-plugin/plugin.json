@@ -28,5 +28,6 @@
       "type": "http",
       "url": "https://mcp.feast-api.com/mcp"
     }
-  }
+  },
+  "icon": "./icon.png"
 }
