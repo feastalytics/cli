@@ -62,11 +62,11 @@ Most tools act on one organization, and you may belong to several. Pass `--org <
 - Belong to several and omit `--org` → the CLI **errors and lists your orgs** rather than silently picking one. Acting on the wrong org is worse than stopping to ask.
 - A typo'd org id is rejected client-side (it never falls through to a default).
 
-Mutations additionally require `--org`, verify the server-resolved org, and prompt for confirmation (`--yes` to skip in scripts).
+Mutations additionally require `--org` and print the server-resolved org before running. There is no confirmation prompt: a mutation runs the moment it is called.
 
 ## Agent skill
 
-The `feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate the CLI. Install it into your agent(s):
+The `feast/` directory is an [agent skill](https://www.skills.sh) that teaches an agent to operate Feastalytics through its tools, either this CLI or the hosted MCP server at `https://mcp.feast-api.com/mcp` (same tools, same names). Install it into your agent(s):
 
 ```bash
 npx skills add feastalytics/cli

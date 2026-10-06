@@ -1,31 +1,45 @@
 # Setup, auth, and organizations
 
-One-time and troubleshooting material: getting the `feast` CLI installed and logged in, keeping it and this skill current, and working out which organization to act on. The day-to-day loop lives in `SKILL.md`; you only need this file when something isn't working yet.
+One-time and troubleshooting material: connecting the Feastalytics MCP server or installing and logging in to the `feast` CLI, keeping the CLI and this skill current, and working out which organization to act on. The day-to-day loop lives in `SKILL.md`; you only need this file when something isn't working yet.
 
-Some environments hand you a CLI that is already installed and authenticated, and pin you to a single organization. Nothing in this file applies there — if `feast tools` runs and your commands are going to the right restaurant, you are already set up.
+Some environments hand you the tools already connected and authenticated, pinned to a single organization. Nothing in this file applies there: if a read such as `listCampaigns` works and your calls are going to the right restaurant, you are already set up.
 
-## Installing
+## The MCP server
+
+The hosted server is at `https://mcp.feast-api.com/mcp` (streamable HTTP, OAuth). The user adds it once in their MCP client, for example:
+
+```bash
+claude mcp add --transport http feast https://mcp.feast-api.com/mcp   # Claude Code
+```
+
+In other clients (Claude Desktop, claude.ai, Cursor) it is a custom connector with that URL. The first call opens a browser to the Feastalytics login, then a consent page naming the client; after that the client refreshes the session itself. A session lasts 30 days from that login, then the user logs in again. If tool calls start failing with an authentication error, ask the user to reconnect the server in their client.
+
+You can't add the server for the user from inside a conversation. Tell them the URL and where to add it.
+
+## The `feast` CLI
+
+### Installing
 
 The `feast` CLI must be installed and on PATH:
 
 ```bash
-npm install -g @feastalytics/cli    # or run ad-hoc with: npx @feastalytics/cli <command>
+npm install -g @feastalytics/cli    # or run ad hoc with: npx @feastalytics/cli <command>
 ```
 
-If the global install fails on permissions, don't retry with `sudo` — tell the user and fall back to `npx @feastalytics/cli@latest`.
+If the global install fails on permissions, don't retry with `sudo`. Tell the user and fall back to `npx @feastalytics/cli@latest`.
 
-## Authenticating
+### Authenticating
 
-Authenticate once — tokens are cached in `~/.config/feast-cli/credentials.json` and refreshed automatically:
+Authenticate once. Tokens are cached in `~/.config/feast-cli/credentials.json` and refreshed automatically:
 
 ```bash
 feast login                        # opens a browser to authorize (default)
-feast login --password [username]  # headless / CI: username + password prompt, no browser
+feast login --password [username]  # headless or CI: username and password prompt, no browser
 ```
 
-If a command reports you're not logged in or the session expired, re-run `feast login`.
+If a command reports you're not logged in or the session expired, run `feast login` again.
 
-## Staying current
+### Staying current
 
 Neither the CLI nor this skill updates itself. When a command prints an update notice on stderr:
 
@@ -36,17 +50,17 @@ Update available: feast 0.1.1 → 0.2.0
 update both, then tell the user in one line that you did:
 
 ```bash
-npm install -g @feastalytics/cli@latest      # only if `feast` is already on PATH from a global install
+npm install -g @feastalytics/cli@latest      # only if `feast` is on PATH from a global install
 npx skills add feastalytics/cli -g -a '*' -y # refresh this skill from the repo
 ```
 
-If you've been invoking the CLI through `npx` rather than a global install, skip the `npm install -g` and use `npx @feastalytics/cli@latest <command>` for the rest of the session instead — `npx` reuses a cached copy otherwise.
+If you've been invoking the CLI through `npx` rather than a global install, skip the `npm install -g` and use `npx @feastalytics/cli@latest <command>` for the rest of the session instead (`npx` reuses a cached copy otherwise).
 
-Update the skill whenever you update the CLI: the two ship from the same repo but on different triggers, so a new CLI version usually means this skill's guidance has moved too.
+Update the skill whenever you update the CLI: the two ship from the same repo but on different triggers, so a new CLI version usually means this skill's guidance has moved too. The MCP server always serves the current tools, so over MCP only the skill needs refreshing.
 
 ## Playbook skills
 
-Feastalytics publishes further skills that build on this one (campaign diagnosis and other playbooks). They come from the API, not from GitHub:
+Feastalytics publishes further skills that build on this one (campaign diagnosis and other playbooks). They come from the API, not from GitHub, and installing them takes the CLI:
 
 ```bash
 feast skill list                       # what is published for your organization
@@ -59,12 +73,8 @@ Install what `feast skill list` offers when the user asks for a playbook this sk
 
 Most tools act on one organization. A user often belongs to several, so which one you target matters and must be explicit.
 
-```bash
-feast whoami                # shows the logged-in user and every org (with names) they can act on
-```
-
-Pass the target org with `--org <organizationId>`:
-
-- If the user names an org, resolve it to its id with `feast whoami` and pass that id.
-- If the user belongs to exactly one org, the CLI uses it automatically — no flag needed.
-- If they belong to more than one and you omit `--org`, the CLI refuses and lists the orgs rather than silently picking one. That's intentional: acting on the wrong org is worse than stopping to ask. When this happens, surface the list to the user and confirm which one they mean.
+- See every organization the user can act on, with names and their role: `listOrganizations` over MCP, `feast whoami` on the CLI.
+- Pass the target as the `organizationId` argument (MCP) or `--org <organizationId>` (CLI).
+- If the user names an organization, resolve it to its id from that list and pass the id.
+- If the user belongs to exactly one organization, it is used automatically.
+- If they belong to more than one and you don't pass one, the call is refused with the list of their organizations rather than silently picking one. That's intentional: acting on the wrong organization is worse than stopping to ask. Show the user the list and confirm which one they mean.
