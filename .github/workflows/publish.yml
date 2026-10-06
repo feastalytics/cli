@@ -50,8 +50,8 @@ jobs:
       - name: Bump version
         id: bump
         run: |
-          NEW_VERSION=$(npm version ${{ inputs.bump }} -m "release: v%s")
-          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          npm version ${{ inputs.bump }} -m "release: v%s" > /dev/null
+          echo "version=v$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
 
       - name: Build
         run: npm run build
