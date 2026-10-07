@@ -41,6 +41,10 @@ Restaurants recruit local content creators to visit and post. One config per loc
 
 A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `setAdCampaignStatus`, plus `ads_*` tools for reading and steering what's already on the ad account. See `workflows/ads.md`.
 
+## Video ads (Content Studio)
+
+Bevyl edits a campaign's b-roll into ad videos, grouped into angles. One `projectId` per video: `getVideoPromptOptions` → `generateVideo` → poll `getVideo` → `requestVideoEdit` or `approveVideo`. See `workflows/videos.md`.
+
 ## The data catalog
 
 `describeData` / `queryData` expose a read-only, org-scoped query surface over the data model: guests, orders, menu items, texts, creator visits, payouts. When no purpose-built tool answers a read question, the catalog usually does; `describeData` with no arguments is the index.

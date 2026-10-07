@@ -55,8 +55,4 @@ An effect that reports `error` in the job is a case for the dashboard, not for p
 - `ads_activate_entity`: go-live for structures Feastalytics did *not* publish. No cascade: activate top-down and check `willDeliver`; a child under a paused parent is live in name only. For campaigns Feastalytics published, `setAdCampaignStatus` cascades and is the right tool: those are published paused at all three levels, so activating the campaign alone would spend nothing.
 - `ads_get_datasets` / `ads_create_dataset`: pixel checks and creation. The pixel a campaign should optimise against is the one its funnel actually fires (from the layout config), not whichever pixel looks plausible on the account. After creating one, write its id back with `updateBrandIdentity`; creation alone connects nothing. That layout config value is what makes the funnel fire the pixel and what the onboarding task reads.
 
-### Reference scripts for video ads
-
-`listReferenceScripts` returns the reference ad scripts Content Studio offers as Concept presets for Bevyl videos, each distilled from an ad that performed: `description` (what the video shows), `videoUrl` (a public MP4 preview), `structure` (the ordered beats), `keyPhrases` (lines to adapt, with `<placeholders>` filled from the campaign's facts) and `concept` (the exact text Content Studio sends to Bevyl). Copy the structure and pacing, not the words. The list is the same for every organization.
-
 > **Not exposed:** ad-copy generation (write it yourself: `ad-copy-guest.md` / `ad-copy-creator.md`), creative *content* editing on Meta (immutable there), and publishing creator content as partnership ads.
