@@ -17,7 +17,7 @@ The retention counterpart to campaigns: flows with no `campaignId`.
 - Input: `{ "serialNumber": "...", "itemId": "...", "expiresInDays": 14 }`. Get `serialNumber` from `searchUsers` and `itemId` from `listMembersProgramRewards` (or a catalog query). Both are checked against the organization, and a wrong id is rejected rather than granted.
 - Expiry is optional, and a reward with none never expires. `expiresInDays` ends at the end of that day in the restaurant's timezone (what a guest reads "14 days" to mean); `expiresAt` takes an exact ISO 8601 instant. Pass one or the other. `locationId` restricts redemption to one participating location.
 - It recomputes the member's progress, which **re-evaluates their automations**, so a flow triggered by earning a reward will fire (and may text them).
-- **No undo and no idempotency key: a retried call grants a second reward.** Confirm the member, item and expiry with the user before calling, call once per member, and if a call's outcome is unclear, check the member's `rewardAwarded` events with `getMemberConversation` before retrying.
+- **No undo and no idempotency key: a retried call grants a second reward.** Confirm the member, item and expiry with the user before calling, call once per member, and if a call's outcome is unclear, check for the award with `searchUsers` (`eventTypes: ["rewardAwarded"]` and the member's name as `query`; the row is the member's latest award) before retrying.
 
 ---
 

@@ -2,16 +2,18 @@
 
 `searchUsers` returns a page of recent member activity: one event per member, each carrying the member's `serialNumber` plus the event (type, time, related object).
 
-- Filter with `query` (free-text name), `eventTypes` (e.g. `sentText`, `receivedText`, `scan`, `order`, `rewardAwarded`, `rewardRedeemed`, `checkout`, the `*Attribution` types), `campaignId`, `progressMinBound`/`progressMaxBound` (visit-count range), `isUnread: true` (members with unanswered inbound texts; it overrides any broader `eventTypes`), `orderBy` (ASC|DESC by event time).
+- Filter with `query` (free-text name), `eventTypes` (e.g. `sentText`, `receivedText`, `scan`, `order`, `rewardAwarded`, `rewardRedeemed`, `checkout`, the `*Attribution` types), `campaignId`, `progressMinBound`/`progressMaxBound` (visit-count range), `orderBy` (ASC|DESC by event time).
 - Paginate with `limit` (default 100) and `cursor` (pass back the `cursor` from the previous call; an undefined cursor means no more pages).
 
-`getMemberConversation` with a member's `serialNumber` loads their thread, newest first: the pair to `searchUsers` the same way `getCreatorConversation` pairs with `listCreatorConversations`. Always pass `eventTypes`: `["sentText","receivedText"]` is the SMS thread, and adding `scan`/`order`/`checkout`/`rewardAwarded`/`rewardRedeemed` interleaves what happened between the messages. Unfiltered it returns the member's entire history unpaginated.
+**The texting inbox is `listConversations` with `{ "type": "guest" }`**: a page of members by their latest text, each row that text event plus `member` (`serialNumber`, name, phone, `optIn`). `"unreadOnly": true` keeps the members whose latest inbound text is unread and unanswered (opted-in members only). It takes the same `query`, `progressMinBound`/`progressMaxBound`, `campaignId`, `orderBy`, `limit` and `cursor` as `searchUsers`.
+
+`getConversation` with `{ "contact": { "type": "guest", "serialNumber": "..." } }` (the same `contact` object `sendText` takes as `to`) loads the member's SMS thread, newest first, in the same shape as a creator thread: `participant` (name, phone, `optIn`) and `messages` with `direction`, `body`, `time`, `sender` and the raw text row, 100 by default (`limit` up to 1000, `before` with the returned `nextBefore` for older ones). It carries texts only; for what happened between the messages (scans, orders, rewards), filter `searchUsers` by `eventTypes` or query the catalog below.
 
 ## Replying to a guest
 
 `sendText` sends one SMS from the organization's texting number, the reply you would otherwise type into the dashboard chat. It is high priority and sent immediately: **no scheduling, no undo, no bulk form**.
 
-1. Find the guest with `searchUsers` (`isUnread: true` is the "waiting on a reply" queue) and read the thread with `getMemberConversation` before drafting anything.
+1. Find the guest with `listConversations` (`type: "guest"`, `unreadOnly: true` is the "waiting on a reply" queue) or `searchUsers`, and read the thread with `getConversation` before drafting anything.
 2. **Show the user the exact text and get their go-ahead before sending.** Drafting is yours; sending is theirs to approve, every time.
 3. `sendText` with `{ "to": { "type": "guest", "serialNumber": "..." }, "message": "..." }`. Guest messages render `{{firstName}}`-style handlebars (the same ones text automations use) before sending. `mediaUrls` attaches up to 10 images.
 4. **One recipient per call.** To reach several guests, call once per guest, each with its own confirmed text; for a broadcast, use a text blast automation instead.
