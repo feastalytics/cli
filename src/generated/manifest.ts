@@ -4916,7 +4916,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "description": "Generate the five AI recruitment ad creatives for a location. Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit from getInfluencerBoardConfig.",
+      "description": "Render the five recruitment ad images for a location from fixed templates, using its own photo, logo and food credit (no AI image generation). Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit from getInfluencerBoardConfig.",
       "type": "mutation",
       "path": [
         "api",
@@ -5232,7 +5232,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "generateVideo",
       "domain": "ads",
-      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll getVideo with the projectId every 30 seconds or so until pipeline.status is ready (exportUrl is the MP4) or failed (message says why); preparing takes a few minutes, rendering a few more. Spends Bevyl generation credits, so only with the human's explicit approval. Inputs: campaignId; angleTitle (reuse an existing angle's title, or pass its angleId from listCampaignVideos, to keep the video in that angle); conceptText (what the video shows and says, for example a listReferenceScripts concept with its placeholders filled from the campaign); creativeDirectionId \"custom\" with creativeDirectionText (tone and style); campaignText and ctaText (may be empty strings); format talking-head, voiceover, trending-sounds (needs trendId) or no-audio; durationSeconds 10 to 80 in steps of 5; brollKeys, the S3 keys of the clips to use (listMedia scope creativeLibraryBroll), or omit to use every clip already synced to Bevyl. strategyId defaults to the campaign's newest creative strategy.",
+      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll getVideo with the projectId every 30 seconds or so until pipeline.status is ready (exportUrl is the MP4) or failed (message says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. Optional: angleId from listCampaignVideos to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scope creativeLibraryBroll; omit to use every clip already synced to Bevyl).",
       "type": "mutation",
       "path": [
         "api",
@@ -5246,10 +5246,6 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "string",
             "minLength": 1
           },
-          "strategyId": {
-            "type": "string",
-            "minLength": 1
-          },
           "angleId": {
             "type": "string",
             "minLength": 1,
@@ -5260,31 +5256,10 @@ export const CLI_MANIFEST: CliManifest = {
             "minLength": 1,
             "maxLength": 300
           },
-          "campaignText": {
-            "type": "string",
-            "maxLength": 2000
-          },
-          "conceptText": {
+          "prompt": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 2000
-          },
-          "creativeDirectionId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "creativeDirectionText": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2000
-          },
-          "ctaText": {
-            "type": "string",
-            "maxLength": 500
-          },
-          "requestId": {
-            "type": "string",
-            "format": "uuid"
+            "maxLength": 5000
           },
           "format": {
             "type": "string",
@@ -5332,13 +5307,7 @@ export const CLI_MANIFEST: CliManifest = {
           }
         },
         "required": [
-          "campaignId",
-          "angleTitle",
-          "campaignText",
-          "conceptText",
-          "creativeDirectionId",
-          "creativeDirectionText",
-          "ctaText"
+          "campaignId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -6326,6 +6295,31 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "projectId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "getVideoPromptOptions",
+      "domain": "ads",
+      "description": "The building blocks for a generateVideo prompt for one campaign. defaultPrompt is what Content Studio would send with its default picks: plain text in four sections (Campaign, Concept, Creative direction, CTA), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from, and direction options a suggestedFormat to pass as generateVideo's format. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. Reads Feastalytics only.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "getVideoPromptOptions"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "campaignId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -13907,23 +13901,6 @@ export const CLI_MANIFEST: CliManifest = {
                 },
                 "additionalProperties": false
               },
-              "openTableConfig": {
-                "type": "object",
-                "properties": {
-                  "baseUrl": {
-                    "type": "string"
-                  },
-                  "numDaysCanReserveAhead": {
-                    "type": "number"
-                  }
-                },
-                "required": [
-                  "baseUrl",
-                  "numDaysCanReserveAhead"
-                ],
-                "additionalProperties": false,
-                "description": "Deprecated: Use openTableConfigs instead"
-              },
               "openTableConfigs": {
                 "type": "array",
                 "items": {
@@ -15188,13 +15165,6 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "maxItems": 20,
             "description": "Additional email addresses for scheduled, rescheduled, confirmed and cancelled visit emails and Calendar invitations. No Feast account is required. Send an empty array to remove all email-only recipients; omit to preserve them. Requires the organization's booking notification feature to be enabled."
-          },
-          "passConfigured": {
-            "type": "boolean"
-          },
-          "calendarConfigured": {
-            "type": "boolean",
-            "description": "Ignored. Kept while older clients still send it."
           },
           "maxBookingDaysOut": {
             "anyOf": [
