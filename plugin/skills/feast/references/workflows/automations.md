@@ -16,14 +16,14 @@ Automations have a staging tier, and it is the default path. Changes accumulate 
 2. If none fits, `createAutomationFlow` to make one. If the campaign/members-program has **no flows at all**, strongly prefer `applyAutomationTemplate` (then customize) over building from scratch. Only apply a template when there are no existing flows.
 3. `listAutomations` with `{ "flowId": "<id>" }` to see the automations already in that flow before editing (omit the input to list every automation in the org). **Do this immediately before every `update` op you stage, not just once at the start of the session.** An `update` replaces an automation's entire `actions` array; it does not merge one action in. If you reconstruct `actions` from an earlier tool result or from what you remember discussing, rather than the automation's current live state, you silently drop whatever isn't in your reconstruction (a reward grant, a task action, anything not under discussion in that turn). This is true even a few messages later in the same conversation, once the user has asked for a second or third change to the same automation.
 4. `createAutomationDraft` with a short `title` describing the change in the user's terms ("Shorten the day-3 nudge"). That title is what the reviewer sees. Keep the returned `draftId`; **there is no way to list drafts, so if you lose it the draft is unreachable.**
-5. `stageAutomationEdits` with `{ "draftId": "<id>", "operations": [...] }`. Each operation is the named type `AutomationOperation` (the same ones `batchEditAutomations` takes), and its automation fields use the named types `UserCondition`, `AutomationTrigger`, `AutomationAction`, `AutomationSendTime` and `AutomationVariant`. Fetch those shapes once before writing your first op:
+5. `stageAutomationEdits` with `{ "draftId": "<id>", "operations": [...] }`. Each operation is the named type `AutomationOperation`, and its automation fields use the named types `UserCondition`, `AutomationTrigger`, `AutomationAction`, `AutomationSendTime` and `AutomationVariant`. Fetch those shapes once before writing your first op:
    - `{ "type": "create", "automation": { "automationId": "<new-uuid>", "flowId": "<id>", "title": "...", "isActive": true, "triggers": [...], "conditions": [...], "actions": [...], "time": {...} } }`: generate a fresh UUID for `automationId` (the key is `automationId`, not `id`). `automationId`, `isActive`, `triggers`, `conditions`, `actions` and `time` are required; set the `flowId` and a descriptive title too. Create ops require the flowId.
    - `{ "type": "update", "automationId": "<id>", "automation": { ...changed fields... } }`
    - `{ "type": "delete", "automationId": "<id>" }`: blocked at save time if the automation already has sends.
    - `{ "type": "createVariant", "automationId": "<id>", "variantId": "<new-uuid>", "variant": <AutomationVariant> }` and `{ "type": "updateVariant", "automationId": "<id>", "variantId": "<id>", "variant": { "triggers"?, "conditions"?, "actions"?, "time"? } }` add or change an A/B variant of an automation.
    Call it repeatedly to build a change up; ops append in order.
-6. `simulateAutomations` with `{ "flowId": "<id>", "edits": <the draft's operations> }`: dry-run against a synthetic event timeline with **no real sends** and confirm the right automations fire. If the simulation surprises you, stage a correction rather than promoting and patching live.
-   - **First call:** pass `flowId` and omit `events`. The server seeds a timeline from that flow's triggers (a `viewCampaign` event when the flow has a campaign, then the first eligible trigger event 15 seconds later) and returns it as `eventsUsed`.
+6. `simulateAutomationDraft` with `{ "draftId": "<id>" }`: dry-run the draft's staged operations against a synthetic event timeline with **no real sends** and confirm the right automations fire. `flowId` defaults to the draft's flow when it touches exactly one; pass it when the draft touches several. If the simulation surprises you, stage a correction rather than promoting and patching live.
+   - **First call:** omit `events`. The server seeds a timeline from that flow's triggers (a `viewCampaign` event when the flow has a campaign, then the first eligible trigger event 15 seconds later) and returns it as `eventsUsed`.
    - **Later calls:** to test another day or continue the guest's journey, change `at` on those events or append more, and pass the array back as `events`. Each event is `{ "type": "...", "at": "<ISO 8601 timestamp>" }` plus a few optional fields per type; the server fills in the guest, organization and campaign.
    - The result is `scheduledTexts` (what would be sent, and when) plus `eventsUsed`.
 7. **Give the user the `previewUrls` from the draft** and let them look before you promote. Each entry is one flow's before/after view. Don't promote unprompted work on the user's behalf; staging exists so a human sees the change first.
@@ -31,11 +31,9 @@ Automations have a staging tier, and it is the default path. Changes accumulate 
 
 `discardAutomationDraft` throws a draft away without promoting. `getAutomationDraft` re-reads one by id, including `resultingAutomations` (each touched automation as it will look after the save); check it for fields that changed or disappeared. Drafts expire after 14 days.
 
-**`batchEditAutomations` writes straight to production in one call.** Reach for it only when the user explicitly wants an immediate live change and has said so, not as a shortcut past the review step.
-
 `updateAutomationFlow` renames/retitles a flow; `deleteAutomationFlow` removes a flow and its automations (blocked at ≥20 sends; turn it off instead).
 
-> **Not exposed:** actually *firing* an automation at a live member (the app's "run") is intentionally not a tool, because it sends a real SMS. Use `simulateAutomations` for verification; real sends happen in the app.
+> **Not exposed:** actually *firing* an automation at a live member (the app's "run") is intentionally not a tool, because it sends a real SMS. Use `simulateAutomationDraft` for verification; real sends happen in the app.
 
 ### Choosing the trigger
 
