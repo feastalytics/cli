@@ -403,6 +403,35 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "approveVideo",
+      "domain": "ads",
+      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one getVideo's exportUrl plays), so pass it only to approve an earlier run from listCampaignVideos. Fails until that run's export is ready (getVideo pipeline.status ready). Only once the human has watched the video and approved it.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "approveProject"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "projectId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "awardReward",
       "domain": "membersProgram",
       "description": "Give one member a reward in their wallet pass now, like the dashboard's Give Reward button (createMembersProgramReward only defines a reward the program offers). serialNumber from searchUsers, itemId from listMembersProgramRewards. Re-evaluates the member's automations, so a flow triggered by earning a reward fires. No undo and no idempotency key: a retried call grants a second reward, so confirm with the user and call once per member.",
@@ -5201,6 +5230,121 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "generateVideo",
+      "domain": "ads",
+      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll getVideo with the projectId every 30 seconds or so until pipeline.status is ready (exportUrl is the MP4) or failed (message says why); preparing takes a few minutes, rendering a few more. Spends Bevyl generation credits, so only with the human's explicit approval. Inputs: campaignId; angleTitle (reuse an existing angle's title, or pass its angleId from listCampaignVideos, to keep the video in that angle); conceptText (what the video shows and says, for example a listReferenceScripts concept with its placeholders filled from the campaign); creativeDirectionId \"custom\" with creativeDirectionText (tone and style); campaignText and ctaText (may be empty strings); format talking-head, voiceover, trending-sounds (needs trendId) or no-audio; durationSeconds 10 to 80 in steps of 5; brollKeys, the S3 keys of the clips to use (listMedia scope creativeLibraryBroll), or omit to use every clip already synced to Bevyl. strategyId defaults to the campaign's newest creative strategy.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "generate"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "strategyId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "angleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "angleTitle": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "campaignText": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "conceptText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "creativeDirectionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "creativeDirectionText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "ctaText": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "talking-head",
+              "voiceover",
+              "trending-sounds",
+              "no-audio"
+            ],
+            "default": "talking-head"
+          },
+          "voiceoverProfileId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "trendId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "backgroundMusicTrackId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "minimum": 10,
+            "maximum": 80,
+            "multipleOf": 5
+          },
+          "brollKeys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 100
+          },
+          "bevylVideoIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "campaignId",
+          "angleTitle",
+          "campaignText",
+          "conceptText",
+          "creativeDirectionId",
+          "creativeDirectionText",
+          "ctaText"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "getAutomationDraft",
       "domain": "automations",
       "description": "Read an automation draft by draftId: its staged `operations`, the flows it touches, `previewUrls`, and `resultingAutomations` (each touched automation as it will look after the save). Check `resultingAutomations` for fields that changed or disappeared, not only the ones the operations mention.",
@@ -6163,6 +6307,31 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getVideo",
+      "domain": "ads",
+      "description": "Read one Content Studio video by projectId. pipeline.status moves uploading, processing, creating, rendering, exporting, then ready (exportUrl is the MP4 to watch) or failed (message says why). pipeline is null for videos made before the server pipeline; use listCampaignVideos for those. Reads Feastalytics only, so it is cheap to poll.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "getProject"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "projectId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "inviteUser",
       "domain": "core",
       "description": "Invite someone to the organization by email. Sends a real email immediately; someone who already has a Feast account joins right away with no acceptance step. Always pass role: it defaults to OWNER, with full billing and settings access. VIEWER is read-only; SCANNER is for staff running the scanner app.",
@@ -6321,6 +6490,31 @@ export const CLI_MANIFEST: CliManifest = {
         "listSummaries"
       ],
       "inputJsonSchema": null
+    },
+    {
+      "id": "listCampaignVideos",
+      "domain": "ads",
+      "description": "Every Content Studio video for a campaign, newest first: projectId, angleId and angleTitle (videos are grouped into angles), the concept and direction they were made from, latestRun (the Bevyl run, whose runId approveVideo needs), approvedRunId, edits, and pipeline (status, message, exportUrl) for videos made through generateVideo. Calls Bevyl to read run status, so prefer getVideo to poll a single video.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "listCampaignProjects"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "campaignId"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
     },
     {
       "id": "listCreatives",
@@ -7062,6 +7256,41 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "schemaName",
           "objectTypeName"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "requestVideoEdit",
+      "domain": "ads",
+      "description": "Ask Bevyl to remake a video with one change, for example \"make the hook punchier\" or \"use the patio shots first\". Send only the change in note (600 characters at most); Bevyl builds from the video's current state. On-screen text cannot be moved or resized. Starts a new run: getVideo moves back to rendering, then ready with the new export. Spends Bevyl generation credits, so only with the human's explicit approval.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "regenerateProject"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "projectId",
+          "note"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
