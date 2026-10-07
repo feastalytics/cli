@@ -11,7 +11,7 @@
 
 ## The onboarding form
 
-Some tasks read self-reported answers rather than observed data: launch date, funnel direction, per-step `isComplete` markers. `getOnboardingForm` reads them (`null` when the org has no form yet); `updateOnboardingForm` writes them (and creates the form when there is none). Top-level keys you omit are left alone. **Nested step objects are replaced, not merged**: read first and send back the whole step you're editing (`data` is the exception and is merged). Setting `pos.details.type` to `"other"` provisions a manual-entry POS location as a side effect.
+Some tasks read self-reported answers rather than observed data: launch date, funnel direction, per-step `isComplete` markers. `getOnboardingForm` reads them (`null` when the org has no form yet); `updateOnboardingForm` writes them (and creates the form when there is none). Top-level keys you omit are left alone. **Nested step objects are replaced, not merged**: read first and send back the whole step you're editing. Setting `pos.details.type` to `"other"` provisions a manual-entry POS location as a side effect.
 
 Two POS setup tasks complete off `updateOrganization` instead: `staffInstructions.scan` completes *Members Program Visits POS setup*, and `.prepaid` is additionally required for *Campaign POS setup* when the promotion allows pre-pay. `staffInstructions` is replaced wholesale, so send every key you want to keep.
 
