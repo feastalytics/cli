@@ -2,47 +2,21 @@
 
 ## Creating a campaign
 
-Fully doable through the tools. Follow the dashboard's creation wizard: ask its questions in its order, one at a time, then save the answers. Don't ask a question the user already answered, and don't skip one because a default seems likely.
+Ask the dashboard wizard's questions, one at a time, skipping any the user already answered:
 
-**Ask first.** Read the org with `getOrganization` (valid **referrers** are `subdomains2[].subdomain`; `featureFlags` gates question 2), then:
+1. Name, and which site (`subdomains2[].subdomain` from `getOrganization`).
+2. "How will you run this campaign?": I have the content (`self`), I need creator-made content (`creator`, only if `featureFlags.isDfyEnabled`), or tracking only.
+3. "Is there an offer?"
+4. If yes: its name, whether guests can prepay (then a price in dollars), and an image (required for prepay). Upload with `getMediaUploadUrl` (`scope: "organizationFilePublic"`, a PNG), PUT the bytes, keep the `key`.
 
-1. **Name and referrer.** "What should the campaign be called, and which site is it for?" Offer the org's subdomains when there is more than one.
-2. **"How will you run this campaign?"**
-   - *I have the content*: they have ad creative or will make it (`self`).
-   - *I need creator-made content*: they will recruit creators to make it (`creator`). Offer this only when `featureFlags.isDfyEnabled` is true.
-   - *Tracking only*: the campaign already runs elsewhere and Feast only tracks it (`tracking_only`). Skip questions 3 and 4.
-   - When `isDfyEnabled` is true and `isAcquisitionEnabled` is not, don't ask: the answer is `creator` with no offer.
-3. **"Is there an offer?"** Guests sign up and get the offer in their wallet, and can optionally prepay for it.
-4. **The offer**, only if the answer to 3 is yes:
-   - Its name, e.g. "Free Dessert" or "Summer Special Dinner". Frame it as an offer, never a discount or deal.
-   - "Can guests prepay for it?" If yes, the price in dollars (`29.99`, not cents).
-   - An image. Required for a prepay offer; optional otherwise (it can be added later from the campaign settings). To upload one: `getMediaUploadUrl` with `{ "scope": "organizationFilePublic", "fileName": "offer.png", "fileType": "image/png" }`, PUT the file bytes to the returned `presignedUrl`, and keep the returned `key`. The image becomes the pass strip, so use a PNG.
+Then:
 
-**Then save, in two calls.**
+1. `createCampaign` with `{ "campaign": { "name": "...", "referrers": ["<subdomain>"] } }`. Keep the returned id.
+2. One `updateCampaign` with `"isCreating": false` (until then the campaign is stuck in the creation wizard) and:
+   - `enabledFeatures`: start from `["OFFER", "CREATOR_SOURCING", "AD_PUBLISHING", "FUNNEL", "AUTOMATIONS"]`; drop `OFFER` with no offer, drop `CREATOR_SOURCING` for `self`. Tracking only: `[]` and `"isPublished": true`.
+   - With an offer: `promotions: [{ "promoId": "<new-uuid>", "type": "basic", "basic": { "title": "...", "price"?: 29.99, "canPrePay"?: true } }]`, `imageUrl: { "type": "s3", "key": "..." }`, and if there is no description, `"Prepay for <offer>"` or `"Earn <offer>"`.
 
-1. `createCampaign` with `{ "campaign": { "name": "...", "referrers": ["<subdomain>"] } }`. Keep the returned campaign **id** (a UUID). The campaign starts mid-setup (`isCreating: true`): the dashboard lists it under in progress and opening it shows the creation wizard.
-2. `updateCampaign` with `{ "campaignId": "...", "update": { ... } }` built from the answers, in **one** call:
-   - `"isCreating": false`. This is what finishes setup. Without it the campaign stays stuck in the wizard.
-   - `enabledFeatures`, from questions 2 and 3:
-
-     | Run it | Offer | `enabledFeatures` |
-     |---|---|---|
-     | `self` | yes | `["OFFER", "AD_PUBLISHING", "FUNNEL", "AUTOMATIONS"]` |
-     | `self` | no | `["AD_PUBLISHING", "FUNNEL", "AUTOMATIONS"]` |
-     | `creator` | yes | `["OFFER", "CREATOR_SOURCING", "AD_PUBLISHING", "FUNNEL", "AUTOMATIONS"]` |
-     | `creator` | no | `["CREATOR_SOURCING", "AD_PUBLISHING", "FUNNEL", "AUTOMATIONS"]` |
-     | `tracking_only` | | `[]` |
-
-   - With an offer, `promotions` holds exactly one promotion. Generate a fresh UUID for `promoId`:
-     - prepay: `{ "promoId": "<new-uuid>", "type": "basic", "basic": { "title": "<offer name>", "price": 29.99, "canPrePay": true } }`
-     - no prepay: `{ "promoId": "<new-uuid>", "type": "basic", "basic": { "title": "<offer name>" } }`
-   - With an image, `"imageUrl": { "type": "s3", "key": "<key>" }`.
-   - `description`: the user's, or else `"Prepay for <offer name>"` (prepay) or `"Earn <offer name>"` (no prepay).
-   - Tracking only: also `"isPublished": true`. The campaign is already running elsewhere, so answering question 2 with *Tracking only* is the go-ahead, and there is no funnel or automations to check. Every other campaign stays unpublished until "Before a campaign goes live" below.
-
-   Then `getCampaign` and confirm `isCreating` is false and the features and promotion match the answers.
-
-A tracking-only campaign is done here. Every other campaign continues with the funnel and the automations:
+Tracking only stops here. Otherwise continue:
 
 3. (optional) the funnel, the **acquisition** half: the funnel screens a guest sees. Same list → pick → apply shape as automations:
    - `listFunnelTemplates` with the `campaignId`: the template catalog with per-campaign `eligible`/`ineligibleReason`, a `recommended` id, and each template's guest `journey`. Read this before applying; never guess a template id.
