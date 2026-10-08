@@ -78,7 +78,21 @@ When an automation's trigger is `receiveAutomation`, ask the user whether it sho
 
 - Default `applyToHistorical: false` (going forward only).
 - For past recipients, set `applyToHistorical: true` as a **top-level sibling** of `automation` on the create/update op (never inside a trigger). It isn't stored; it only enqueues a one-shot backfill on that save.
-- Before confirming, call `countParentAutomationRecipients` with `{ "parentAutomationId": "<id>" }` and tell the user the audience size; warn if > 1000. Only backfill after explicit confirmation.
+- Before confirming, count the audience: the distinct members the parent automation has run for. Run `queryData` with exactly this input, putting the parent automation's id in place of `<parentAutomationId>`:
+
+  ```json
+  {
+    "schemaName": "core",
+    "objectTypeName": "automationLog",
+    "commands": [
+      { "type": "filter", "filter": { "$automationId": { "string": "<parentAutomationId>", "match": "EQ" } } },
+      { "type": "aggregate", "aggregate": { "aggregate": { "$serialNumber": "COUNT_DISTINCT" } } }
+    ]
+  }
+  ```
+
+  The count is `data[0].serialNumber`. Count on `core.automationLog`, not `texting.textMessage`: the backfill reads the automation log, which also records runs that sent no text or whose text failed, so a count of texts comes out low.
+- Tell the user the number, warn if it is above 1000, and only backfill after they explicitly confirm.
 
 ### Rewards inside automations
 
