@@ -725,9 +725,6 @@ export const CLI_MANIFEST: CliManifest = {
               "visitEventId": {
                 "type": "string"
               },
-              "briefId": {
-                "type": "string"
-              },
               "strategyId": {
                 "type": "string"
               },
@@ -893,7 +890,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createCampaign",
       "domain": "campaigns",
-      "description": "Creates a new acquisition campaign shell. The campaign is created mid-setup (isCreating: true) and stays hidden from the dashboard until populateCampaign runs, so ALWAYS follow this call with populateCampaign to finish setup and make the campaign visible.",
+      "description": "Creates a new acquisition campaign shell. The campaign is created mid-setup (isCreating: true) and stays in the dashboard's creation wizard until an updateCampaign call sets isCreating: false with the offer and enabledFeatures. ALWAYS follow this call with that updateCampaign.",
       "type": "mutation",
       "path": [
         "api",
@@ -1243,9 +1240,6 @@ export const CLI_MANIFEST: CliManifest = {
           "foodCredit": {
             "type": "number",
             "minimum": 1
-          },
-          "photoUrl": {
-            "type": "string"
           },
           "photoUrls": {
             "type": "array",
@@ -2290,9 +2284,6 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "fileType": {
             "type": "string"
-          },
-          "cropped": {
-            "type": "boolean"
           }
         },
         "required": [
@@ -3027,7 +3018,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listMedia",
       "domain": "core",
-      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. `cropped` lists the cropped variants under each scope's cropped/ subfolder instead of the base files.",
+      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag.",
       "type": "query",
       "path": [
         "api",
@@ -3054,9 +3045,6 @@ export const CLI_MANIFEST: CliManifest = {
             "minItems": 1
           },
           "mediaOnly": {
-            "type": "boolean"
-          },
-          "cropped": {
             "type": "boolean"
           }
         },
@@ -3187,77 +3175,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "templateId",
           "variables"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "populateCampaign",
-      "domain": "campaigns",
-      "description": "Finalizes a campaign that was created with isCreating true. Optionally attaches a promotion/offer image to the campaign. Does NOT set up funnel screens; follow with applyFunnelTemplate, or the user picks a template in the funnel editor. contentStrategy: \"tracking_only\" publishes the campaign immediately.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "campaigns",
-        "app",
-        "populateCampaign"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "campaignId": {
-            "type": "string"
-          },
-          "contentStrategy": {
-            "type": "string",
-            "enum": [
-              "self",
-              "creator",
-              "tracking_only"
-            ]
-          },
-          "prepayConfig": {
-            "type": "object",
-            "properties": {
-              "promotionName": {
-                "type": "string"
-              },
-              "price": {
-                "type": "number"
-              },
-              "imageKey": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "promotionName",
-              "price",
-              "imageKey"
-            ],
-            "additionalProperties": false
-          },
-          "simpleRewardsConfig": {
-            "type": "object",
-            "properties": {
-              "promotionName": {
-                "type": "string"
-              },
-              "imageKey": {
-                "type": "string"
-              },
-              "imageUrl": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "promotionName"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "campaignId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -8211,9 +8128,6 @@ export const CLI_MANIFEST: CliManifest = {
               "visitEventId": {
                 "type": "string"
               },
-              "briefId": {
-                "type": "string"
-              },
               "strategyId": {
                 "type": "string"
               },
@@ -8402,35 +8316,6 @@ export const CLI_MANIFEST: CliManifest = {
                   "additionalProperties": false
                 }
               },
-              "googleConfig": {
-                "type": "object",
-                "properties": {
-                  "placeId": {
-                    "type": "string"
-                  },
-                  "cid": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "address": {
-                    "type": "string"
-                  },
-                  "latitude": {
-                    "type": "number"
-                  },
-                  "longitude": {
-                    "type": "number"
-                  },
-                  "geoTargetingRadiusMiles": {
-                    "type": "number",
-                    "minimum": 1,
-                    "maximum": 50
-                  }
-                },
-                "additionalProperties": false
-              },
               "facebookConfig": {
                 "type": "object",
                 "properties": {
@@ -8458,14 +8343,31 @@ export const CLI_MANIFEST: CliManifest = {
                   "logoUrl": {
                     "type": "string"
                   },
-                  "ownerName": {
-                    "type": "string"
-                  },
                   "googleMapsUrl": {
                     "type": "string"
                   },
                   "menuUrl": {
                     "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "googleConfig": {
+                "type": "object",
+                "properties": {
+                  "placeId": {
+                    "type": "string"
+                  },
+                  "latitude": {
+                    "type": "number"
+                  },
+                  "longitude": {
+                    "type": "number"
+                  },
+                  "geoTargetingRadiusMiles": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 50
                   }
                 },
                 "additionalProperties": false
@@ -8552,52 +8454,6 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "isPublished": {
                 "type": "boolean"
-              },
-              "influencers": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "promoCode": {
-                      "type": "string"
-                    },
-                    "influencer": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "user"
-                            },
-                            "user": {
-                              "type": "object",
-                              "properties": {
-                                "userId": {
-                                  "type": "string"
-                                }
-                              },
-                              "required": [
-                                "userId"
-                              ],
-                              "additionalProperties": false
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "user"
-                          ],
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "promoCode",
-                    "influencer"
-                  ],
-                  "additionalProperties": false
-                }
               },
               "referrers": {
                 "type": "array",
@@ -8904,9 +8760,6 @@ export const CLI_MANIFEST: CliManifest = {
                   ]
                 }
               },
-              "startTime": {
-                "type": "string"
-              },
               "imageUrl": {
                 "anyOf": [
                   {
@@ -9134,13 +8987,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "additionalProperties": false
                 }
               },
-              "createdAt": {
-                "type": "string"
-              },
               "isReservationFunnel": {
-                "type": "boolean"
-              },
-              "excludeFromTextBlasts": {
                 "type": "boolean"
               },
               "isCreating": {
@@ -9148,9 +8995,6 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "isInactive": {
                 "type": "boolean"
-              },
-              "campaignGroupId": {
-                "type": "string"
               },
               "variantsConfig": {
                 "type": "object",
@@ -9850,7 +9694,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateOnboardingForm",
       "domain": "core",
-      "description": "Update the onboarding form (self-reported answers behind tasks the system can't observe). Nested step objects are replaced, not merged: read getOnboardingForm first and send the whole step (`data` is merged). pos.details.type \"other\" creates a manual-entry POS location.",
+      "description": "Update the onboarding form (self-reported answers behind tasks the system can't observe). Nested step objects are replaced, not merged: read getOnboardingForm first and send the whole step. pos.details.type \"other\" creates a manual-entry POS location.",
       "type": "mutation",
       "path": [
         "api",
@@ -10100,15 +9944,6 @@ export const CLI_MANIFEST: CliManifest = {
             ],
             "additionalProperties": false
           },
-          "toastDataExport": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
           "phone": {
             "type": "object",
             "properties": {
@@ -10119,53 +9954,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "boolean"
               }
             },
-            "additionalProperties": false
-          },
-          "slack": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
-              "hasJoinedSlack": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "subdomains": {
-            "type": "object",
-            "properties": {
-              "locations": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "referrer": {
-                      "type": "string"
-                    },
-                    "homepageUrl": {
-                      "type": "string"
-                    },
-                    "openTableUrl": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "referrer",
-                    "homepageUrl",
-                    "openTableUrl"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "locations"
-            ],
             "additionalProperties": false
           },
           "facebook": {
@@ -10207,6 +9995,107 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "additionalProperties": false
           },
+          "staffTraining": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              },
+              "step1Complete": {
+                "type": "boolean"
+              },
+              "step2Complete": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "directSignup": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "minimumSpend": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "visitQrCode": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "plannedLaunchDate": {
+            "type": "string"
+          },
+          "deferrals": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "WAITING_ON_SOMEONE",
+                    "MISSING_INFO",
+                    "NOT_SURE_HOW",
+                    "PREFER_SOMETHING_ELSE"
+                  ]
+                },
+                "deferredAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reason",
+                "deferredAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "subdomains": {
+            "type": "object",
+            "properties": {
+              "locations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "referrer": {
+                      "type": "string"
+                    },
+                    "homepageUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "referrer",
+                    "homepageUrl"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "isComplete": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "locations"
+            ],
+            "additionalProperties": false
+          },
           "dataAudit": {
             "type": "object",
             "properties": {
@@ -10225,42 +10114,39 @@ export const CLI_MANIFEST: CliManifest = {
                   "isComplete": {
                     "type": "boolean"
                   },
-                  "toastCsv": {
-                    "type": "object",
-                    "properties": {
-                      "fileName": {
-                        "type": "string"
-                      },
-                      "key": {
-                        "type": "string"
-                      },
-                      "uploadedAt": {
-                        "type": "string"
-                      },
-                      "firstDate": {
-                        "type": "string"
-                      },
-                      "lastDate": {
-                        "type": "string"
-                      },
-                      "dayCount": {
-                        "type": "number"
-                      },
-                      "missingNetSalesCents": {
-                        "type": "number"
-                      }
-                    },
-                    "required": [
-                      "fileName",
-                      "key",
-                      "uploadedAt"
-                    ],
-                    "additionalProperties": false
-                  },
                   "toastCsvs": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/properties/dataAudit/properties/pos/properties/toastCsv"
+                      "type": "object",
+                      "properties": {
+                        "fileName": {
+                          "type": "string"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "uploadedAt": {
+                          "type": "string"
+                        },
+                        "firstDate": {
+                          "type": "string"
+                        },
+                        "lastDate": {
+                          "type": "string"
+                        },
+                        "dayCount": {
+                          "type": "number"
+                        },
+                        "missingNetSalesCents": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "fileName",
+                        "key",
+                        "uploadedAt"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "salesCoverage": {
@@ -10353,116 +10239,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "additionalProperties": false
               }
             },
-            "additionalProperties": false
-          },
-          "staffTraining": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
-              "step1Complete": {
-                "type": "boolean"
-              },
-              "step2Complete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "directSignup": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "strategy": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "minimumSpend": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "trackingLink": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "visitQrCode": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "additionalProperties": false
-          },
-          "plannedLaunchDate": {
-            "type": "string"
-          },
-          "deferrals": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "reason": {
-                  "type": "string",
-                  "enum": [
-                    "WAITING_ON_SOMEONE",
-                    "MISSING_INFO",
-                    "NOT_SURE_HOW",
-                    "PREFER_SOMETHING_ELSE"
-                  ]
-                },
-                "deferredAt": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "reason",
-                "deferredAt"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "data": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "both"
-              },
-              "retention": {
-                "type": "object",
-                "properties": {
-                  "membersProgramDescription": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "type"
-            ],
             "additionalProperties": false
           }
         },
