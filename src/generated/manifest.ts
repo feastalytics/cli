@@ -3086,18 +3086,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "listReferenceScripts",
-      "domain": "ads",
-      "description": "List the reference ad scripts Content Studio offers as Concept presets for Bevyl videos, each distilled from an ad that performed: a preview video, its beats, lines to adapt and the concept text sent to Bevyl. Copy the structure and pacing, not the words.",
-      "type": "query",
-      "path": [
-        "api",
-        "bevyl",
-        "listReferenceScripts"
-      ],
-      "inputJsonSchema": null
-    },
-    {
       "id": "listTemplateAutomations",
       "domain": "automations",
       "description": "Load template automations to preview what applying a template would create. Use after listAutomationTemplates. For acquisition templates, provide campaignId.",
