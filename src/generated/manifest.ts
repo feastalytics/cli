@@ -336,7 +336,7 @@ export const CLI_MANIFEST: CliManifest = {
     },
     {
       "id": "approveVideo",
-      "domain": "ads",
+      "domain": "videos",
       "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one getVideo's exportUrl plays), so pass it only to approve an earlier run from listCampaignVideos. Fails until that run's export is ready (getVideo pipeline.status ready). Only once the human has watched the video and approved it.",
       "type": "mutation",
       "path": [
@@ -1465,7 +1465,7 @@ export const CLI_MANIFEST: CliManifest = {
     },
     {
       "id": "generateVideo",
-      "domain": "ads",
+      "domain": "videos",
       "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll getVideo with the projectId every 30 seconds or so until pipeline.status is ready (exportUrl is the MP4) or failed (message says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. Optional: angleId from listCampaignVideos to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scope creativeLibraryBroll; omit to use every clip already synced to Bevyl).",
       "type": "mutation",
       "path": [
@@ -2514,7 +2514,7 @@ export const CLI_MANIFEST: CliManifest = {
     },
     {
       "id": "getVideo",
-      "domain": "ads",
+      "domain": "videos",
       "description": "Read one Content Studio video by projectId. pipeline.status moves uploading, processing, creating, rendering, exporting, then ready (exportUrl is the MP4 to watch) or failed (message says why). pipeline is null for videos made before the server pipeline; use listCampaignVideos for those. Reads Feastalytics only, so it is cheap to poll.",
       "type": "query",
       "path": [
@@ -2539,7 +2539,7 @@ export const CLI_MANIFEST: CliManifest = {
     },
     {
       "id": "getVideoPromptOptions",
-      "domain": "ads",
+      "domain": "videos",
       "description": "The building blocks for a generateVideo prompt for one campaign. defaultPrompt is what Content Studio would send with its default picks: plain text in four sections (Campaign, Concept, Creative direction, CTA), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from, and direction options a suggestedFormat to pass as generateVideo's format. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. Reads Feastalytics only.",
       "type": "query",
       "path": [
@@ -2673,7 +2673,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listAutomationTemplates",
       "domain": "automations",
-      "description": "Lists available automation templates for retention (members program) or acquisition (campaign) systems. Use listTemplateAutomations to preview before applying. Only apply templates when the campaign or members program has no existing flows.",
+      "description": "Lists available automation templates for retention (members program) or acquisition (campaign) systems. applyAutomationTemplate creates live, active automations right away. Only apply templates when the campaign or members program has no existing flows.",
       "type": "query",
       "path": [
         "api",
@@ -2725,7 +2725,7 @@ export const CLI_MANIFEST: CliManifest = {
     },
     {
       "id": "listCampaignVideos",
-      "domain": "ads",
+      "domain": "videos",
       "description": "Every Content Studio video for a campaign, newest first: projectId, angleId and angleTitle (videos are grouped into angles), the concept and direction they were made from, latestRun (the Bevyl run, whose runId approveVideo needs), approvedRunId, edits, and pipeline (status, message, exportUrl) for videos made through generateVideo. Calls Bevyl to read run status, so prefer getVideo to poll a single video.",
       "type": "query",
       "path": [
@@ -2986,34 +2986,6 @@ export const CLI_MANIFEST: CliManifest = {
         "properties": {},
         "additionalProperties": false,
         "default": {},
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "listTemplateAutomations",
-      "domain": "automations",
-      "description": "Load template automations to preview what applying a template would create. Use after listAutomationTemplates. For acquisition templates, provide campaignId.",
-      "type": "query",
-      "path": [
-        "api",
-        "automation",
-        "loadTemplateAutomations"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "templateId": {
-            "type": "string"
-          },
-          "formData": {},
-          "campaignId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "templateId"
-        ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3386,7 +3358,7 @@ export const CLI_MANIFEST: CliManifest = {
     },
     {
       "id": "requestVideoEdit",
-      "domain": "ads",
+      "domain": "videos",
       "description": "Ask Bevyl to remake a video with one change, for example \"make the hook punchier\" or \"use the patio shots first\". Send only the change in note (600 characters at most); Bevyl builds from the video's current state. On-screen text cannot be moved or resized. Starts a new run: getVideo moves back to rendering, then ready with the new export. Spends Bevyl generation credits, so only with the human's explicit approval.",
       "type": "mutation",
       "path": [
