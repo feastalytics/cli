@@ -1,6 +1,6 @@
 # Funnels
 
-**Applying a funnel template** expands a whole screen tree server-side in one call: `applyFunnelTemplate` (needs the campaign's funnel unset, as on a fresh campaign, and resolves the referrer from the campaign). `deleteFunnel` with `{ "campaignId": "..." }` tears one down: it deletes the campaign's own screens and resets its overrides, returning the campaign to the choose-template state.
+**Applying a funnel template** expands a whole screen tree server-side in one call: `applyFunnelTemplate`, which resolves the referrer from the campaign. On a campaign that already has a funnel it replaces it: the campaign's own screens are deleted, along with every edit made to them, and its overrides reset before the template is applied. Base screens such as Members Pass are untouched, and an ineligible template is rejected before anything is deleted. `applyFunnelTemplate` with `{ "campaignId": "...", "templateId": null }` deletes the funnel and applies nothing, returning the campaign to the choose-template state.
 
 **Individual funnel screens are edited** through a **draft → preview → promote** loop. You never apply edits locally: you stage them on an off-prod draft, preview the result at a stable URL, then save. Tools: `listFunnelScreens`, `createFunnelDraft`, `stageFunnelEdit`, `stageFunnelScreen`, `getFunnelDraft`, `listFunnelDrafts`, `discardFunnelDraft`, `saveFunnelEdits`.
 
