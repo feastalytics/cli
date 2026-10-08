@@ -24,46 +24,6 @@ export const CLI_MANIFEST: CliManifest = {
   ],
   "tools": [
     {
-      "id": "ads_activate_entity",
-      "domain": "ads",
-      "description": "Take one Meta campaign, ad set or ad from PAUSED to ACTIVE. Spends real money: only after the human explicitly confirms. Does not cascade, so activate top-down; willDeliver false (a paused parent, listed in pausedAncestors) means live in name only, so say so. For a campaign Feastalytics published, use setAdCampaignStatus, which cascades.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "activateEntity"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "adAccountId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "entityType": {
-            "type": "string",
-            "enum": [
-              "campaign",
-              "adSet",
-              "ad"
-            ]
-          },
-          "entityId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "adAccountId",
-          "entityType",
-          "entityId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "ads_create_dataset",
       "domain": "ads",
       "description": "Create a dataset (Meta pixel) on an ad account. Datasets cannot be deleted and a second one splits a funnel's events, so check ads_get_assets with include datasets first. Creating connects nothing: write the returned id to the layout config with updateBrandIdentity.",
@@ -208,7 +168,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_update_entity",
       "domain": "ads",
-      "description": "Rename, re-budget or pause a Meta campaign, ad set or ad. Budgets are integer cents and replace the current value, and spend changes the moment it lands: read the entity with ads_get_ad_entities and confirm the new number with the human first. adAccountId must own the entity. status only accepts PAUSED; going live is setAdCampaignStatus or ads_activate_entity. Creatives cannot be edited.",
+      "description": "Rename, re-budget, pause or turn on a Meta campaign, ad set or ad. adAccountId must own the entity. Budgets are integer cents and replace the current value, and spend changes the moment it lands: read the entity with ads_get_ad_entities and confirm the new number with the human first. status ACTIVE spends real money: send it only after the human explicitly confirms. It does not cascade, so activate top-down (campaign, then ad set, then ad); the response's willDeliver false with pausedAncestors listed means the entity is live in name only, so say so. Combined with name or budget changes, those are applied first and the entity is activated after, so the budget is set before spend starts. For a campaign Feastalytics published, use setAdCampaignStatus instead, which cascades. Creatives cannot be edited.",
       "type": "mutation",
       "path": [
         "api",
@@ -252,7 +212,10 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "status": {
                 "type": "string",
-                "const": "PAUSED"
+                "enum": [
+                  "ACTIVE",
+                  "PAUSED"
+                ]
               }
             },
             "additionalProperties": false
@@ -299,7 +262,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "applyFunnelTemplate",
       "domain": "campaigns",
-      "description": "Builds a campaign's funnel screens from a template. Only works on a campaign with no funnel yet (deleteFunnel resets one). templateId comes from listFunnelTemplates. Prepay templates always add a Stripe payment screen, so use offer-basic for an offer redeemed in person, priced or not.",
+      "description": "Builds a campaign's funnel screens from a template, replacing any funnel the campaign already has. Replacing is destructive: the campaign's own screens are deleted along with every edit made to them, and the campaign override is reset (initialScreenId, postSignupScreen, overrideByScreenId, variants). Base screens shared by the website, such as Members Pass, are untouched. Pass templateId: null to delete the funnel and apply nothing, returning the campaign to the choose-template state. Otherwise templateId comes from listFunnelTemplates; an ineligible template is rejected before anything is deleted. Prepay templates always add a Stripe payment screen, so use offer-basic for an offer redeemed in person, priced or not.",
       "type": "mutation",
       "path": [
         "api",
@@ -314,15 +277,22 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "string"
           },
           "templateId": {
-            "type": "string",
-            "enum": [
-              "offer-basic",
-              "offer-prepay",
-              "offer-direct-prepay",
-              "reservation-offer-basic",
-              "reservation-offer-prepay",
-              "reservation-offer-direct-prepay",
-              "reservation-only"
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "offer-basic",
+                  "offer-prepay",
+                  "offer-direct-prepay",
+                  "reservation-offer-basic",
+                  "reservation-offer-prepay",
+                  "reservation-offer-direct-prepay",
+                  "reservation-only"
+                ]
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -397,63 +367,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "serialNumber",
           "itemId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "cloneCampaign",
-      "domain": "campaigns",
-      "description": "Copies a campaign's funnel screens, automations and offers into a new campaign. referrer is a subdomain from getOrganization (subdomains2). The copied automations keep the source campaign's reservation links; rewrite them to the new campaign's shorthand.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "campaigns",
-        "app",
-        "clone"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "sourceCampaignId": {
-            "type": "string"
-          },
-          "newCampaignName": {
-            "type": "string"
-          },
-          "referrer": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "sourceCampaignId",
-          "newCampaignName",
-          "referrer"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "countParentAutomationRecipients",
-      "domain": "automations",
-      "description": "Count distinct members who already received an automation: the audience a receiveAutomation child reaches if backfilled with applyToHistorical: true. Read-only. Before any backfill, tell the user this number, warn above 1000, and backfill only after they confirm.",
-      "type": "query",
-      "path": [
-        "api",
-        "automation",
-        "countParentAutomationRecipients"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "parentAutomationId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "parentAutomationId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -819,7 +732,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createCampaign",
       "domain": "campaigns",
-      "description": "Creates a new acquisition campaign shell. The campaign is created mid-setup (isCreating: true) and stays in the dashboard's creation wizard until an updateCampaign call sets isCreating: false with the offer and enabledFeatures. ALWAYS follow this call with that updateCampaign.",
+      "description": "Creates a new acquisition campaign and returns its id. Without sourceCampaignId it creates an empty shell mid-setup (isCreating: true) that stays in the dashboard's creation wizard until an updateCampaign call sets isCreating: false with the offer and enabledFeatures; ALWAYS follow that call with that updateCampaign. With sourceCampaignId it copies that campaign's funnel screens, automations and offers into the new campaign named campaign.name; description and imageUrl replace the source's when given. The copy keeps the source's isCreating, so a copy of a finished campaign is finished and needs no updateCampaign finish step. Referrer rule for a copy: campaign.referrers is either left out (the funnel is copied from the source's first referrer and the source's referrers are kept) or holds exactly one subdomain from getOrganization (subdomains2), which becomes the new campaign's only referrer and the one whose funnel screens are copied. The copied automations keep the source campaign's reservation links; rewrite them to the new campaign's shorthand.",
       "type": "mutation",
       "path": [
         "api",
@@ -888,6 +801,9 @@ export const CLI_MANIFEST: CliManifest = {
               "name"
             ],
             "additionalProperties": false
+          },
+          "sourceCampaignId": {
+            "type": "string"
           }
         },
         "required": [
@@ -1284,31 +1200,6 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "availabilityId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "deleteFunnel",
-      "domain": "campaigns",
-      "description": "Tears down a campaign's funnel: deletes the campaign-specific screens and resets the campaign override (clears initialScreenId, postSignupScreen, overrideByScreenId, and variants), returning the campaign to the choose-template state. Inverse of applyFunnelTemplate.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "campaigns",
-        "app",
-        "deleteFunnel"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "campaignId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "campaignId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2909,7 +2800,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listFunnelTemplates",
       "domain": "campaigns",
-      "description": "Lists the funnel templates for a campaign: each template's guest journey (ordered screens), whether it collects payment, its eligibility for this campaign, and a recommended id. Read before applyFunnelTemplate; never guess a template id.",
+      "description": "Lists the funnel templates for a campaign: each template's guest journey (ordered screens), whether it collects payment, its eligibility for this campaign, a recommended id, and hasFunnel (whether the campaign already has a funnel, which applyFunnelTemplate would delete and replace). Read before applyFunnelTemplate; never guess a template id.",
       "type": "query",
       "path": [
         "api",
@@ -3194,7 +3085,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "queryData",
       "domain": "data",
-      "description": "Run a read-only query against the data catalog. Call describeData first for object types and exact column names; do not guess columns. Results are already scoped to the organization, so never filter on organizationId. Page by passing the returned nextCursor back as args.cursor.",
+      "description": "Run a read-only query against the data catalog. Call describeData first for object types and exact column names; do not guess columns. Results are already scoped to the organization, so never filter on organizationId. Page by passing the returned nextCursor back as args.cursor. Aggregate functions: SUM, MAX, MIN, AVG, COUNT, COUNT_DISTINCT.",
       "type": "query",
       "path": [
         "api",
@@ -3261,7 +3152,7 @@ export const CLI_MANIFEST: CliManifest = {
                       "const": "aggregate"
                     },
                     "aggregate": {
-                      "description": "Required. Group and aggregate, replacing the row shape with the grouped and aggregated columns only. Shape: {\"aggregate\":{\"$<column>\":\"SUM\"|\"MAX\"|\"MIN\"|\"AVG\"|\"COUNT\"},\"groupBy\":{\"$<column>\":\"EXACT\"}}. Example - revenue by location: {\"aggregate\":{\"$amount\":\"SUM\"},\"groupBy\":{\"$locationId\":\"EXACT\"}}"
+                      "description": "Required. Group and aggregate, replacing the row shape with the grouped and aggregated columns only. Shape: {\"aggregate\":{\"$<column>\":\"SUM\"|\"MAX\"|\"MIN\"|\"AVG\"|\"COUNT\"|\"COUNT_DISTINCT\"},\"groupBy\":{\"$<column>\":\"EXACT\"}}. groupBy is optional; without it the result is one row. SUM and AVG need a number column. COUNT counts non-null values and COUNT_DISTINCT counts distinct non-null values, on any column. Example - revenue by location: {\"aggregate\":{\"$amount\":\"SUM\"},\"groupBy\":{\"$locationId\":\"EXACT\"}} Example - distinct members an automation ran for, on core.automationLog: {\"aggregate\":{\"$serialNumber\":\"COUNT_DISTINCT\"}}"
                     }
                   },
                   "required": [
