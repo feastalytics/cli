@@ -23,7 +23,7 @@ Typical flow: `createCampaign`, then `updateCampaign` with `isCreating: false` t
 - A **flow** is a named grouping of automations. A flow belongs to *either* a campaign *or* the members program (never both).
 - `listAutomationFlows` scopes with input: `{ campaignId }` returns that campaign's flows; `{ scope: "membersProgram" }` returns members-program flows (those with no campaign). `listAutomations` returns every automation in the org, ordered by execution priority.
 - **Authoring:** `createAutomationFlow` makes a flow; automations are created, updated and deleted through a draft (`createAutomationDraft` → `stageAutomationEdits` → `simulateAutomationDraft` → `saveAutomationEdits`; create ops **require** a `flowId`); `updateAutomationFlow` / `deleteAutomationFlow` manage the flow itself. See `workflows/automations.md` for the ordering and the trigger/condition/send-time rules.
-- Templates: `listAutomationTemplates` → `listTemplateAutomations` (preview) → `applyAutomationTemplate`. Only apply a template to a campaign/members-program that has no existing flows.
+- Templates: `listAutomationTemplates` → `applyAutomationTemplate` (creates live, active automations right away). Only apply a template to a campaign/members-program that has no existing flows.
 
 ## Offers and promotions
 
