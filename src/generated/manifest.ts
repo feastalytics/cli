@@ -971,7 +971,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createCreativeStrategy",
       "domain": "creators",
-      "description": "Generate a creator brief (creative strategy). An awareness brief is saved before this returns; a CTA brief generates in the background, so poll getCreativeStrategy with the returned strategyId until generationStatus is complete or failed before using it. Edit it with updateCreativeStrategy.",
+      "description": "Generate a creator brief (creative strategy). An awareness brief is saved before this returns; a CTA brief generates in the background, so poll getCreativeStrategy with the returned strategyId until generationStatus is complete or failed before using it, or pass wait: true to hold the call up to 20 seconds first. Edit it with updateCreativeStrategy.",
       "type": "mutation",
       "path": [
         "api",
@@ -1021,6 +1021,9 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "strategyId": {
                 "type": "string"
+              },
+              "wait": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -1077,6 +1080,9 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "strategyId": {
                 "$ref": "#/anyOf/0/properties/strategyId"
+              },
+              "wait": {
+                "$ref": "#/anyOf/0/properties/wait"
               }
             },
             "required": [
@@ -2132,7 +2138,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCreativeStrategy",
       "domain": "creators",
-      "description": "Read one creator strategy by id, including generationStatus. This is how you finish createCreativeStrategy: the CTA path returns immediately with generationStatus 'generating', so poll here until it reads complete or failed before using the brief.",
+      "description": "Read one creator strategy by id, including generationStatus. This is how you finish createCreativeStrategy: the CTA path returns immediately with generationStatus 'generating', so poll here until it reads complete or failed before using the brief. wait: true holds the call up to 20 seconds until generation finishes.",
       "type": "query",
       "path": [
         "api",
@@ -2144,6 +2150,9 @@ export const CLI_MANIFEST: CliManifest = {
         "properties": {
           "strategyId": {
             "type": "string"
+          },
+          "wait": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2229,7 +2238,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getJob",
       "domain": "core",
-      "description": "Poll one background job. Pass both jobId and jobType from the tool that queued it (a job id alone is not addressable). { job: null } means not landed yet: keep polling. status goes PENDING, RUNNING, then COMPLETED or FAILED (with errorMessage). includeFullPayload adds the input and generated text.",
+      "description": "Poll one background job. Pass both jobId and jobType from the tool that queued it (a job id alone is not addressable). { job: null } means not landed yet: keep polling. status goes PENDING, RUNNING, then COMPLETED or FAILED (with errorMessage). includeFullPayload adds the input and generated text. wait: true holds the call up to 20 seconds until the job finishes, then returns it either way.",
       "type": "query",
       "path": [
         "api",
@@ -2244,6 +2253,9 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "string"
           },
           "includeFullPayload": {
+            "type": "boolean"
+          },
+          "wait": {
             "type": "boolean"
           }
         },
@@ -3208,7 +3220,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "publishAds",
       "domain": "ads",
-      "description": "Publish a planAds plan to Meta, everything paused; setAdCampaignStatus starts spending. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome. Only with the human's explicit approval.",
+      "description": "Publish a planAds plan to Meta, everything paused; setAdCampaignStatus starts spending. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome, or pass wait: true to hold the call up to 20 seconds and get the job back (still check its status; a long publish returns unfinished). Only with the human's explicit approval.",
       "type": "mutation",
       "path": [
         "api",
@@ -3299,7 +3311,10 @@ export const CLI_MANIFEST: CliManifest = {
               ]
             }
           },
-          "reviewedPlan": {}
+          "reviewedPlan": {},
+          "wait": {
+            "type": "boolean"
+          }
         },
         "required": [
           "templateId",
