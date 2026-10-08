@@ -38,7 +38,7 @@ Automations have a staging tier, and it is the default path. Changes accumulate 
 ### Choosing the trigger
 
 - **Campaign flows: prefer `viewCampaign` over `signUp`.** A guest viewing the campaign page is the natural entry point: it captures new sign-ups *and* returning guests. Use `signUp` only for members-program welcome flows or a fire-once-at-registration moment.
-- **`offerExpiration` is rarely a *flow* trigger.** Use it on an individual automation inside an expiration nurture chain, not as a standalone flow's trigger type.
+- **`offerRedemption`, `offerExpiration` and `pickupDate` are conditions, not triggers.** They never fire as triggers, so saving one as a trigger is rejected. Use them as conditions on an automation with a trigger that does fire (an expiration nurture chain checks `offerExpiration` as a condition).
 
 ### Conditions: the nested event/occur shape
 
