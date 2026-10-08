@@ -1,0 +1,20 @@
+{
+  "name": "feast",
+  "interface": {
+    "displayName": "Feastalytics"
+  },
+  "plugins": [
+    {
+      "name": "feastalytics",
+      "source": {
+        "source": "local",
+        "path": "./plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
