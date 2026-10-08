@@ -48,7 +48,7 @@ A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`;
 `createCreativeStrategy` has two paths behind one tool, and only one of them finishes synchronously:
 
 - **`awareness`**: assembled from a fixed template and saved before the call returns. `generationStatus` comes back `complete`.
-- **`cta`**: handed to a background LLM. You get a `strategyId` and `generationStatus: "generating"` immediately. **Poll `getCreativeStrategy` until it reads `complete` or `failed`** before using the brief or quoting anything from it. The `jobId` and `jobType` that come back track the same run through `getJob`; reach for that only when the strategy reads `failed` and you want the job's `errorMessage`.
+- **`cta`**: handed to a background LLM. Pass `"wait": true` and the call holds up to 20 seconds; if `generationStatus` still reads `"generating"`, **call `getCreativeStrategy` with `"wait": true` until it reads `complete` or `failed`** before using the brief or quoting anything from it. The `jobId` and `jobType` that come back track the same run through `getJob`; reach for that only when the strategy reads `failed` and you want the job's `errorMessage`.
 
 `updateCreativeStrategy` is the revision step. Two things to get right: omitting `strategyId` **creates a new strategy** instead of editing the one you meant, and it replaces the fields you send rather than merging them, so read first, apply your edits to the full `concepts` array, and send the whole thing back. Generating into a strategy that isn't a draft is rejected rather than silently overwritten.
 

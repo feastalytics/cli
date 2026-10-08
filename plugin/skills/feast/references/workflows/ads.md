@@ -26,7 +26,7 @@ For the *words* in the ads, read the copywriting file for your audience first: `
    - `effects`: see below.
 
    If the organization resolves differently than when you planned (a `PLAN_STALE` refusal), re-run `planAds` and show the human what changed before publishing again.
-5. Poll `getJob` with the returned `jobId` + `jobType` until `COMPLETED` or `FAILED`. `{ "job": null }` means not landed yet, so keep polling. **Read the job's effect outcomes.** Each declared effect reports `done`, `skipped` or `error` with a human-readable detail, and effect failures do not fail the job (the ads already exist by then), so this is the only place you find out.
+5. Pass `"wait": true` to `publishAds` and it returns the finished `job` (up to 20 seconds). If that `job` is still `PENDING` or `RUNNING`, call `getJob` with the `jobId` + `jobType` and `"wait": true` until `COMPLETED` or `FAILED`. `{ "job": null }` means not landed yet, so call again. **Read the job's effect outcomes.** Each declared effect reports `done`, `skipped` or `error` with a human-readable detail, and effect failures do not fail the job (the ads already exist by then), so this is the only place you find out.
 6. `setAdCampaignStatus` to go live, after the user says go. Check the preflight counts in the response. For guest-facing ads linked to a Feast campaign, run the campaign readiness check first (`getTaskboard` with the campaign scope, see "Before a campaign goes live" in `campaigns.md`). Ads that send traffic to a funnel with no automations pay for sign ups that never receive their offer.
 
 ### Effects: the write-back is declared, not called afterwards
