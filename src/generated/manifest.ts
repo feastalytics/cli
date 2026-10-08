@@ -66,7 +66,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_create_dataset",
       "domain": "ads",
-      "description": "Create a dataset (Meta pixel) on an ad account. Datasets cannot be deleted and a second one splits a funnel's events, so check ads_get_datasets first. Creating connects nothing: write the returned id to the layout config with updateBrandIdentity.",
+      "description": "Create a dataset (Meta pixel) on an ad account. Datasets cannot be deleted and a second one splits a funnel's events, so check ads_get_assets with include datasets first. Creating connects nothing: write the returned id to the layout config with updateBrandIdentity.",
       "type": "mutation",
       "path": [
         "api",
@@ -95,32 +95,9 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "ads_get_ad_accounts",
-      "domain": "ads",
-      "description": "List the ad accounts you can publish to. The Meta token reaches every ad account of every business it was connected for, so the list is narrowed to accounts publishAds will accept; includeUnassigned returns the rest for diagnosing a missing account, and those are not publishable.",
-      "type": "query",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "getAdAccounts"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "includeUnassigned": {
-            "type": "boolean",
-            "default": false
-          }
-        },
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "ads_get_ad_entities",
       "domain": "ads",
-      "description": "Read the campaigns, ad sets or ads on an ad account; ads include their creative. level is what comes back; a campaignId, adSetId or adId narrows to that object or its children (an id below level is an error). Before an addAds publish, copy a live ad's settings as the ads workflow describes.",
+      "description": "Read the campaigns, ad sets or ads on an ad account; ads include their creative. level is what comes back; a campaignId, adSetId or adId narrows to that object or its children (an id below level is an error). includeChildren nests the tree in one call: each campaign gets adSets and each ad set gets ads, fetched with the same scope, effectiveStatus and limit (the limit applies per level, so narrow with campaignId for a complete tree). Before an addAds publish, copy a live ad's settings as the ads workflow describes.",
       "type": "query",
       "path": [
         "api",
@@ -167,6 +144,9 @@ export const CLI_MANIFEST: CliManifest = {
             "minimum": 1,
             "maximum": 200,
             "default": 50
+          },
+          "includeChildren": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -178,97 +158,49 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "ads_get_custom_audiences",
+      "id": "ads_get_assets",
       "domain": "ads",
-      "description": "List the custom audiences on an ad account, for the customAudienceIds and excludedCustomAudienceIds template variables. Skip any with isReadyForUse false: Meta delivers nothing to it. Audience ids belong to one ad account and are rejected by another.",
+      "description": "Read the Meta assets ad templates need, one section per include value, in one call. adAccounts are the accounts you can publish to (includeUnassigned adds the rest for diagnosing a missing account; those are not publishable). pages are the Facebook Pages on the token: prefer one with usedByOrganization true. instagramAccounts (needs pageId) are the identities that Page can run ads as; pageBacked and business are both valid for instagramAccountId. customAudiences (needs adAccountId) feed customAudienceIds: skip any with isReadyForUse false, and an audience id only works on the ad account it came from. datasets (needs adAccountId) are for checking a pixel, not choosing one: optimise against the pixel the funnel fires. instagramMedia (needs pageId) lists recent posts for igMedia creative references, each with the instagramUserId the reference needs.",
       "type": "query",
       "path": [
         "api",
         "ads",
         "facebook",
-        "getCustomAudiences"
+        "getAssets"
       ],
       "inputJsonSchema": {
         "type": "object",
         "properties": {
+          "include": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "adAccounts",
+                "pages",
+                "instagramAccounts",
+                "customAudiences",
+                "datasets",
+                "instagramMedia"
+              ]
+            },
+            "minItems": 1
+          },
           "adAccountId": {
             "type": "string",
             "minLength": 1
-          }
-        },
-        "required": [
-          "adAccountId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "ads_get_datasets",
-      "domain": "ads",
-      "description": "List the datasets (Meta pixels) on an ad account, with lastFiredTime. For checking a pixel, not choosing one: a campaign should optimise against the pixel its funnel fires (from the organization's layout config), or it may get no traffic.",
-      "type": "query",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "getDatasets"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "adAccountId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "adAccountId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "ads_get_ig_accounts",
-      "domain": "ads",
-      "description": "List the Instagram identities a Page can run ads as. kind is business for a real Instagram business account, or pageBacked for the shadow identity Meta creates for a Page without one; both are valid for the instagramAccountId template variable. pageId comes from ads_get_user_pages.",
-      "type": "query",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "getIgAccounts"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
+          },
           "pageId": {
             "type": "string",
             "minLength": 1
+          },
+          "includeUnassigned": {
+            "type": "boolean"
           }
         },
         "required": [
-          "pageId"
+          "include"
         ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "ads_get_user_pages",
-      "domain": "ads",
-      "description": "List the Facebook Pages available for advertising, with any linked Instagram business account. The token also reaches other businesses' Pages and publishAds accepts them, so prefer a Page with usedByOrganization true (one this organization has run ads from).",
-      "type": "query",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "getUserPages"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {},
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -456,13 +388,10 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "string",
             "minLength": 1
           },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
           "expiresInDays": {
             "type": "integer",
-            "exclusiveMinimum": 0
+            "exclusiveMinimum": 0,
+            "description": "Days until the reward expires, at the end of that day in the organization's timezone. Omit for no expiration."
           }
         },
         "required": [
@@ -1224,7 +1153,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "description": "Render the five recruitment ad images for a location from fixed templates, using its own photo, logo and food credit (no AI image generation). Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit from getInfluencerBoardConfig.",
+      "description": "Render the five recruitment ad images for a location from fixed templates, using its own photo, logo and food credit (no AI image generation). Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit is in dollars (25 means $25): getInfluencerBoardConfig's foodCreditAmountCents divided by 100.",
       "type": "mutation",
       "path": [
         "api",
@@ -2636,7 +2565,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "inviteUser",
       "domain": "core",
-      "description": "Invite someone to the organization by email. Sends a real email immediately; someone who already has a Feast account joins right away with no acceptance step. Always pass role: it defaults to OWNER, with full billing and settings access. VIEWER is read-only; SCANNER is for staff running the scanner app.",
+      "description": "Invite someone to the organization by email. Sends a real email immediately; someone who already has a Feast account joins right away with no acceptance step. OWNER has full billing and settings access, VIEWER is read-only, SCANNER is for staff running the scanner app.",
       "type": "mutation",
       "path": [
         "api",
@@ -2657,11 +2586,12 @@ export const CLI_MANIFEST: CliManifest = {
               "VIEWER",
               "SCANNER"
             ],
-            "default": "OWNER"
+            "description": "The invitee's role. Ask the user which one; OWNER grants full billing and settings access."
           }
         },
         "required": [
-          "email"
+          "email",
+          "role"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2996,32 +2926,6 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "campaignId"
-        ],
-        "additionalProperties": false,
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "listIgMedia",
-      "domain": "ads",
-      "description": "List up to 50 recent posts from the Instagram business account linked to a Facebook Page, for igMedia creative references in planAds, with the instagramUserId each reference needs. pageId comes from ads_get_user_pages; a Page with no linked account returns instagramAccount null.",
-      "type": "query",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "listIgMedia"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "pageId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "pageId"
         ],
         "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -8390,7 +8294,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCampaign",
       "domain": "campaigns",
-      "description": "Updates one campaign. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read with getCampaign first. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices.",
+      "description": "Updates one campaign. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read with getCampaign first. A promotion sent with the promoId of a stored one keeps its Stripe product and price ids when it omits them. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices.",
       "type": "mutation",
       "path": [
         "api",
@@ -9124,7 +9028,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreativeStrategy",
       "domain": "creators",
-      "description": "Save a creator brief: the revision step after createCreativeStrategy. Omitting strategyId creates a new brief instead of editing one. Sent fields replace stored ones, so read it with getCreativeStrategy and send the full concepts array with your edits.",
+      "description": "Save a creator brief: the revision step after createCreativeStrategy. Omitting strategyId creates a new brief instead of editing one. title, briefMarkdown and concepts replace the stored ones, so read it with getCreativeStrategy and send the full concepts array with your edits. Omitted optional fields keep their stored values; send null for locationId or campaignId to clear it. Omit briefWithoutConcepts to derive it from briefMarkdown.",
       "type": "mutation",
       "path": [
         "api",
@@ -9147,10 +9051,16 @@ export const CLI_MANIFEST: CliManifest = {
             ]
           },
           "locationId": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "campaignId": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "briefMarkdown": {
             "type": "string"
@@ -9368,7 +9278,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "title",
           "briefMarkdown",
-          "briefWithoutConcepts",
           "concepts"
         ],
         "additionalProperties": false,
@@ -10348,27 +10257,7 @@ export const CLI_MANIFEST: CliManifest = {
               "minimumSpendValue": {
                 "type": "number"
               },
-              "restaurantType": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "enum": [
-                      "QSR",
-                      "FSR"
-                    ]
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
               "isOnboarding": {
-                "type": "boolean"
-              },
-              "isArchived": {
-                "type": "boolean"
-              },
-              "isReadOnly": {
                 "type": "boolean"
               },
               "staffInstructions": {
