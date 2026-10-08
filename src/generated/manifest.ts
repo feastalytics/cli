@@ -9451,7 +9451,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program (an upsert, one per locationId; omitted fields are left alone). Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. locationId from queryData interface.location.",
+      "description": "Create or update a location's creator program (an upsert, one per locationId; omitted fields are left alone). Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. locationId from queryData interface.location.",
       "type": "mutation",
       "path": [
         "api",
@@ -9607,6 +9607,10 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "agentPaused": {
             "type": "boolean"
+          },
+          "identityHidden": {
+            "type": "boolean",
+            "description": "true hides the restaurant's name, logo and address from creators until they are approved. Omit to preserve."
           },
           "recruitmentFacebookCampaignId": {
             "anyOf": [
