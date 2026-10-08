@@ -1,7 +1,7 @@
 {
   "name": "feastalytics",
   "displayName": "Feastalytics",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "Operate a Feastalytics restaurant organization (campaigns, automations, funnels, members program, wallet pass, creator sourcing, Meta ads, texting, onboarding and data queries) through the hosted Feastalytics MCP server and the feast skill.",
   "author": {
     "name": "Feastalytics",
