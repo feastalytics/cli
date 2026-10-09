@@ -50,7 +50,6 @@ export const CLI_MANIFEST: CliManifest = {
           "adAccountId",
           "name"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -113,7 +112,6 @@ export const CLI_MANIFEST: CliManifest = {
           "level",
           "adAccountId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -161,7 +159,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "include"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -217,8 +214,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "PAUSED"
                 ]
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
@@ -227,7 +223,6 @@ export const CLI_MANIFEST: CliManifest = {
           "entityId",
           "fields"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -255,13 +250,12 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "templateId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
     {
       "id": "applyFunnelTemplate",
-      "domain": "campaigns",
+      "domain": "funnel",
       "description": "Builds a campaign's funnel screens from a template, replacing any funnel the campaign already has. Replacing is destructive: the campaign's own screens are deleted along with every edit made to them, and the campaign override is reset (initialScreenId, postSignupScreen, overrideByScreenId, variants). Base screens shared by the website, such as Members Pass, are untouched. Pass templateId: null to delete the funnel and apply nothing, returning the campaign to the choose-template state. Otherwise templateId comes from listFunnelTemplates; an ineligible template is rejected before anything is deleted. Prepay templates always add a Stripe payment screen, so use offer-basic for an offer redeemed in person, priced or not.",
       "type": "mutation",
       "path": [
@@ -300,7 +294,6 @@ export const CLI_MANIFEST: CliManifest = {
           "campaignId",
           "templateId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -329,7 +322,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "projectId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -368,7 +360,6 @@ export const CLI_MANIFEST: CliManifest = {
           "serialNumber",
           "itemId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -392,7 +383,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "title"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -455,7 +445,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "title"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -500,15 +489,13 @@ export const CLI_MANIFEST: CliManifest = {
                         "required": [
                           "utcStart",
                           "utcEnd"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "required": [
                       "type",
                       "once"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -549,15 +536,13 @@ export const CLI_MANIFEST: CliManifest = {
                           "utcEndMinute",
                           "utcDaysOfWeek",
                           "blockUtcStart"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "required": [
                       "type",
                       "weekly"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 ]
               },
@@ -577,14 +562,12 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "locationId",
               "block"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
           "availability"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -635,8 +618,7 @@ export const CLI_MANIFEST: CliManifest = {
                     },
                     "required": [
                       "main"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   "secondary": {
                     "$ref": "#/properties/theme/properties/palette/properties/primary"
@@ -657,8 +639,7 @@ export const CLI_MANIFEST: CliManifest = {
                       "secondary": {
                         "type": "string"
                       }
-                    },
-                    "additionalProperties": false
+                    }
                   },
                   "background": {
                     "type": "object",
@@ -669,14 +650,12 @@ export const CLI_MANIFEST: CliManifest = {
                       "paper": {
                         "type": "string"
                       }
-                    },
-                    "additionalProperties": false
+                    }
                   },
                   "divider": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "typography": {
                 "type": "object",
@@ -709,15 +688,12 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "family",
                         "url"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   }
-                },
-                "additionalProperties": false
+                }
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
@@ -725,7 +701,6 @@ export const CLI_MANIFEST: CliManifest = {
           "referrer",
           "logoUrl"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -768,8 +743,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "type",
                       "key"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -785,8 +759,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "type",
                       "url"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 ]
               },
@@ -799,8 +772,7 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "required": [
               "name"
-            ],
-            "additionalProperties": false
+            ]
           },
           "sourceCampaignId": {
             "type": "string"
@@ -809,7 +781,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaign"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -855,8 +826,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "restaurantNeighborhood",
                   "differentiatorsText",
                   "mustTryItemsText"
-                ],
-                "additionalProperties": false
+                ]
               },
               "campaignId": {
                 "type": "string"
@@ -874,8 +844,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "type",
               "awareness"
-            ],
-            "additionalProperties": false
+            ]
           },
           {
             "type": "object",
@@ -914,8 +883,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "customDeliverables": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "campaignId": {
                 "$ref": "#/anyOf/0/properties/campaignId"
@@ -933,8 +901,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "type",
               "cta"
-            ],
-            "additionalProperties": false
+            ]
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -967,7 +934,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "referrer"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -998,7 +964,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "eventId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1035,8 +1000,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "type",
               "name"
-            ],
-            "additionalProperties": false
+            ]
           },
           {
             "type": "object",
@@ -1059,8 +1023,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "type",
               "itemId"
-            ],
-            "additionalProperties": false
+            ]
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1106,7 +1069,6 @@ export const CLI_MANIFEST: CliManifest = {
           "locationId",
           "foodCredit"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1153,7 +1115,6 @@ export const CLI_MANIFEST: CliManifest = {
           "submissionId",
           "status"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1177,7 +1138,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "flowId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1201,7 +1161,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "availabilityId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1238,7 +1197,6 @@ export const CLI_MANIFEST: CliManifest = {
           "scope",
           "key"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1263,7 +1221,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "rewardId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1301,7 +1258,6 @@ export const CLI_MANIFEST: CliManifest = {
             "description": "Whether to include the query grammar for queryData. Defaults to true; pass false once you already have it."
           }
         },
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1325,7 +1281,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1350,7 +1305,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1434,7 +1388,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1458,7 +1411,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1495,7 +1447,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1547,15 +1498,13 @@ export const CLI_MANIFEST: CliManifest = {
                       },
                       "required": [
                         "campaignId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "campaign"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1586,15 +1535,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "channel"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "channel"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1624,15 +1571,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "fbCampaignId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "fbCampaign"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1658,15 +1603,13 @@ export const CLI_MANIFEST: CliManifest = {
                         "campaignId",
                         "fbCampaignId",
                         "fbAdsetId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "fbAdset"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1697,15 +1640,13 @@ export const CLI_MANIFEST: CliManifest = {
                         "fbCampaignId",
                         "fbAdsetId",
                         "fbAdId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "fbAd"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1727,15 +1668,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "googleCampaignId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "googleCampaign"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1757,15 +1696,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "utmCampaignId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "tiktokCampaign"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1787,15 +1724,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "source"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "miscSource"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1817,15 +1752,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "referrerSerialNumber"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "referrer"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1847,15 +1780,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "promoCode"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "creator"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -1877,15 +1808,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "campaignId",
                         "variantId"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
                     "type",
                     "variant"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               ]
             },
@@ -1915,7 +1844,6 @@ export const CLI_MANIFEST: CliManifest = {
           "start",
           "end"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1951,7 +1879,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -1978,7 +1905,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "strategyId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2002,7 +1928,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "userId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2027,7 +1952,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2051,7 +1975,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "locationId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2082,7 +2005,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "jobId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2123,7 +2045,6 @@ export const CLI_MANIFEST: CliManifest = {
           "fileName",
           "fileType"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2183,7 +2104,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "serialNumber"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2225,7 +2145,6 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": {
         "type": "object",
         "properties": {},
-        "additionalProperties": false,
         "default": {},
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2255,8 +2174,7 @@ export const CLI_MANIFEST: CliManifest = {
                 },
                 "required": [
                   "type"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -2268,8 +2186,7 @@ export const CLI_MANIFEST: CliManifest = {
                 },
                 "required": [
                   "type"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -2287,15 +2204,13 @@ export const CLI_MANIFEST: CliManifest = {
                     },
                     "required": [
                       "taskId"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "required": [
                   "type",
                   "task"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -2307,8 +2222,7 @@ export const CLI_MANIFEST: CliManifest = {
                 },
                 "required": [
                   "type"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -2326,15 +2240,13 @@ export const CLI_MANIFEST: CliManifest = {
                     },
                     "required": [
                       "campaignId"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "required": [
                   "type",
                   "campaign"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -2352,15 +2264,13 @@ export const CLI_MANIFEST: CliManifest = {
                     },
                     "required": [
                       "campaignId"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "required": [
                   "type",
                   "funnel"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -2378,15 +2288,13 @@ export const CLI_MANIFEST: CliManifest = {
                     },
                     "required": [
                       "flowId"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "required": [
                   "type",
                   "flow"
-                ],
-                "additionalProperties": false
+                ]
               }
             ],
             "default": {
@@ -2394,7 +2302,6 @@ export const CLI_MANIFEST: CliManifest = {
             }
           }
         },
-        "additionalProperties": false,
         "default": {
           "scope": {
             "type": "all"
@@ -2424,7 +2331,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "projectId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2449,7 +2355,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2484,7 +2389,6 @@ export const CLI_MANIFEST: CliManifest = {
           "email",
           "role"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2526,8 +2430,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "string",
                 "const": "membersProgram"
               }
-            },
-            "additionalProperties": false
+            }
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2554,8 +2457,7 @@ export const CLI_MANIFEST: CliManifest = {
               "flowId": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2585,7 +2487,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "type"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2635,7 +2536,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2660,8 +2560,7 @@ export const CLI_MANIFEST: CliManifest = {
               "offerId": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2719,8 +2618,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "rejected"
                 ]
               }
-            },
-            "additionalProperties": false
+            }
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2756,8 +2654,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "discarded"
                 ]
               }
-            },
-            "additionalProperties": false
+            }
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2793,13 +2690,12 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "referrer"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
     {
       "id": "listFunnelTemplates",
-      "domain": "campaigns",
+      "domain": "funnel",
       "description": "Lists the funnel templates for a campaign: each template's guest journey (ordered screens), whether it collects payment, its eligibility for this campaign, a recommended id, and hasFunnel (whether the campaign already has a funnel, which applyFunnelTemplate would delete and replace). Read before applyFunnelTemplate; never guess a template id.",
       "type": "query",
       "path": [
@@ -2818,7 +2714,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "campaignId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2858,7 +2753,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "scopes"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2875,7 +2769,6 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": {
         "type": "object",
         "properties": {},
-        "additionalProperties": false,
         "default": {},
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2903,7 +2796,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "submissionId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2943,7 +2835,6 @@ export const CLI_MANIFEST: CliManifest = {
           "templateId",
           "variables"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2968,7 +2859,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3034,8 +2924,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "required": [
                     "type",
                     "campaignId"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -3060,8 +2949,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "offerId",
                     "creativeIds"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               ]
             }
@@ -3078,7 +2966,6 @@ export const CLI_MANIFEST: CliManifest = {
           "idempotencyKey",
           "confirm"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3122,7 +3009,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "filter"
                   ],
-                  "additionalProperties": false,
                   "description": "Restrict the set to matching rows. Example: {\"type\":\"filter\",\"filter\":{\"$eventType\":{\"strings\":[\"order\",\"rewardAwarded\"]}}}"
                 },
                 {
@@ -3141,7 +3027,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "name"
                   ],
-                  "additionalProperties": false,
                   "description": "Traverse a link. Example: {\"type\":\"pivot\",\"name\":\"orderItem\"} on interface.order gives its line items."
                 },
                 {
@@ -3159,7 +3044,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "aggregate"
                   ],
-                  "additionalProperties": false,
                   "description": "Group and aggregate. Example: {\"type\":\"aggregate\",\"aggregate\":{\"aggregate\":{\"$amount\":\"SUM\"},\"groupBy\":{\"$locationId\":\"EXACT\"}}}"
                 },
                 {
@@ -3186,7 +3070,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "name",
                     "fields"
                   ],
-                  "additionalProperties": false,
                   "description": "Widen each row with columns from a linked object, keeping the current object type. Example: {\"type\":\"join\",\"name\":\"order\",\"fields\":[\"closedAt\",\"amount\"]}"
                 }
               ]
@@ -3225,7 +3108,6 @@ export const CLI_MANIFEST: CliManifest = {
                   "field",
                   "direction"
                 ],
-                "additionalProperties": false,
                 "description": "Sort order. Example: {\"field\":\"eventTime\",\"direction\":\"DESC\"}"
               },
               "fields": {
@@ -3235,15 +3117,13 @@ export const CLI_MANIFEST: CliManifest = {
                 },
                 "description": "Columns to return. Omit for all of them. The main lever for keeping responses under the payload cap on wide object types."
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
           "schemaName",
           "objectTypeName"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3278,7 +3158,6 @@ export const CLI_MANIFEST: CliManifest = {
           "projectId",
           "note"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3302,7 +3181,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3327,7 +3205,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3367,8 +3244,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "type",
               "query"
-            ],
-            "additionalProperties": false
+            ]
           },
           {
             "type": "object",
@@ -3385,8 +3261,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "type",
               "placeId"
-            ],
-            "additionalProperties": false
+            ]
           }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3463,7 +3338,6 @@ export const CLI_MANIFEST: CliManifest = {
             ]
           }
         },
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3497,8 +3371,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type",
                   "userId"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -3515,8 +3388,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type",
                   "serialNumber"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -3533,8 +3405,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type",
                   "phoneNumber"
-                ],
-                "additionalProperties": false
+                ]
               }
             ]
           },
@@ -3555,7 +3426,6 @@ export const CLI_MANIFEST: CliManifest = {
           "to",
           "message"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3589,7 +3459,6 @@ export const CLI_MANIFEST: CliManifest = {
           "facebookCampaignId",
           "status"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -3664,7 +3533,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest joins the loyalty program"
                 },
                 {
@@ -3682,7 +3550,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest is added by an import rather than signing up"
                 },
                 {
@@ -3703,7 +3570,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest opens a campaign page. Defaults to the flow's campaign"
                 },
                 {
@@ -3728,7 +3594,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest adds their pass to a wallet"
                 },
                 {
@@ -3749,7 +3614,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest scans their pass at a location"
                 },
                 {
@@ -3767,7 +3631,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest scans their pass but the scan does not count"
                 },
                 {
@@ -3794,7 +3657,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest prepays for an offer"
                 },
                 {
@@ -3815,7 +3677,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest texts back. `body` is what reply keywords match on"
                 },
                 {
@@ -3839,7 +3700,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest clicks a tracked button"
                 },
                 {
@@ -3860,7 +3720,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "A reward is awarded to the guest"
                 },
                 {
@@ -3885,7 +3744,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "A reward expires"
                 },
                 {
@@ -3925,7 +3783,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest submits a form property"
                 },
                 {
@@ -3964,7 +3821,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest submits a form property, evaluated as a condition"
                 },
                 {
@@ -3985,7 +3841,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest signed up from someone else's referral link"
                 },
                 {
@@ -4006,7 +3861,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "Someone else signed up from the guest's referral link"
                 },
                 {
@@ -4024,7 +3878,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "at"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest's subscription renews"
                 },
                 {
@@ -4049,7 +3902,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "at",
                     "automationId"
                   ],
-                  "additionalProperties": false,
                   "description": "The guest already received an automation. The simulation generates these itself as texts send, so only pass one to replay history"
                 }
               ]
@@ -4082,7 +3934,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "draftId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -4145,15 +3996,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "automationId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "receiveAutomation"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4174,15 +4023,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                       "type": "string"
                                                     }
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "reply"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4194,8 +4041,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4207,8 +4053,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4220,8 +4065,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4236,14 +4080,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "locationId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4258,15 +4100,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "campaignId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "viewCampaign"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4287,14 +4127,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "offerId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4315,15 +4153,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "offerId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "offerExpiration"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4341,15 +4177,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "campaignId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "checkout"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4371,15 +4205,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                 "required": [
                                                   "buttonId",
                                                   "eventName"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "buttonClick"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4391,8 +4223,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4404,8 +4235,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4417,8 +4247,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4430,8 +4259,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4446,14 +4274,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "campaignId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -4468,14 +4294,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "campaignId": {
                                                     "type": "string"
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         ]
                                       },
@@ -4501,7 +4325,6 @@ export const CLI_MANIFEST: CliManifest = {
                                               "match",
                                               "duration"
                                             ],
-                                            "additionalProperties": false,
                                             "description": "Time-based occur. Use match (GTE/LTE/EQ) and duration (ms). No 'relative' type."
                                           },
                                           {
@@ -4514,8 +4337,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "type"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         ]
                                       }
@@ -4523,15 +4345,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "event"
                                     ],
-                                    "additionalProperties": false,
                                     "description": "Nested: event.event is the AutomationEvent, event.occur is optional. NOT flat event/occur at top level."
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "event"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4553,15 +4373,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "os"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "operatingSystem"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4580,8 +4398,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "conditions"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4600,8 +4417,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "conditions"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4617,8 +4433,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "condition"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4649,15 +4464,13 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "offset",
                                               "step"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "divisible"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -4684,15 +4497,13 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "match",
                                               "value"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "match"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     ]
                                   }
@@ -4700,8 +4511,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "progress"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4719,15 +4529,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "identifier"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "passSubType"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4758,15 +4566,13 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "cohort",
                                               "step"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "specific"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -4778,8 +4584,7 @@ export const CLI_MANIFEST: CliManifest = {
                                         },
                                         "required": [
                                           "type"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     ]
                                   }
@@ -4787,8 +4592,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "cohort"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4808,15 +4612,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "localDayOfWeek"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "dayOfWeek"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4828,8 +4630,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 },
                                 "required": [
                                   "type"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -4870,16 +4671,14 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "operator",
                                               "value"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "propertyId",
                                           "propertyType",
                                           "number"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -4928,15 +4727,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                       "direction",
                                                       "operator",
                                                       "durationMs"
-                                                    ],
-                                                    "additionalProperties": false
+                                                    ]
                                                   }
                                                 },
                                                 "required": [
                                                   "type",
                                                   "relative"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             ]
                                           }
@@ -4945,8 +4742,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "propertyId",
                                           "propertyType",
                                           "dayOfYear"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -4966,8 +4762,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "propertyId",
                                           "propertyType",
                                           "date"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -4988,16 +4783,14 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "value"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "propertyId",
                                           "propertyType",
                                           "boolean"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -5029,16 +4822,14 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "operator",
                                               "value"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "propertyId",
                                           "propertyType",
                                           "string"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     ]
                                   }
@@ -5046,8 +4837,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "customProperty"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             ]
                           }
@@ -5064,8 +4854,7 @@ export const CLI_MANIFEST: CliManifest = {
                               },
                               "required": [
                                 "type"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             {
                               "type": "object",
@@ -5093,15 +4882,13 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "utcHour",
                                     "utcMinute"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               },
                               "required": [
                                 "type",
                                 "absoluteDelay"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             {
                               "type": "object",
@@ -5119,15 +4906,13 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "required": [
                                     "delayMs"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               },
                               "required": [
                                 "type",
                                 "relativeDelay"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           ]
                         },
@@ -5151,21 +4936,18 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "retrigger": {
                                     "type": "object",
-                                    "properties": {},
-                                    "additionalProperties": false
+                                    "properties": {}
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "retrigger"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             },
                             "required": [
                               "event"
-                            ],
-                            "additionalProperties": false
+                            ]
                           }
                         },
                         "actions": {
@@ -5200,8 +4982,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "required": [
                                             "type",
                                             "key"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -5217,8 +4998,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "required": [
                                             "type",
                                             "url"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       ]
                                     }
@@ -5227,8 +5007,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "text"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5261,15 +5040,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                 },
                                                 "required": [
                                                   "unixMs"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "absolute"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -5308,21 +5085,18 @@ export const CLI_MANIFEST: CliManifest = {
                                                       "utcHour",
                                                       "utcMinute",
                                                       "direction"
-                                                    ],
-                                                    "additionalProperties": false
+                                                    ]
                                                   }
                                                 },
                                                 "required": [
                                                   "offsetMs"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "relative"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         ]
                                       },
@@ -5344,8 +5118,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "required": [
                                             "locationId",
                                             "itemId"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       },
                                       "isPrepaid": {
@@ -5360,15 +5133,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "items"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "awardReward"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5392,15 +5163,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       "locationId": {
                                         "type": "string"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "redeemReward"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5427,15 +5196,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "extensionDuration"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "extendReward"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5457,15 +5224,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "name",
                                       "description"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "createTask"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5480,15 +5245,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       "locationId": {
                                         "type": "string"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "awardScan"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5513,15 +5276,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "campaignId",
                                       "promoId"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "setExpiration"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5536,15 +5297,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       "campaignId": {
                                         "type": "string"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "cancelSubscription"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5559,15 +5318,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       "campaignId": {
                                         "type": "string"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "sendStripePortalLink"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5582,15 +5339,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       "progress": {
                                         "type": "number"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "resetProgress"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5652,15 +5407,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                       "null"
                                                     ]
                                                   }
-                                                },
-                                                "additionalProperties": false
+                                                }
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "set"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -5679,15 +5432,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                 "required": [
                                                   "amount"
                                                 ],
-                                                "additionalProperties": false,
                                                 "description": "Number properties only. Added to the current value, or to 0."
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "increment"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         ]
                                       }
@@ -5695,15 +5446,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "propertyId",
                                       "operation"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "setCustomProperty"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -5721,15 +5470,13 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "message"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "type",
                                   "sendWalletPush"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             ]
                           }
@@ -5763,8 +5510,7 @@ export const CLI_MANIFEST: CliManifest = {
                         "actions",
                         "automationId",
                         "isActive"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "applyToHistorical": {
                       "type": "boolean"
@@ -5773,8 +5519,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "required": [
                     "type",
                     "automation"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -5822,16 +5567,14 @@ export const CLI_MANIFEST: CliManifest = {
                         "flowId": {
                           "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/flowId"
                         }
-                      },
-                      "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
                     "type",
                     "automationId",
                     "automation"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -5847,8 +5590,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "required": [
                     "type",
                     "automationId"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -5884,8 +5626,7 @@ export const CLI_MANIFEST: CliManifest = {
                         "time",
                         "triggers",
                         "actions"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "required": [
@@ -5893,8 +5634,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "automationId",
                     "variantId",
                     "variant"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 {
                   "type": "object",
@@ -5924,8 +5664,7 @@ export const CLI_MANIFEST: CliManifest = {
                         "actions": {
                           "$ref": "#/properties/operations/items/anyOf/0/properties/automation/properties/actions"
                         }
-                      },
-                      "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -5933,8 +5672,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "automationId",
                     "variantId",
                     "variant"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               ]
             }
@@ -5944,7 +5682,6 @@ export const CLI_MANIFEST: CliManifest = {
           "draftId",
           "operations"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -6073,23 +5810,20 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "required": [
                                             "text"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       }
                                     },
                                     "required": [
                                       "segments"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "text"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -6169,8 +5903,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "x",
                                               "y"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           "zoom": {
                                             "type": "number"
@@ -6182,22 +5915,19 @@ export const CLI_MANIFEST: CliManifest = {
                                           "width",
                                           "height",
                                           "croppedImageUrl"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     },
                                     "required": [
                                       "src"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "image"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -6243,8 +5973,7 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "images"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -6252,7 +5981,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "carousel"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Displays multiple images in a swipeable carousel format. Users can swipe through the image array. Supports the same styling options as single images including dimensions, object fit, and border radius."
                               },
                               {
@@ -6303,15 +6031,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                 },
                                                 "required": [
                                                   "url"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "external"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -6329,15 +6055,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                 },
                                                 "required": [
                                                   "screenId"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "internal"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -6348,15 +6072,13 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "back": {
                                                 "type": "object",
-                                                "properties": {},
-                                                "additionalProperties": false
+                                                "properties": {}
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "back"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           },
                                           {
                                             "type": "object",
@@ -6374,15 +6096,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                 },
                                                 "required": [
                                                   "screenId"
-                                                ],
-                                                "additionalProperties": false
+                                                ]
                                               }
                                             },
                                             "required": [
                                               "type",
                                               "submit"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         ]
                                       },
@@ -6393,8 +6113,7 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "label",
                                       "destination"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -6402,7 +6121,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "button"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Clickable button that can navigate to external URLs, internal screens, or go back to the previous screen."
                               },
                               {
@@ -6424,16 +6142,14 @@ export const CLI_MANIFEST: CliManifest = {
                                       "thickness": {
                                         "type": "number"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "divider"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -6456,8 +6172,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "right"
                                         ]
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -6465,7 +6180,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "starRating"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Displays restaurant's average rating and review count. Clickable to navigate to reviews section."
                               },
                               {
@@ -6480,8 +6194,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "punchStatus": {
                                     "type": "object",
-                                    "properties": {},
-                                    "additionalProperties": false
+                                    "properties": {}
                                   }
                                 },
                                 "required": [
@@ -6489,7 +6202,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "punchStatus"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Shows punch card progress and next reward. Displays signup button if user hasn't joined yet."
                               },
                               {
@@ -6523,8 +6235,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "type": "number"
                                         }
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -6532,7 +6243,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "openTable"
                                 ],
-                                "additionalProperties": false,
                                 "description": "OpenTable reservation widget that finds available time slots and redirects to OpenTable to book."
                               },
                               {
@@ -6563,11 +6273,9 @@ export const CLI_MANIFEST: CliManifest = {
                                         },
                                         "required": [
                                           "isEnabled"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -6575,7 +6283,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "stripeCheckout"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Embedded Stripe checkout for prepay options and bundles."
                               },
                               {
@@ -6618,8 +6325,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           "type": "string"
                                         }
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -6627,7 +6333,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "cart"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Cart widget with quantity selectors for promotions. Supports both one-time and recurring (subscription) checkout."
                               },
                               {
@@ -6646,8 +6351,7 @@ export const CLI_MANIFEST: CliManifest = {
                                       "disableWalletButton": {
                                         "type": "boolean"
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -6655,7 +6359,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "passButton"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Button to add pass to Apple Wallet or Google Wallet. Automatically detects device type."
                               },
                               {
@@ -6682,8 +6385,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "required": [
                                             "propertyId"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       },
                                       "submitButton": {
@@ -6693,8 +6395,7 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "properties",
                                       "submitButton"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -6702,7 +6403,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "form"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Form with input fields that prevents duplicate submissions and shows previous values if already submitted. **IMPORTANT RESTRICTION**: This component can ONLY be used in screens that come AFTER the signup screen. Signups happen on screens with a signUpForm widget. Do NOT use form components in any screen that appears before or is a screen with a signUpForm in the funnel flow."
                               },
                               {
@@ -6738,12 +6438,10 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "required": [
                                             "propertyId"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       }
-                                    },
-                                    "additionalProperties": false
+                                    }
                                   }
                                 },
                                 "required": [
@@ -6751,7 +6449,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "signUpForm"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Sign up form widget with MemberInfoForm. Submit buttons are controlled by other renderables. Optionally collects additional custom properties alongside the member's name, phone and email; those values are written against the new member as form submissions before any sign up automation runs."
                               },
                               {
@@ -6810,22 +6507,19 @@ export const CLI_MANIFEST: CliManifest = {
                                           "flexShrink": {
                                             "type": "number"
                                           }
-                                        },
-                                        "additionalProperties": false
+                                        }
                                       }
                                     },
                                     "required": [
                                       "content"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "card"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -6853,8 +6547,7 @@ export const CLI_MANIFEST: CliManifest = {
                                     "required": [
                                       "title",
                                       "content"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
@@ -6862,7 +6555,6 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type",
                                   "collapse"
                                 ],
-                                "additionalProperties": false,
                                 "description": "Expandable/collapsible section. Click title to toggle content visibility."
                               },
                               {
@@ -6926,16 +6618,14 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "content"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "stack"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -6959,16 +6649,14 @@ export const CLI_MANIFEST: CliManifest = {
                                     },
                                     "required": [
                                       "content"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "footer"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -7010,8 +6698,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                       },
                                                       "required": [
                                                         "type"
-                                                      ],
-                                                      "additionalProperties": false
+                                                      ]
                                                     },
                                                     {
                                                       "type": "object",
@@ -7023,8 +6710,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                       },
                                                       "required": [
                                                         "type"
-                                                      ],
-                                                      "additionalProperties": false
+                                                      ]
                                                     },
                                                     {
                                                       "type": "object",
@@ -7036,8 +6722,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                       },
                                                       "required": [
                                                         "type"
-                                                      ],
-                                                      "additionalProperties": false
+                                                      ]
                                                     },
                                                     {
                                                       "type": "object",
@@ -7053,8 +6738,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                       "required": [
                                                         "type",
                                                         "icon"
-                                                      ],
-                                                      "additionalProperties": false
+                                                      ]
                                                     }
                                                   ]
                                                 },
@@ -7158,23 +6842,20 @@ export const CLI_MANIFEST: CliManifest = {
                                                                     "required": [
                                                                       "label",
                                                                       "content"
-                                                                    ],
-                                                                    "additionalProperties": false
+                                                                    ]
                                                                   }
                                                                 },
                                                                 "required": [
                                                                   "id",
                                                                   "type",
                                                                   "tab"
-                                                                ],
-                                                                "additionalProperties": false
+                                                                ]
                                                               }
                                                             }
                                                           },
                                                           "required": [
                                                             "content"
-                                                          ],
-                                                          "additionalProperties": false
+                                                          ]
                                                         }
                                                       },
                                                       "required": [
@@ -7182,7 +6863,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type",
                                                         "tabs"
                                                       ],
-                                                      "additionalProperties": false,
                                                       "description": "Tabbed interface where users switch between content sections. Only one tab visible at a time."
                                                     },
                                                     {
@@ -7206,8 +6886,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                               "minimum": 1,
                                                               "maximum": 5
                                                             }
-                                                          },
-                                                          "additionalProperties": false
+                                                          }
                                                         }
                                                       },
                                                       "required": [
@@ -7215,7 +6894,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type",
                                                         "reviews"
                                                       ],
-                                                      "additionalProperties": false,
                                                       "description": "Displays restaurant reviews from Google Reviews."
                                                     },
                                                     {
@@ -7230,8 +6908,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                         },
                                                         "menu": {
                                                           "type": "object",
-                                                          "properties": {},
-                                                          "additionalProperties": false
+                                                          "properties": {}
                                                         }
                                                       },
                                                       "required": [
@@ -7239,7 +6916,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type",
                                                         "menu"
                                                       ],
-                                                      "additionalProperties": false,
                                                       "description": "Displays restaurant menu items organized by categories."
                                                     },
                                                     {
@@ -7254,8 +6930,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                         },
                                                         "photos": {
                                                           "type": "object",
-                                                          "properties": {},
-                                                          "additionalProperties": false
+                                                          "properties": {}
                                                         }
                                                       },
                                                       "required": [
@@ -7263,7 +6938,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type",
                                                         "photos"
                                                       ],
-                                                      "additionalProperties": false,
                                                       "description": "Displays photo gallery from restaurant's Google Business profile."
                                                     },
                                                     {
@@ -7291,8 +6965,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                             "website": {
                                                               "type": "string"
                                                             }
-                                                          },
-                                                          "additionalProperties": false
+                                                          }
                                                         }
                                                       },
                                                       "required": [
@@ -7300,7 +6973,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type",
                                                         "locationInfo"
                                                       ],
-                                                      "additionalProperties": false,
                                                       "description": "Displays restaurant location info with clickable phone and website links."
                                                     },
                                                     {
@@ -7342,8 +7014,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                                       "startLocalMinute",
                                                                       "endLocalHour",
                                                                       "endLocalMinute"
-                                                                    ],
-                                                                    "additionalProperties": false
+                                                                    ]
                                                                   }
                                                                 },
                                                                 "Tue": {
@@ -7391,22 +7062,19 @@ export const CLI_MANIFEST: CliManifest = {
                                                                 "Fri",
                                                                 "Sat",
                                                                 "Sun"
-                                                              ],
-                                                              "additionalProperties": false
+                                                              ]
                                                             }
                                                           },
                                                           "required": [
                                                             "operatingHours"
-                                                          ],
-                                                          "additionalProperties": false
+                                                          ]
                                                         }
                                                       },
                                                       "required": [
                                                         "id",
                                                         "type",
                                                         "hours"
-                                                      ],
-                                                      "additionalProperties": false
+                                                      ]
                                                     },
                                                     {
                                                       "type": "object",
@@ -7461,8 +7129,7 @@ export const CLI_MANIFEST: CliManifest = {
                                                           },
                                                           "required": [
                                                             "src"
-                                                          ],
-                                                          "additionalProperties": false
+                                                          ]
                                                         }
                                                       },
                                                       "required": [
@@ -7470,7 +7137,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type",
                                                         "video"
                                                       ],
-                                                      "additionalProperties": false,
                                                       "description": "Displays a video from an S3 URL. Supports autoplay, loop, muted, and controls options."
                                                     }
                                                   ]
@@ -7479,31 +7145,27 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "enumerator",
                                                 "item"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "id",
                                             "type",
                                             "listItem"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       }
                                     },
                                     "required": [
                                       "items"
-                                    ],
-                                    "additionalProperties": false
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "type",
                                   "list"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19"
@@ -7565,15 +7227,13 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "color"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "color"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -7591,20 +7251,17 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "src"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "image"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     ]
                                   }
-                                },
-                                "additionalProperties": false
+                                }
                               }
                             }
                           }
@@ -7630,8 +7287,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type",
                   "renderable"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -7658,8 +7314,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "type",
                   "id",
                   "renderable"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -7675,8 +7330,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type",
                   "id"
-                ],
-                "additionalProperties": false
+                ]
               },
               {
                 "type": "object",
@@ -7700,8 +7354,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "id",
                   "targetId",
                   "position"
-                ],
-                "additionalProperties": false
+                ]
               }
             ]
           }
@@ -7711,7 +7364,6 @@ export const CLI_MANIFEST: CliManifest = {
           "screenId",
           "edit"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -7749,7 +7401,6 @@ export const CLI_MANIFEST: CliManifest = {
           "draftId",
           "title"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -7783,7 +7434,6 @@ export const CLI_MANIFEST: CliManifest = {
           "flowId",
           "title"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -7831,15 +7481,13 @@ export const CLI_MANIFEST: CliManifest = {
                         "required": [
                           "utcStart",
                           "utcEnd"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "required": [
                       "type",
                       "once"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -7880,15 +7528,13 @@ export const CLI_MANIFEST: CliManifest = {
                           "utcEndMinute",
                           "utcDaysOfWeek",
                           "blockUtcStart"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "required": [
                       "type",
                       "weekly"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 ]
               },
@@ -7904,15 +7550,13 @@ export const CLI_MANIFEST: CliManifest = {
               "campaignId": {
                 "type": "string"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
           "availabilityId",
           "update"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -7954,8 +7598,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "gtmId": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "theme": {
                 "type": "object",
@@ -7975,8 +7618,7 @@ export const CLI_MANIFEST: CliManifest = {
                         },
                         "required": [
                           "main"
-                        ],
-                        "additionalProperties": false
+                        ]
                       },
                       "secondary": {
                         "$ref": "#/properties/config/properties/theme/properties/palette/properties/primary"
@@ -7997,8 +7639,7 @@ export const CLI_MANIFEST: CliManifest = {
                           "secondary": {
                             "type": "string"
                           }
-                        },
-                        "additionalProperties": false
+                        }
                       },
                       "background": {
                         "type": "object",
@@ -8009,14 +7650,12 @@ export const CLI_MANIFEST: CliManifest = {
                           "paper": {
                             "type": "string"
                           }
-                        },
-                        "additionalProperties": false
+                        }
                       },
                       "divider": {
                         "type": "string"
                       }
-                    },
-                    "additionalProperties": false
+                    }
                   },
                   "typography": {
                     "type": "object",
@@ -8049,15 +7688,12 @@ export const CLI_MANIFEST: CliManifest = {
                           "required": [
                             "family",
                             "url"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       }
-                    },
-                    "additionalProperties": false
+                    }
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "openTableConfigs": {
                 "type": "array",
@@ -8082,8 +7718,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "displayName",
                     "baseUrl",
                     "numDaysCanReserveAhead"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "facebookConfig": {
@@ -8101,8 +7736,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "instagramUsername": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "businessData": {
                 "type": "object",
@@ -8119,8 +7753,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "menuUrl": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               },
               "googleConfig": {
                 "type": "object",
@@ -8139,18 +7772,15 @@ export const CLI_MANIFEST: CliManifest = {
                     "minimum": 1,
                     "maximum": 50
                   }
-                },
-                "additionalProperties": false
+                }
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
           "referrer",
           "config"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -8212,8 +7842,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "required": [
                     "accountId",
                     "campaignId"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "excludedAdIds": {
@@ -8251,15 +7880,13 @@ export const CLI_MANIFEST: CliManifest = {
                           },
                           "required": [
                             "itemId"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "type",
                         "item"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8277,15 +7904,13 @@ export const CLI_MANIFEST: CliManifest = {
                           },
                           "required": [
                             "discountId"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "type",
                         "discount"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8303,15 +7928,13 @@ export const CLI_MANIFEST: CliManifest = {
                           },
                           "required": [
                             "campaignId"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "type",
                         "google"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8329,15 +7952,13 @@ export const CLI_MANIFEST: CliManifest = {
                           },
                           "required": [
                             "campaignId"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "type",
                         "tiktok"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8361,15 +7982,13 @@ export const CLI_MANIFEST: CliManifest = {
                                 "type": "string"
                               }
                             }
-                          },
-                          "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "type",
                         "conjunctiveFilter"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8391,15 +8010,13 @@ export const CLI_MANIFEST: CliManifest = {
                           "required": [
                             "startDate",
                             "endDate"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "type",
                         "dateRange"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8427,8 +8044,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "match",
                                     "value"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -8440,8 +8056,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "required": [
                                     "match"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               ]
                             },
@@ -8463,15 +8078,13 @@ export const CLI_MANIFEST: CliManifest = {
                             "endDate": {
                               "type": "string"
                             }
-                          },
-                          "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "type",
                         "reservationFilter"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8482,14 +8095,12 @@ export const CLI_MANIFEST: CliManifest = {
                         },
                         "openTableSoft": {
                           "type": "object",
-                          "properties": {},
-                          "additionalProperties": false
+                          "properties": {}
                         }
                       },
                       "required": [
                         "type"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "object",
@@ -8517,15 +8128,13 @@ export const CLI_MANIFEST: CliManifest = {
                           "required": [
                             "promotedItemIds",
                             "substituteItemIds"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "type",
                         "softItems"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   ]
                 }
@@ -8546,8 +8155,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "type",
                       "key"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -8563,8 +8171,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "type",
                       "url"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 ]
               },
@@ -8615,15 +8222,13 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "required": [
                                     "day"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               },
                               "required": [
                                 "type",
                                 "dayOfMonth"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             {
                               "type": "object",
@@ -8654,15 +8259,13 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "weekday",
                                     "occurrence"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               },
                               "required": [
                                 "type",
                                 "dayOfWeek"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             {
                               "type": "object",
@@ -8682,15 +8285,13 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "required": [
                                     "daysBefore"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               },
                               "required": [
                                 "type",
                                 "relativeToPickup"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           ]
                         },
@@ -8735,15 +8336,13 @@ export const CLI_MANIFEST: CliManifest = {
                               "kind",
                               "scheduledDate",
                               "overrideDate"
-                            ],
-                            "additionalProperties": false
+                            ]
                           }
                         }
                       },
                       "required": [
                         "title"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     "promoId": {
                       "type": "string"
@@ -8753,8 +8352,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "type",
                     "basic",
                     "promoId"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "isReservationFunnel": {
@@ -8781,8 +8379,7 @@ export const CLI_MANIFEST: CliManifest = {
                     },
                     "required": [
                       "percentage"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   "variants": {
                     "type": "array",
@@ -8802,16 +8399,14 @@ export const CLI_MANIFEST: CliManifest = {
                       "required": [
                         "id",
                         "percentage"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   }
                 },
                 "required": [
                   "default",
                   "variants"
-                ],
-                "additionalProperties": false
+                ]
               },
               "stripeAccountId": {
                 "type": "string"
@@ -8870,21 +8465,18 @@ export const CLI_MANIFEST: CliManifest = {
                   "landingPageUrl",
                   "creativeMix",
                   "generatedAt"
-                ],
-                "additionalProperties": false
+                ]
               },
               "recruitmentAdCopy": {
                 "$ref": "#/properties/update/properties/adCopy"
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
           "campaignId",
           "update"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -8970,8 +8562,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "text",
                       "status"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "script": {
@@ -8998,8 +8589,7 @@ export const CLI_MANIFEST: CliManifest = {
                         "markdown",
                         "hookUsed",
                         "status"
-                      ],
-                      "additionalProperties": false
+                      ]
                     },
                     {
                       "type": "null"
@@ -9013,8 +8603,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "status",
                 "hooks",
                 "script"
-              ],
-              "additionalProperties": false
+              ]
             }
           },
           "briefType": {
@@ -9078,8 +8667,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "description",
                     "whatToCapture",
                     "tips"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "universalDos": {
@@ -9121,8 +8709,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "duration",
                   "format",
                   "deliveryHours"
-                ],
-                "additionalProperties": false
+                ]
               }
             },
             "required": [
@@ -9134,8 +8721,7 @@ export const CLI_MANIFEST: CliManifest = {
               "universalDos",
               "universalDonts",
               "deliverables"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -9143,7 +8729,6 @@ export const CLI_MANIFEST: CliManifest = {
           "briefMarkdown",
           "concepts"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -9216,7 +8801,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "eventId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -9427,7 +9011,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "locationId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -9466,7 +9049,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "rewardId"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -9490,8 +9072,7 @@ export const CLI_MANIFEST: CliManifest = {
               "postProductOnboardingComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "general": {
             "type": "object",
@@ -9499,8 +9080,7 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "contentReadiness": {
             "type": "object",
@@ -9520,8 +9100,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "outcome",
               "isComplete"
-            ],
-            "additionalProperties": false
+            ]
           },
           "firstCampaignFunnel": {
             "type": "object",
@@ -9540,8 +9119,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "funnelType",
               "isComplete"
-            ],
-            "additionalProperties": false
+            ]
           },
           "invite": {
             "type": "object",
@@ -9552,8 +9130,7 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "required": [
               "isComplete"
-            ],
-            "additionalProperties": false
+            ]
           },
           "devices": {
             "type": "object",
@@ -9600,15 +9177,13 @@ export const CLI_MANIFEST: CliManifest = {
                     "state",
                     "zip",
                     "country"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "isComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "pos": {
             "type": "object",
@@ -9624,15 +9199,13 @@ export const CLI_MANIFEST: CliManifest = {
                       },
                       "square": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {}
                       }
                     },
                     "required": [
                       "type",
                       "square"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -9643,15 +9216,13 @@ export const CLI_MANIFEST: CliManifest = {
                       },
                       "clover": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {}
                       }
                     },
                     "required": [
                       "type",
                       "clover"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -9672,15 +9243,13 @@ export const CLI_MANIFEST: CliManifest = {
                           "setupConfirmed": {
                             "type": "boolean"
                           }
-                        },
-                        "additionalProperties": false
+                        }
                       }
                     },
                     "required": [
                       "type",
                       "toast"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -9698,15 +9267,13 @@ export const CLI_MANIFEST: CliManifest = {
                         },
                         "required": [
                           "description"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "required": [
                       "type",
                       "other"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 ]
               },
@@ -9720,8 +9287,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "details",
               "isComplete"
-            ],
-            "additionalProperties": false
+            ]
           },
           "phone": {
             "type": "object",
@@ -9732,8 +9298,7 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "facebook": {
             "type": "object",
@@ -9747,8 +9312,7 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "required": [
               "isComplete"
-            ],
-            "additionalProperties": false
+            ]
           },
           "metaCapi": {
             "type": "object",
@@ -9756,8 +9320,7 @@ export const CLI_MANIFEST: CliManifest = {
               "skipAcknowledged": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "onboardingMeeting": {
             "type": "object",
@@ -9771,8 +9334,7 @@ export const CLI_MANIFEST: CliManifest = {
               "wasSkipped": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "staffTraining": {
             "type": "object",
@@ -9786,8 +9348,7 @@ export const CLI_MANIFEST: CliManifest = {
               "step2Complete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "directSignup": {
             "type": "object",
@@ -9795,8 +9356,7 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "minimumSpend": {
             "type": "object",
@@ -9804,8 +9364,7 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "visitQrCode": {
             "type": "object",
@@ -9813,8 +9372,7 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete": {
                 "type": "boolean"
               }
-            },
-            "additionalProperties": false
+            }
           },
           "plannedLaunchDate": {
             "type": "string"
@@ -9840,8 +9398,7 @@ export const CLI_MANIFEST: CliManifest = {
               "required": [
                 "reason",
                 "deferredAt"
-              ],
-              "additionalProperties": false
+              ]
             }
           },
           "subdomains": {
@@ -9862,8 +9419,7 @@ export const CLI_MANIFEST: CliManifest = {
                   "required": [
                     "referrer",
                     "homepageUrl"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "isComplete": {
@@ -9872,8 +9428,7 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "required": [
               "locations"
-            ],
-            "additionalProperties": false
+            ]
           },
           "dataAudit": {
             "type": "object",
@@ -9924,8 +9479,7 @@ export const CLI_MANIFEST: CliManifest = {
                         "fileName",
                         "key",
                         "uploadedAt"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   },
                   "salesCoverage": {
@@ -9959,8 +9513,7 @@ export const CLI_MANIFEST: CliManifest = {
                             "start",
                             "end",
                             "days"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "years": {
@@ -9985,8 +9538,7 @@ export const CLI_MANIFEST: CliManifest = {
                             "year",
                             "dayCount",
                             "months"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       }
                     },
@@ -9996,14 +9548,12 @@ export const CLI_MANIFEST: CliManifest = {
                       "dayCount",
                       "gaps",
                       "years"
-                    ],
-                    "additionalProperties": false
+                    ]
                   }
                 },
                 "required": [
                   "type"
-                ],
-                "additionalProperties": false
+                ]
               },
               "resultsCall": {
                 "type": "object",
@@ -10014,14 +9564,11 @@ export const CLI_MANIFEST: CliManifest = {
                   "firstBookedAt": {
                     "type": "string"
                   }
-                },
-                "additionalProperties": false
+                }
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -10097,15 +9644,13 @@ export const CLI_MANIFEST: CliManifest = {
                               "pattern",
                               "yearEndWeekday",
                               "yearEndRule"
-                            ],
-                            "additionalProperties": false
+                            ]
                           }
                         },
                         "required": [
                           "type",
                           "fiscal"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     ]
                   },
@@ -10134,22 +9679,19 @@ export const CLI_MANIFEST: CliManifest = {
                       "prepaid": {
                         "type": "string"
                       }
-                    },
-                    "additionalProperties": false
+                    }
                   },
                   {
                     "type": "null"
                   }
                 ]
               }
-            },
-            "additionalProperties": false
+            }
           }
         },
         "required": [
           "update"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -10217,15 +9759,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "automationId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type",
                                                 "receiveAutomation"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10246,15 +9786,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "type": "string"
                                                       }
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type",
                                                 "reply"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10266,8 +9804,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10279,8 +9816,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10292,8 +9828,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10308,14 +9843,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "locationId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10330,15 +9863,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "campaignId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type",
                                                 "viewCampaign"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10359,14 +9890,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "offerId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10387,15 +9916,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "offerId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type",
                                                 "offerExpiration"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10413,15 +9940,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "campaignId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type",
                                                 "checkout"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10443,15 +9968,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                   "required": [
                                                     "buttonId",
                                                     "eventName"
-                                                  ],
-                                                  "additionalProperties": false
+                                                  ]
                                                 }
                                               },
                                               "required": [
                                                 "type",
                                                 "buttonClick"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10463,8 +9986,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10476,8 +9998,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10489,8 +10010,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10502,8 +10022,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10518,14 +10037,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "campaignId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             },
                                             {
                                               "type": "object",
@@ -10540,14 +10057,12 @@ export const CLI_MANIFEST: CliManifest = {
                                                     "campaignId": {
                                                       "type": "string"
                                                     }
-                                                  },
-                                                  "additionalProperties": false
+                                                  }
                                                 }
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           ]
                                         },
@@ -10573,7 +10088,6 @@ export const CLI_MANIFEST: CliManifest = {
                                                 "match",
                                                 "duration"
                                               ],
-                                              "additionalProperties": false,
                                               "description": "Time-based occur. Use match (GTE/LTE/EQ) and duration (ms). No 'relative' type."
                                             },
                                             {
@@ -10586,8 +10100,7 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "type"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           ]
                                         }
@@ -10595,15 +10108,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       "required": [
                                         "event"
                                       ],
-                                      "additionalProperties": false,
                                       "description": "Nested: event.event is the AutomationEvent, event.occur is optional. NOT flat event/occur at top level."
                                     }
                                   },
                                   "required": [
                                     "type",
                                     "event"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10625,15 +10136,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       },
                                       "required": [
                                         "os"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "required": [
                                     "type",
                                     "operatingSystem"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10652,8 +10161,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "type",
                                     "conditions"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10672,8 +10180,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "type",
                                     "conditions"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10689,8 +10196,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "type",
                                     "condition"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10721,15 +10227,13 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "offset",
                                                 "step"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "type",
                                             "divisible"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -10756,15 +10260,13 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "match",
                                                 "value"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "type",
                                             "match"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       ]
                                     }
@@ -10772,8 +10274,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "type",
                                     "progress"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10791,15 +10292,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       },
                                       "required": [
                                         "identifier"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "required": [
                                     "type",
                                     "passSubType"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10830,15 +10329,13 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "cohort",
                                                 "step"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "type",
                                             "specific"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -10850,8 +10347,7 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "required": [
                                             "type"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       ]
                                     }
@@ -10859,8 +10355,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "type",
                                     "cohort"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10880,15 +10375,13 @@ export const CLI_MANIFEST: CliManifest = {
                                       },
                                       "required": [
                                         "localDayOfWeek"
-                                      ],
-                                      "additionalProperties": false
+                                      ]
                                     }
                                   },
                                   "required": [
                                     "type",
                                     "dayOfWeek"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10900,8 +10393,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   },
                                   "required": [
                                     "type"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 },
                                 {
                                   "type": "object",
@@ -10942,16 +10434,14 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "operator",
                                                 "value"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "propertyId",
                                             "propertyType",
                                             "number"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -11000,15 +10490,13 @@ export const CLI_MANIFEST: CliManifest = {
                                                         "direction",
                                                         "operator",
                                                         "durationMs"
-                                                      ],
-                                                      "additionalProperties": false
+                                                      ]
                                                     }
                                                   },
                                                   "required": [
                                                     "type",
                                                     "relative"
-                                                  ],
-                                                  "additionalProperties": false
+                                                  ]
                                                 }
                                               ]
                                             }
@@ -11017,8 +10505,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             "propertyId",
                                             "propertyType",
                                             "dayOfYear"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -11038,8 +10525,7 @@ export const CLI_MANIFEST: CliManifest = {
                                             "propertyId",
                                             "propertyType",
                                             "date"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -11060,16 +10546,14 @@ export const CLI_MANIFEST: CliManifest = {
                                               },
                                               "required": [
                                                 "value"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "propertyId",
                                             "propertyType",
                                             "boolean"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         },
                                         {
                                           "type": "object",
@@ -11101,16 +10585,14 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "operator",
                                                 "value"
-                                              ],
-                                              "additionalProperties": false
+                                              ]
                                             }
                                           },
                                           "required": [
                                             "propertyId",
                                             "propertyType",
                                             "string"
-                                          ],
-                                          "additionalProperties": false
+                                          ]
                                         }
                                       ]
                                     }
@@ -11118,8 +10600,7 @@ export const CLI_MANIFEST: CliManifest = {
                                   "required": [
                                     "type",
                                     "customProperty"
-                                  ],
-                                  "additionalProperties": false
+                                  ]
                                 }
                               ]
                             }
@@ -11144,15 +10625,13 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "name": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {}
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "name"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -11163,15 +10642,13 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "phoneNumber": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {}
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "phoneNumber"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -11182,15 +10659,13 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "progress": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {}
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "progress"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -11201,15 +10676,13 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "memberNumber": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {}
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "memberNumber"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -11220,15 +10693,13 @@ export const CLI_MANIFEST: CliManifest = {
                                           },
                                           "lastVisit": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {}
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "lastVisit"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       },
                                       {
                                         "type": "object",
@@ -11257,15 +10728,13 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "propertyId",
                                               "propertyType"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "customProperty"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     ]
                                   }
@@ -11273,8 +10742,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "property"
-                                ],
-                                "additionalProperties": false
+                                ]
                               },
                               {
                                 "type": "object",
@@ -11301,15 +10769,13 @@ export const CLI_MANIFEST: CliManifest = {
                                             },
                                             "required": [
                                               "text"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                           }
                                         },
                                         "required": [
                                           "type",
                                           "string"
-                                        ],
-                                        "additionalProperties": false
+                                        ]
                                       }
                                     ]
                                   }
@@ -11317,8 +10783,7 @@ export const CLI_MANIFEST: CliManifest = {
                                 "required": [
                                   "type",
                                   "expression"
-                                ],
-                                "additionalProperties": false
+                                ]
                               }
                             ]
                           }
@@ -11327,8 +10792,7 @@ export const CLI_MANIFEST: CliManifest = {
                           "ruleId",
                           "conditions",
                           "value"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     },
                     "alignment": {
@@ -11344,8 +10808,7 @@ export const CLI_MANIFEST: CliManifest = {
                     "key",
                     "label",
                     "valueRules"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "auxiliaryFields": {
@@ -11405,8 +10868,7 @@ export const CLI_MANIFEST: CliManifest = {
                               "required": [
                                 "x",
                                 "y"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             "zoom": {
                               "type": "number"
@@ -11432,31 +10894,27 @@ export const CLI_MANIFEST: CliManifest = {
                                 "y",
                                 "width",
                                 "height"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "required": [
                             "cropPosition",
                             "zoom",
                             "croppedAreaPixels"
-                          ],
-                          "additionalProperties": false
+                          ]
                         }
                       },
                       "required": [
                         "ruleId",
                         "conditions",
                         "file"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   }
                 },
                 "required": [
                   "conditionalRules"
-                ],
-                "additionalProperties": false
+                ]
               },
               "stripFile": {
                 "$ref": "#/properties/sections/properties/logoFile"
@@ -11486,15 +10944,13 @@ export const CLI_MANIFEST: CliManifest = {
                         "ruleId",
                         "conditions",
                         "color"
-                      ],
-                      "additionalProperties": false
+                      ]
                     }
                   }
                 },
                 "required": [
                   "conditionalRules"
-                ],
-                "additionalProperties": false
+                ]
               },
               "labelColor": {
                 "$ref": "#/properties/sections/properties/backgroundColor"
@@ -11508,8 +10964,7 @@ export const CLI_MANIFEST: CliManifest = {
               "stripFile",
               "backgroundColor",
               "labelColor"
-            ],
-            "additionalProperties": false
+            ]
           },
           "features": {
             "type": "object",
@@ -11542,16 +10997,14 @@ export const CLI_MANIFEST: CliManifest = {
                     "ruleId",
                     "conditions",
                     "label"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               }
             },
             "required": [
               "renderRewards",
               "campaignTakeover"
-            ],
-            "additionalProperties": false
+            ]
           },
           "locations": {
             "type": "object",
@@ -11580,15 +11033,13 @@ export const CLI_MANIFEST: CliManifest = {
                   "required": [
                     "latitude",
                     "longitude"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               }
             },
             "required": [
               "locations"
-            ],
-            "additionalProperties": false
+            ]
           },
           "passStyle": {
             "anyOf": [
@@ -11619,8 +11070,7 @@ export const CLI_MANIFEST: CliManifest = {
             "required": [
               "name",
               "description"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -11628,7 +11078,6 @@ export const CLI_MANIFEST: CliManifest = {
           "features",
           "metadata"
         ],
-        "additionalProperties": false,
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     }
