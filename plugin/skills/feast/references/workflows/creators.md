@@ -40,24 +40,39 @@ No row means the location has no program; drop the filter to see every location'
 
 ### Booking windows
 
-`listAvailability` (no arguments, **org-wide**: filter by `locationId` or `campaignId` yourself), `createAvailability`, `updateAvailability`, `deleteAvailability`.
+Read windows with `queryData` on `creators.creatorAvailability` (one row per window), and write them with `createAvailability`, `updateAvailability` and `deleteAvailability`. A location's windows:
+
+```json
+{ "schemaName": "creators", "objectTypeName": "creatorAvailability",
+  "commands": [{ "type": "filter", "filter": { "$locationId": { "string": "<locationId>", "match": "EQ" } } }] }
+```
+
+Filter on `campaignId` instead for one campaign's windows, or drop the filter for every window in the organization. `id` is the `availabilityId` the write tools take.
 
 A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`; or `weekly`, with start and end hour/minute, the `utcDaysOfWeek` it repeats on, and `blockUtcStart` for when the repetition begins.
 
-**Everything is UTC and the restaurant will describe it in local time.** For weekly blocks `utcDaysOfWeek` is the day of week *in UTC*, so an evening local window that crosses midnight UTC lands on the **following** day: 9pm Friday New York is 02:00 Saturday UTC, and writing `Friday` there opens the wrong night. Convert the day and the time together, never just the time. This fails silently: you get a valid window on a day nobody asked for. The same applies in reverse when you read `listAvailability` back: convert each window to local day and time before describing it to the restaurant.
+**Everything is UTC and the restaurant will describe it in local time.** For weekly blocks `utcDaysOfWeek` is the day of week *in UTC*, so an evening local window that crosses midnight UTC lands on the **following** day: 9pm Friday New York is 02:00 Saturday UTC, and writing `Friday` there opens the wrong night. Convert the day and the time together, never just the time. This fails silently: you get a valid window on a day nobody asked for. The same applies in reverse when you read windows back: convert each window to local day and time before describing it to the restaurant.
 
 **Set `campaignId`, not just `locationId`.** It's optional in the schema and required by the task: *Set booking windows* completes only when a window carries the first campaign's id. Without it the window books fine and the task stays open forever.
 
-`updateAvailability` replaces `block` whole rather than merging it, so send the complete block including the parts you aren't changing, and it returns nothing: re-read with `listAvailability` to confirm. `deleteAvailability` **succeeds silently on an id that doesn't exist**, so no error is not proof anything was removed; take ids from `listAvailability`. Deleting closes future slots but does not cancel visits already booked inside the window; those are separate rows.
+`updateAvailability` replaces `block` whole rather than merging it, so send the complete block including the parts you aren't changing, and it returns nothing: re-read it from `creatorAvailability` filtered on `id` to confirm. `deleteAvailability` **succeeds silently on an id that doesn't exist**, so no error is not proof anything was removed; take ids from `creatorAvailability`. Deleting closes future slots but does not cancel visits already booked inside the window; those are separate rows.
 
 ### The creative brief
 
 `createCreativeStrategy` has two paths behind one tool, and only one of them finishes synchronously:
 
 - **`awareness`**: assembled from a fixed template and saved before the call returns. `generationStatus` comes back `complete`.
-- **`cta`**: handed to a background LLM. Pass `"wait": true` and the call holds up to 20 seconds; if `generationStatus` still reads `"generating"`, **call `getCreativeStrategy` with `"wait": true` until it reads `complete` or `failed`** before using the brief or quoting anything from it. The `jobId` and `jobType` that come back track the same run through `getJob`; reach for that only when the strategy reads `failed` and you want the job's `errorMessage`.
+- **`cta`**: handed to a background LLM. Pass `"wait": true` and the call holds up to 20 seconds; if `generationStatus` still reads `"generating"`, **re-read it with `queryData` on `creators.creativeStrategy` every few seconds until `generationStatus` reads `complete` or `failed`** before using the brief or quoting anything from it:
 
-`updateCreativeStrategy` is the revision step. Two things to get right: omitting `strategyId` **creates a new strategy** instead of editing the one you meant, and a field you send replaces the stored one whole (fields you leave out keep their stored values), so read first, apply your edits to the full `concepts` array, and send the whole thing back. Generating into a strategy that isn't a draft is rejected rather than silently overwritten.
+  ```json
+  { "schemaName": "creators", "objectTypeName": "creativeStrategy",
+    "commands": [{ "type": "filter", "filter": { "$strategyId": { "string": "<strategyId>", "match": "EQ" } } }],
+    "args": { "fields": ["strategyId", "title", "generationStatus", "failureReason"] } }
+  ```
+
+  Drop `fields` to get the whole brief (`briefMarkdown`, `concepts`). The `jobId` and `jobType` that come back track the same run through `getJob`; reach for that only when the strategy reads `failed` and you want the job's `errorMessage`.
+
+`updateCreativeStrategy` is the revision step. Two things to get right: omitting `strategyId` **creates a new strategy** instead of editing the one you meant, and a field you send replaces the stored one whole (fields you leave out keep their stored values), so read first (the same `creativeStrategy` query without `fields`), apply your edits to the full `concepts` array, and send the whole thing back. Generating into a strategy that isn't a draft is rejected rather than silently overwritten.
 
 ### Recruitment creatives and the recruitment ad
 
@@ -70,12 +85,28 @@ The ads that bring applicants in are tool-drivable end to end:
 
 ### The decision loop
 
-1. `listCreatorApplications`: the approval queue, newest first, across every location. Takes no arguments. Each row carries **`instagramFollowerCount`**, which is usually the deciding factor. For private and verified flags, see the Instagram recipe under *Everything else* below. Each row also carries the brief assigned to the visit as `strategyId`/`strategyTitle`, with its `campaignId`/`campaignName`, all null when no brief is assigned. **Check `strategyId` is non-null before approving**: the approval text links whatever brief the visit carries at that moment. No tool assigns a brief to a visit, so when it is null, have the user assign one on the Creator approvals page first.
+1. The approval queue is `creators.creatorVisitApplication` with `approvalStatus` `pending_approval`, across every location: run the *Pending applications* query under *Everything else* below for names and handles, and the *Instagram stats* query beside it for **follower counts**, which are usually the deciding factor. Each application carries the brief assigned to the visit as `strategyId`, null when no brief is assigned. Read the briefs' titles and campaigns in one call:
+
+   ```json
+   { "schemaName": "creators", "objectTypeName": "creativeStrategy",
+     "commands": [{ "type": "filter", "filter": { "$strategyId": { "strings": ["<strategyId>", "<strategyId>"] } } }],
+     "args": { "fields": ["strategyId", "title", "campaignId"] } }
+   ```
+
+   **Check `strategyId` is non-null before approving**: the approval text links whatever brief the visit carries at that moment. No tool assigns a brief to a visit, so when it is null, have the user assign one on the Creator approvals page first.
 2. `updateCreatorVisit` with `{ "eventId": "...", "status": "approved" | "denied" }`. **This texts the creator immediately**: approved sends their booking link and creative brief, denied sends a decline. A denial is reversible: approving a denied row later sends a "we changed our mind" text and re-arms the scheduled texts. Approval also **consumes the location's monthly creator sourcing allowance**, and recruitment auto-pauses once that limit is reached, so an approval is both a message and a spend. Confirm with the user before working through a queue; don't batch-approve on your own initiative. **Preview first with `dryRun: true`**: it returns the exact creator text(s) the same call would send and writes nothing, so show the user that before the real call. Approving a row that isn't actionable is a no-op and comes back with `changed: false` rather than texting twice.
 
    The same tool is how you reschedule and how you record what happened. `startTime` set to a date texts the creator a confirmation and alerts the approver; `null` clears the time and texts the creator asking for a new one. `startTime` is rejected while the row is `pending_approval` and in any call that passes `status: "approved"`, so approve first, then set the time in a second call (`status: "pending_approval"` clears the time itself; don't pass `startTime` with it). `status` also accepts `confirmed`, `visited`, `missed`, `issue` and `cancelled`; of these only `cancelled` texts the creator. `locationId` moves the visit to another location with a creator program and texts no one, so tell the creator yourself. `notes` sets staff notes shown on the scanner, never sent to the creator. Pass `sideEffects: false` to make any update silent (same field writes, but no creator text, no allowance spend, no post-approval automation), which is what you want when correcting a record after the fact rather than making the decision now.
 3. The creator books, visits, and submits content on their own; none of that is driven from here.
-4. `listCreatorSubmissions` with `{ "status": "submitted" }` (and `"revision_requested"`): the content review queue. Submissions are stored outside the queryable data model, so this tool is the only way to read them.
+4. The content review queue is `creators.creatorSubmission` with `status` `submitted` (and `revision_requested`, which is waiting on the creator), newest first:
+
+   ```json
+   { "schemaName": "creators", "objectTypeName": "creatorSubmission",
+     "commands": [{ "type": "filter", "filter": { "$status": { "strings": ["submitted", "revision_requested"] } } }],
+     "args": { "order": { "field": "submittedAt", "direction": "DESC" } } }
+   ```
+
+   A submission carries `visitEventId` and `userId` but not the creator's name, handles or the visit's location: read those from `creatorVisitApplication` filtered on `eventId` (`{ "$eventId": { "strings": [<visitEventIds>] } }`) with the `influencer` join from the *Pending applications* query.
 5. `updateCreatorSubmission` with `{ "submissionId": "...", "decision": { "status": ..., "approvalType": ... } }`. `status` is `approved`, `rejected`, `revision_requested`, or `under_review`. **Approving texts the creator too**, unless you send `skipApprovalText: true` (use that only for silent record corrections). `revision_requested` always texts: it sends your `feedbackMessage` verbatim plus a resubmit link, so write it as something the creator will read, not an internal note. **Always send `approvalType` explicitly when approving**, because an omitted one means `"ad"`: `"ad"` means the content may run in paid ads, stamps the board's bonus on the submission and marks it pending (paid later through `createInfluencerPayout`), and is rejected when the board's bonus is zero; `"organic"` is for content only on their own channels, and earns no payout. Re-approving an approved submission is rejected, except upgrading an `organic` approval to `ad`.
 
 ### Paying the bonus
@@ -86,7 +117,7 @@ Over the MCP server `createInfluencerPayout` is not available: the client pays c
 
 ### Reimbursing boards
 
-On a board with `reimbursementEnabled`, the creator pays for the meal and uploads a receipt with their submission, and the client pays them back by their own means (up to the `foodCreditAmountCents` cap). `updateCreatorSubmission` with `{ "submissionId": "...", "reimbursementPaid": { "note": "..." } }` **moves no money**: it only records that the client already sent it. **Call it only after the client tells you the money has gone out.** The submission must be approved with its reimbursement pending; a submission with no receipt was never on a reimbursing board and is rejected. Read the receipt total (`receiptTotalCents`) and `reimbursementStatus` off the `listCreatorSubmissions` row before recording anything. A call may carry both a `decision` and `reimbursementPaid`: the decision is applied first and the reimbursement is checked against the decided submission, so approving and recording the reimbursement in one call works. If either part is refused, nothing is saved and no text is sent.
+On a board with `reimbursementEnabled`, the creator pays for the meal and uploads a receipt with their submission, and the client pays them back by their own means (up to the `foodCreditAmountCents` cap). `updateCreatorSubmission` with `{ "submissionId": "...", "reimbursementPaid": { "note": "..." } }` **moves no money**: it only records that the client already sent it. **Call it only after the client tells you the money has gone out.** The submission must be approved with its reimbursement pending; a submission with no receipt was never on a reimbursing board and is rejected. Read the receipt total (`receiptTotalCents`) and `reimbursementStatus` off the `creatorSubmission` row before recording anything. A call may carry both a `decision` and `reimbursementPaid`: the decision is applied first and the reimbursement is checked against the decided submission, so approving and recording the reimbursement in one call works. If either part is refused, nothing is saved and no text is sent.
 
 ### Conversations
 
@@ -98,11 +129,11 @@ On a board with `reimbursementEnabled`, the creator pays for the meal and upload
 
 ### Everything else: queryData
 
-The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorInstagramProfile` (follower count, private and verified flags, profile picture), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. Content submissions are **not** in the catalog; `listCreatorSubmissions` is the only read.
+The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorInstagramProfile` (follower count, private and verified flags, profile picture), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. It also exposes three **nosql** objects: `creativeStrategy` (creator briefs), `creatorAvailability` (booking windows) and `creatorSubmission` (content submissions). `describeData` marks them `"type": "nosql"`. They take only `filter` commands, and only on columns with `isFilterable: true`; `join`, `pivot` and `aggregate` are rejected, and they have no links, so reach a related object with a second `queryData` call on its id. `order`, `fields`, `limit` and `cursor` work as usual.
 
 `creator` and `creatorInstagramProfile` only return creators who applied to this organization. To go from an application to its creator, follow the `influencer` link, then the creator's `instagramProfile` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
 
-Pending applications with names and handles (the same queue as `listCreatorApplications`, without the brief's title and campaign):
+Pending applications with names and handles (the approval queue):
 
 ```json
 { "schemaName": "creators", "objectTypeName": "creatorVisitApplication",
