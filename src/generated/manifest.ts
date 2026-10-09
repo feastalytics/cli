@@ -1032,7 +1032,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "description": "Render the five recruitment ad images for a location from fixed templates, using its own photo, logo and food credit (no AI image generation). Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit is in dollars (25 means $25): getInfluencerBoardConfig's foodCreditAmountCents divided by 100.",
+      "description": "Render the five recruitment ad images for a location from fixed templates, using its own photo, logo and food credit (no AI image generation). Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit is in dollars (25 means $25): the location's foodCreditAmountCents (queryData creators.creatorBoardConfig, configId = locationId) divided by 100.",
       "type": "mutation",
       "path": [
         "api",
@@ -1910,29 +1910,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "getInfluencerBoardConfig",
-      "domain": "creators",
-      "description": "Read a location's creator program settings (dining credit, creator bonus, follower minimum, booking limits) and its recruitment Meta campaign, ad set and status. config is null when the location has no program. Quote credit and bonus only from here. locationId from queryData interface.location.",
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "getInfluencerBoardConfig"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "locationId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "locationId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "getJob",
       "domain": "core",
       "description": "Poll one background job. Pass both jobId and jobType from the tool that queued it (a job id alone is not addressable). { job: null } means not landed yet: keep polling. status goes PENDING, RUNNING, then COMPLETED or FAILED (with errorMessage). includeFullPayload adds the input and generated text. wait: true holds the call up to 20 seconds until the job finishes, then returns it either way.",
@@ -2523,7 +2500,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorApplications",
       "domain": "creators",
-      "description": "Creator applications awaiting approve or deny, newest first, across every location, with follower counts (not in queryData). Each row has the eventId for updateCreatorVisit and the assigned brief's strategyId; when it is null, have a brief assigned on the Creator approvals page before approving.",
+      "description": "Creator applications awaiting approve or deny, newest first, across every location, with names, handles, Instagram follower counts and the assigned brief's title and campaign. For private and verified flags, or applications in other states, use queryData creators.creatorVisitApplication with the influencer link to creator and its instagramProfile link. Each row has the eventId for updateCreatorVisit and the assigned brief's strategyId; when it is null, have a brief assigned on the Creator approvals page before approving.",
       "type": "query",
       "path": [
         "api",
@@ -8796,7 +8773,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
-      "description": "Create or update a location's creator program (an upsert, one per locationId; omitted fields are left alone). Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. locationId from queryData interface.location.",
+      "description": "Create or update a location's creator program (an upsert, one per locationId; omitted fields are left alone). Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. Read the current settings with queryData creators.creatorBoardConfig filtered on configId = locationId. locationId from queryData interface.location.",
       "type": "mutation",
       "path": [
         "api",
