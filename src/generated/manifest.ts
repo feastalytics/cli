@@ -1181,7 +1181,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "describeData",
       "domain": "data",
-      "description": "Describe the queryable data model, then read it with queryData. With no arguments it returns an index of every object type plus the query grammar; narrowing by schema or object type returns full column detail, including the link names pivot and join take. Prefer the POS-agnostic 'interface' schema.",
+      "description": "Describe the queryable data model, then read it with queryData. With no arguments it returns an index of every object type plus the query grammar; narrowing by schema or object type returns full column detail, including the link names pivot and join take. Every object type has a type: 'sql' takes every command; 'nosql' takes only filter commands on its isFilterable columns, with no links. Prefer the POS-agnostic 'interface' schema.",
       "type": "query",
       "path": [
         "api",
@@ -2877,7 +2877,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "queryData",
       "domain": "data",
-      "description": "Run a read-only query against the data catalog. Call describeData first for object types and exact column names; do not guess columns. Results are already scoped to the organization, so never filter on organizationId. Page by passing the returned nextCursor back as args.cursor. Aggregate functions: SUM, MAX, MIN, AVG, COUNT, COUNT_DISTINCT.",
+      "description": "Run a read-only query against the data catalog. Call describeData first for object types and exact column names; do not guess columns. Results are already scoped to the organization, so never filter on organizationId. Page by passing the returned nextCursor back as args.cursor. Aggregate functions: SUM, MAX, MIN, AVG, COUNT, COUNT_DISTINCT. Object types describeData marks type 'nosql' take only filter commands, on their filterable columns.",
       "type": "query",
       "path": [
         "api",
