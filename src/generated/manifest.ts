@@ -787,7 +787,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createCreativeStrategy",
       "domain": "creators",
-      "description": "Generate a creator brief (creative strategy). An awareness brief is saved before this returns; a CTA brief generates in the background, so poll getCreativeStrategy with the returned strategyId until generationStatus is complete or failed before using it, or pass wait: true to hold the call up to 20 seconds first. Edit it with updateCreativeStrategy.",
+      "description": "Generate a creator brief (creative strategy). An awareness brief is saved before this returns; a CTA brief generates in the background, so pass wait: true to hold this call up to 20 seconds until it finishes, or re-run queryData creators.creativeStrategy filtered on the returned strategyId until generationStatus is complete or failed before using it. Edit it with updateCreativeStrategy.",
       "type": "mutation",
       "path": [
         "api",
@@ -1098,7 +1098,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "deleteAvailability",
       "domain": "creators",
-      "description": "Remove a booking window. Deleting closes future booking slots for that window; visits already scheduled inside it are separate rows and are not cancelled. An unknown availabilityId succeeds silently, so confirm the id came from listAvailability rather than trusting a no-error result.",
+      "description": "Remove a booking window. Deleting closes future booking slots for that window; visits already scheduled inside it are separate rows and are not cancelled. An unknown availabilityId succeeds silently, so confirm the id came from queryData creators.creatorAvailability rather than trusting a no-error result.",
       "type": "mutation",
       "path": [
         "api",
@@ -1837,32 +1837,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "getCreativeStrategy",
-      "domain": "creators",
-      "description": "Read one creator strategy by id, including generationStatus. This is how you finish createCreativeStrategy: the CTA path returns immediately with generationStatus 'generating', so poll here until it reads complete or failed before using the brief. wait: true holds the call up to 20 seconds until generation finishes.",
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "getCreativeStrategyForOrg"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "strategyId": {
-            "type": "string"
-          },
-          "wait": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "strategyId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "getCreatorConversation",
       "domain": "creators",
       "description": "One creator's full SMS thread, newest first. userId from listCreatorConversations. Read this before summarizing an exchange or drafting a reply, since the queue only has the last message. Empty when the creator has no phone number. Reply with sendText and {type:'creator', userId}.",
@@ -2422,18 +2396,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "listAvailability",
-      "domain": "creators",
-      "description": "List every creator booking window in the organization. Takes no arguments; filter by locationId or campaignId yourself. Times and utcDaysOfWeek are UTC, not the restaurant's local time.",
-      "type": "query",
-      "path": [
-        "api",
-        "scheduling",
-        "listAvailability"
-      ],
-      "inputJsonSchema": null
-    },
-    {
       "id": "listCampaigns",
       "domain": "core",
       "description": "The organization's acquisition campaigns, newest first, as summaries. Use the `id` field (a UUID) as campaignId in every other campaign tool, not the nested Meta campaign id. getCampaign returns one campaign's full configuration.",
@@ -2498,18 +2460,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "listCreatorApplications",
-      "domain": "creators",
-      "description": "Creator applications awaiting approve or deny, newest first, across every location, with names, handles, Instagram follower counts and the assigned brief's title and campaign. For private and verified flags, or applications in other states, use queryData creators.creatorVisitApplication with the influencer link to creator and its instagramProfile link. Each row has the eventId for updateCreatorVisit and the assigned brief's strategyId; when it is null, have a brief assigned on the Creator approvals page before approving.",
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "listPendingApprovals"
-      ],
-      "inputJsonSchema": null
-    },
-    {
       "id": "listCreatorConversations",
       "domain": "creators",
       "description": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue. hasUnread rows need a human. Each row has the last message, visitLocationIds and a derived visitStatus. Read a thread with getCreatorConversation (userId); reply with sendText and {type:'creator', userId}.",
@@ -2520,40 +2470,6 @@ export const CLI_MANIFEST: CliManifest = {
         "listInfluencersWithTexts"
       ],
       "inputJsonSchema": null
-    },
-    {
-      "id": "listCreatorSubmissions",
-      "domain": "creators",
-      "description": "Creator content submissions, newest first. 'submitted' is the review queue; 'revision_requested' is waiting on the creator to resubmit. Each row carries the `submissionId` for updateCreatorSubmission. Submissions are outside the queryData catalog, so this is the only way to read them.",
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "listSubmissions"
-      ],
-      "inputJsonSchema": {
-        "anyOf": [
-          {
-            "not": {}
-          },
-          {
-            "type": "object",
-            "properties": {
-              "status": {
-                "type": "string",
-                "enum": [
-                  "submitted",
-                  "under_review",
-                  "approved",
-                  "revision_requested",
-                  "rejected"
-                ]
-              }
-            }
-          }
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
     },
     {
       "id": "listFunnelDrafts",
@@ -7345,7 +7261,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateAvailability",
       "domain": "creators",
-      "description": "Change a booking window (availabilityId from listAvailability). block is replaced whole, so send the complete block. Times and weekly days are UTC: convert the local day and time together (see the creators workflow). Returns nothing; re-read with listAvailability to confirm.",
+      "description": "Change a booking window (availabilityId is the id from queryData creators.creatorAvailability). block is replaced whole, so send the complete block. Times and weekly days are UTC: convert the local day and time together (see the creators workflow). Returns nothing; re-read it with queryData creators.creatorAvailability filtered on id to confirm.",
       "type": "mutation",
       "path": [
         "api",
@@ -8388,7 +8304,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreativeStrategy",
       "domain": "creators",
-      "description": "Save a creator brief: the revision step after createCreativeStrategy. Omitting strategyId creates a new brief instead of editing one. title, briefMarkdown and concepts replace the stored ones, so read it with getCreativeStrategy and send the full concepts array with your edits. Omitted optional fields keep their stored values; send null for locationId or campaignId to clear it. Omit briefWithoutConcepts to derive it from briefMarkdown.",
+      "description": "Save a creator brief: the revision step after createCreativeStrategy. Omitting strategyId creates a new brief instead of editing one. title, briefMarkdown and concepts replace the stored ones, so read it with queryData creators.creativeStrategy filtered on strategyId and send the full concepts array with your edits. Omitted optional fields keep their stored values; send null for locationId or campaignId to clear it. Omit briefWithoutConcepts to derive it from briefMarkdown.",
       "type": "mutation",
       "path": [
         "api",
@@ -8640,7 +8556,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreatorSubmission",
       "domain": "creators",
-      "description": "Update a creator's content submission: decide on it (`decision`), record that its meal reimbursement was paid (`reimbursementPaid`), or both. Send at least one. submissionId and receiptTotalCents from listCreatorSubmissions.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
+      "description": "Update a creator's content submission: decide on it (`decision`), record that its meal reimbursement was paid (`reimbursementPaid`), or both. Send at least one. submissionId and receiptTotalCents from queryData creators.creatorSubmission.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
       "type": "mutation",
       "path": [
         "api",
@@ -8701,7 +8617,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCreatorVisit",
       "domain": "creators",
-      "description": "Update one creator visit: approve or deny an application, set or clear its time, move it, or record its outcome. Approving or denying texts the creator immediately, and approving spends the location's monthly creator allowance; setting or clearing startTime and status 'cancelled' also text them. Confirm with the user and preview with dryRun: true first. sideEffects: false writes silently. eventId from listCreatorApplications.",
+      "description": "Update one creator visit: approve or deny an application, set or clear its time, move it, or record its outcome. Approving or denying texts the creator immediately, and approving spends the location's monthly creator allowance; setting or clearing startTime and status 'cancelled' also text them. Confirm with the user and preview with dryRun: true first. sideEffects: false writes silently. eventId from queryData creators.creatorVisitApplication (the approval queue is approvalStatus 'pending_approval').",
       "type": "mutation",
       "path": [
         "api",
