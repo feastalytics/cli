@@ -100,7 +100,7 @@ On a board with `reimbursementEnabled`, the creator pays for the meal and upload
 
 The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorInstagramProfile` (follower count, private and verified flags, profile picture), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. Content submissions are **not** in the catalog; `listCreatorSubmissions` is the only read.
 
-**`creator` and `creatorInstagramProfile` are shared across organizations, so a query can't start from them.** Start from `creatorVisitApplication` and follow its `influencer` link to the creator, then the creator's `instagramProfile` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
+`creator` and `creatorInstagramProfile` only return creators who applied to this organization. To go from an application to its creator, follow the `influencer` link, then the creator's `instagramProfile` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
 
 Pending applications with names and handles (the same queue as `listCreatorApplications`, without the brief's title and campaign):
 
