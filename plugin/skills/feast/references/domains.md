@@ -35,7 +35,7 @@ The retention counterpart to campaigns: rewards and pass configuration for retur
 
 ## Creator sourcing
 
-Restaurants recruit local content creators to visit and post. One config per location (`getInfluencerBoardConfig`), an approval queue of applications, content review, and bonus payouts. See `workflows/creators.md`. Recruitment *ads* publish through the Meta ads surface (`workflows/ads.md`).
+Restaurants recruit local content creators to visit and post. One config per location (`queryData` `creators.creatorBoardConfig`), an approval queue of applications, content review, and bonus payouts. See `workflows/creators.md`. Recruitment *ads* publish through the Meta ads surface (`workflows/ads.md`).
 
 ## Meta ads
 

@@ -33,6 +33,6 @@ The recipient is always named by id, never by phone number, and the type must ma
     "commands": [{ "type": "filter", "filter": { "type": "and", "filters": [{ "$optIn": { "boolean": true } }, { "$progress": { "number": 5, "match": "GT" } }] } }],
     "args": { "limit": 500, "order": { "field": "timeAdded", "direction": "DESC" }, "fields": ["serialNumber", "phoneNumber", "progress"] } }
   ```
-- Six schemas: `interface` (POS-agnostic orders, order items, menu `catalogItem`s, `location`s, reservations: the same shape whichever POS the org runs), `core` (guests/members), `events` (user events), `texting` (SMS logs), `creators` (visits and payouts), `attribution` (campaign attribution). Prefer `interface` for anything POS-shaped.
+- Six schemas: `interface` (POS-agnostic orders, order items, menu `catalogItem`s, `location`s, reservations: the same shape whichever POS the org runs), `core` (guests/members), `events` (user events), `texting` (SMS logs), `creators` (creator program settings, applications and visits, Instagram stats, payouts), `attribution` (campaign attribution). Prefer `interface` for anything POS-shaped.
 
 Typical uses: visit counts and cohorts, order history for one guest, menu items with real prices for grounding copy, text delivery history, creator payout status.
