@@ -73,7 +73,7 @@ That's a customer offer wearing a creator ad's clothes. Every one of "free meal"
 
 `foodCreditCents`, `creatorPayoutCents` and `minFollowerCount` on `recruitmentAdCopy` record the terms your copy actually stated. The dashboard compares them against the live creator board config and flags the copy as drifted when they diverge, so if you write "$30 tab" and leave them unset, nobody finds out when the credit later changes to $50 and the ad starts lying.
 
-**Read the creator board config with `getInfluencerBoardConfig` first.** The dining credit, the bonus and the follower minimum live there and nowhere else. Write those exact numbers into the copy, and mirror them into these fields (in **cents** for the two money fields). Don't guess them, and don't ask the user for numbers the config already has.
+**Read the creator board config first**: `queryData` `creators.creatorBoardConfig` filtered on `configId` = the location id (the recipe is in `creators.md`). The dining credit, the bonus and the follower minimum live there and nowhere else. Write those exact numbers into the copy, and mirror them into these fields (in **cents** for the two money fields). Don't guess them, and don't ask the user for numbers the config already has.
 
 The creator landing page is `/creator-landing` on the org's subdomain with `orgId`, `locId`, `campaignId` and UTM params, fiddly enough that you should reuse the existing `recruitmentAdCopy.landingPageUrl` when the campaign already has copy, rather than reconstructing it.
 

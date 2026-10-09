@@ -29,7 +29,14 @@ Other fields worth knowing on the same call:
 - **`agentPaused: true`** turns the creator AI agent off for the location: no AI replies, visit reminders or content follow-ups until it is set back to `false`. Texts sent by people (including `sendText`) deliver as usual.
 - **`reimbursementEnabled`** switches the board from comping the meal to reimbursing a meal the creator paid for, and `foodCreditAmountCents` becomes the reimbursement cap rather than a dining credit. It changes what creators are promised on the landing page, brief and rights agreement, so **never set it unless the client asks for it**. See *Reimbursing boards* below.
 
-`getInfluencerBoardConfig` returns the config (or `null` when the location has no program), including the location's recruitment Meta campaign, ad set and saved status (`recruitmentFacebookCampaignId`, `recruitmentFacebookAdSetId`, `recruitmentStatus`). **Read it before writing recruitment copy**: the dining credit, creator bonus and follower minimum you're supposed to quote live here and nowhere else. It's also how you check the bonus is non-zero before calling `decideCreatorSubmission` with `approvalType: "ad"`.
+**Read the settings with `queryData`**, one row per location in `creators.creatorBoardConfig`, keyed by `configId` (the location id):
+
+```json
+{ "schemaName": "creators", "objectTypeName": "creatorBoardConfig",
+  "commands": [{ "type": "filter", "filter": { "$configId": { "string": "<locationId>", "match": "EQ" } } }] }
+```
+
+No row means the location has no program; drop the filter to see every location's program at once. The row includes the location's recruitment Meta campaign, ad set and saved status (`recruitmentFacebookCampaignId`, `recruitmentFacebookAdSetId`, `recruitmentStatus`). These are the stored values: `recruitmentStatus` is what Feast last set, not a live read from Meta. A null setting means its default: `minFollowerCount` 1000, `creatorBonusAmountCents` 10000 ($100), `maxBookingDaysOut` 14 days, `minBookingHoursNotice` 24 hours, and no cap for the other limits. **Read it before writing recruitment copy**: the dining credit, creator bonus and follower minimum you're supposed to quote live here and nowhere else. It's also how you check the bonus is non-zero before calling `decideCreatorSubmission` with `approvalType: "ad"`.
 
 ### Booking windows
 
@@ -56,14 +63,14 @@ A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`;
 
 The ads that bring applicants in are tool-drivable end to end:
 
-1. `createRecruitmentCreatives` with `{ "locationId": "...", "foodCredit": ..., "campaignId": "..." }`. `locationId` and `foodCredit` are required. `foodCredit` is in dollars (25 means $25): `getInfluencerBoardConfig`'s `foodCreditAmountCents` divided by 100. Pass `campaignId` and the tool resolves (or creates) the campaign's recruitment offer itself, which is what groups the creatives and carries the monthly sourcing cap; pass `offerId` instead only when you already have the exact offer. One of the two is needed, or the creatives are generated, charged for, and attached to nothing. Each run calls an image model per missing type; `force` deletes and regenerates the whole set, so don't pass it casually.
+1. `createRecruitmentCreatives` with `{ "locationId": "...", "foodCredit": ..., "campaignId": "..." }`. `locationId` and `foodCredit` are required. `foodCredit` is in dollars (25 means $25): the location's `creatorBoardConfig` `foodCreditAmountCents` divided by 100. Pass `campaignId` and the tool resolves (or creates) the campaign's recruitment offer itself, which is what groups the creatives and carries the monthly sourcing cap; pass `offerId` instead only when you already have the exact offer. One of the two is needed, or the creatives are generated, charged for, and attached to nothing. Each run calls an image model per missing type; `force` deletes and regenerates the whole set, so don't pass it casually.
 2. `listCreatives`: each creative's `imageKey` is the reference `planAds` takes as a `libraryAsset` (`selectedImageUrl` is the same picked render as a URL). `imageUrl` is the base render, not the ad asset, so don't choose among the image fields yourself. `staleCreativeIds` flags creatives generated from an older version of their offer, and is only populated when you pass `offerId`.
 3. Publish through the `recruitment` template in `ads.md`, declaring the **`linkRecruitmentOffer` effect**; the publish is refused without it. The effect stamps the creatives, links the offer (which the sourcing cap and dashboard spend read), and texts the program's approver that sourcing is live.
 4. Copy rules for the ad live in `ad-copy-creator.md` (`recruitmentAdCopy`; conflating it with guest copy is the classic failure).
 
 ### The decision loop
 
-1. `listCreatorApplications`: the approval queue, newest first, across every location. Takes no arguments. Use this rather than querying the data model: it carries **`instagramFollowerCount`**, which is usually the deciding factor and isn't reachable any other way. Each row also carries the brief assigned to the visit as `strategyId`/`strategyTitle`, with its `campaignId`/`campaignName`, all null when no brief is assigned. **Check `strategyId` is non-null before approving**: the approval text links whatever brief the visit carries at that moment. No tool assigns a brief to a visit, so when it is null, have the user assign one on the Creator approvals page first.
+1. `listCreatorApplications`: the approval queue, newest first, across every location. Takes no arguments. Each row carries **`instagramFollowerCount`**, which is usually the deciding factor. For private and verified flags, see the Instagram recipe under *Everything else* below. Each row also carries the brief assigned to the visit as `strategyId`/`strategyTitle`, with its `campaignId`/`campaignName`, all null when no brief is assigned. **Check `strategyId` is non-null before approving**: the approval text links whatever brief the visit carries at that moment. No tool assigns a brief to a visit, so when it is null, have the user assign one on the Creator approvals page first.
 2. `updateCreatorVisit` with `{ "eventId": "...", "status": "approved" | "denied" }`. **This texts the creator immediately**: approved sends their booking link and creative brief, denied sends a decline. A denial is reversible: approving a denied row later sends a "we changed our mind" text and re-arms the scheduled texts. Approval also **consumes the location's monthly creator sourcing allowance**, and recruitment auto-pauses once that limit is reached, so an approval is both a message and a spend. Confirm with the user before working through a queue; don't batch-approve on your own initiative. **Preview first with `dryRun: true`**: it returns the exact creator text(s) the same call would send and writes nothing, so show the user that before the real call. Approving a row that isn't actionable is a no-op and comes back with `changed: false` rather than texting twice.
 
    The same tool is how you reschedule and how you record what happened. `startTime` set to a date texts the creator a confirmation and alerts the approver; `null` clears the time and texts the creator asking for a new one. `startTime` is rejected while the row is `pending_approval` and in any call that passes `status: "approved"`, so approve first, then set the time in a second call (`status: "pending_approval"` clears the time itself; don't pass `startTime` with it). `status` also accepts `confirmed`, `visited`, `missed`, `issue` and `cancelled`; of these only `cancelled` texts the creator. `locationId` moves the visit to another location with a creator program and texts no one, so tell the creator yourself. `notes` sets staff notes shown on the scanner, never sent to the creator. Pass `sideEffects: false` to make any update silent (same field writes, but no creator text, no allowance spend, no post-approval automation), which is what you want when correcting a record after the fact rather than making the decision now.
@@ -91,6 +98,35 @@ On a board with `reimbursementEnabled`, the creator pays for the meal and upload
 
 ### Everything else: queryData
 
-The `creators` schema exposes `creator` (the person, one row shared across all their applications), `creatorVisitApplication` (one application/visit), and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Join person to visit on `creator.influencerId = creatorVisitApplication.userId`. Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, payout history. Content submissions are **not** in the catalog; `listCreatorSubmissions` is the only read.
+The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorInstagramProfile` (follower count, private and verified flags, profile picture), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. Content submissions are **not** in the catalog; `listCreatorSubmissions` is the only read.
+
+**`creator` and `creatorInstagramProfile` are shared across organizations, so a query can't start from them.** Start from `creatorVisitApplication` and follow its `influencer` link to the creator, then the creator's `instagramProfile` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
+
+Pending applications with names and handles (the same queue as `listCreatorApplications`, without the brief's title and campaign):
+
+```json
+{ "schemaName": "creators", "objectTypeName": "creatorVisitApplication",
+  "commands": [
+    { "type": "filter", "filter": { "type": "and", "filters": [
+      { "$approvalStatus": { "string": "pending_approval", "match": "EQ" } },
+      { "type": "or", "filters": [ { "$status": { "match": "NULL" } }, { "$status": { "string": "cancelled", "match": "NEQ" } } ] } ] } },
+    { "type": "join", "name": "influencer", "fields": ["firstName", "lastName", "instagramHandle", "tiktokHandle", "youtubeHandle"] } ],
+  "args": { "limit": 1000, "order": { "field": "createdAt", "direction": "DESC" } } }
+```
+
+Their Instagram stats: the same filter, then pivot to the creator and join the profile. Match the rows to the applications on `influencerId = userId`.
+
+```json
+{ "schemaName": "creators", "objectTypeName": "creatorVisitApplication",
+  "commands": [
+    { "type": "filter", "filter": { "type": "and", "filters": [
+      { "$approvalStatus": { "string": "pending_approval", "match": "EQ" } },
+      { "type": "or", "filters": [ { "$status": { "match": "NULL" } }, { "$status": { "string": "cancelled", "match": "NEQ" } } ] } ] } },
+    { "type": "pivot", "name": "influencer" },
+    { "type": "join", "name": "instagramProfile", "fields": ["followerCount", "isPrivate", "isVerified", "profilePicUrl", "fetchedAt"] } ],
+  "args": { "limit": 1000 } }
+```
+
+A creator with null `dest_followerCount` has no Instagram handle, or the scrape found no account. Drop the `approvalStatus` filter to see the stats of every applicant, approved or denied.
 
 > **Not exposed:** marking a creator conversation read, assigning a brief to a visit, the dashboard's launch-program button itself (its bookkeeping rides the recruitment publish effect, see above), and publishing a creator's submitted content as a partnership ad.
