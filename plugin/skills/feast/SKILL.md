@@ -53,7 +53,7 @@ Query tools (listing, describing, reading) are safe and read-only; over MCP they
 That last point matters most for the tools that reach the real world rather than just the database:
 
 - `sendText` texts a guest or creator immediately, one person per call, with no scheduling and no undo.
-- Approving or denying a creator visit (`updateCreatorVisit`) or deciding a submission (`decideCreatorSubmission`) texts that person. `updateCreatorVisit` can preview its texts with `dryRun: true` or skip them with `sideEffects: false`; `decideCreatorSubmission` can skip its text with `skipApprovalText`.
+- Approving or denying a creator visit (`updateCreatorVisit`) or deciding a submission (`updateCreatorSubmission` with a `decision`) texts that person. `updateCreatorVisit` can preview its texts with `dryRun: true` or skip them with `sideEffects: false`; `updateCreatorSubmission` can skip its approval text with `decision.skipApprovalText`.
 - Paying a creator's bonus (`createInfluencerPayout`, on the CLI) charges the organization's card. Over the MCP server that tool is not available, so the client pays bonuses in the dashboard.
 - `awardReward` puts a real reward in a member's wallet pass, and a retried call grants a second one.
 - `inviteUser` sends a real email.
