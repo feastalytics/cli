@@ -1073,52 +1073,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "decideCreatorSubmission",
-      "domain": "creators",
-      "description": "Decide on a creator's content submission. Approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. submissionId from listCreatorSubmissions.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "dfy",
-        "updateSubmissionStatus"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "submissionId": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "under_review",
-              "approved",
-              "revision_requested",
-              "rejected"
-            ]
-          },
-          "approvalType": {
-            "type": "string",
-            "enum": [
-              "ad",
-              "organic"
-            ]
-          },
-          "skipApprovalText": {
-            "type": "boolean"
-          },
-          "feedbackMessage": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "submissionId",
-          "status"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "deleteAutomationFlow",
       "domain": "automations",
       "description": "Delete an automation flow and the automations inside it. Pass flowId. Blocked if the flow's automations have 20 or more sends; turn the flow off instead of deleting it in that case. This is destructive; prefer disabling over deleting when unsure.",
@@ -2593,7 +2547,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatorSubmissions",
       "domain": "creators",
-      "description": "Creator content submissions, newest first. 'submitted' is the review queue; 'revision_requested' is waiting on the creator to resubmit. Each row carries the `submissionId` for decideCreatorSubmission. Submissions are outside the queryData catalog, so this is the only way to read them.",
+      "description": "Creator content submissions, newest first. 'submitted' is the review queue; 'revision_requested' is waiting on the creator to resubmit. Each row carries the `submissionId` for updateCreatorSubmission. Submissions are outside the queryData catalog, so this is the only way to read them.",
       "type": "query",
       "path": [
         "api",
@@ -2770,32 +2724,6 @@ export const CLI_MANIFEST: CliManifest = {
         "type": "object",
         "properties": {},
         "default": {},
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "markReimbursementPaid",
-      "domain": "creators",
-      "description": "Record that the client already paid a creator back for a meal on a reimbursing board. Moves no money: call it only after the client says the payment went out. The submission must be approved with its reimbursement pending. submissionId and receiptTotalCents from listCreatorSubmissions.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "dfy",
-        "markReimbursementPaid"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "submissionId": {
-            "type": "string"
-          },
-          "reimbursementPaidNote": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "submissionId"
-        ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -8728,6 +8656,67 @@ export const CLI_MANIFEST: CliManifest = {
           "title",
           "briefMarkdown",
           "concepts"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "updateCreatorSubmission",
+      "domain": "creators",
+      "description": "Update a creator's content submission: decide on it (`decision`), record that its meal reimbursement was paid (`reimbursementPaid`), or both. Send at least one. submissionId and receiptTotalCents from listCreatorSubmissions.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "dfy",
+        "updateCreatorSubmission"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "under_review",
+                  "approved",
+                  "revision_requested",
+                  "rejected"
+                ]
+              },
+              "approvalType": {
+                "type": "string",
+                "enum": [
+                  "ad",
+                  "organic"
+                ]
+              },
+              "skipApprovalText": {
+                "type": "boolean"
+              },
+              "feedbackMessage": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "reimbursementPaid": {
+            "type": "object",
+            "properties": {
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "submissionId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
