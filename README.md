@@ -58,7 +58,7 @@ The CLI is the source of truth for which tools exist and what they accept — di
 ```bash
 feast tools
 feast describe updateCampaign
-feast call listCampaigns --org <organizationId>
+feast call getOrganization --org <organizationId>
 ```
 
 `--input` is validated locally against the tool's JSON schema before anything is sent, so a bad payload fails fast with a clear message.
@@ -126,7 +126,7 @@ Set `FEAST_ACCESS_TOKEN` for that case:
 export FEAST_ACCESS_TOKEN="$TOKEN"
 export FEAST_ORGANIZATION_ID=4fafb31e-dd46-4081-9778-c298e577a1d1
 export FEAST_PREFERRED_ROLE=OWNER
-feast call listCampaigns
+feast call getOrganization
 ```
 
 - `FEAST_ACCESS_TOKEN` — access token sent verbatim as `x-access-token`
@@ -146,7 +146,7 @@ just defaulting it. `--org` and `--role` may repeat the pinned value but cannot
 change it:
 
 ```
-$ FEAST_ORGANIZATION_ID=org-A feast call listCampaigns --org org-B
+$ FEAST_ORGANIZATION_ID=org-A feast call getOrganization --org org-B
 FEAST_ORGANIZATION_ID pins this session to org-A, so --org org-B is not allowed.
 ```
 

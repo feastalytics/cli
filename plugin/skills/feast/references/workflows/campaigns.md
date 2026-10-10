@@ -12,7 +12,7 @@ Ask the dashboard wizard's questions, one at a time, skipping any the user alrea
 Then:
 
 1. `createCampaign` with `{ "campaign": { "name": "...", "referrers": ["<subdomain>"] } }`. Keep the returned id.
-2. One `updateCampaign` with `"isCreating": false` (until then the campaign is stuck in the creation wizard) and:
+2. Read the new campaign by its id (the get recipe under **Reading campaigns** below), then one `updateCampaign` with `"isCreating": false` (until then the campaign is stuck in the creation wizard) and:
    - `enabledFeatures`: start from `["OFFER", "CREATOR_SOURCING", "AD_PUBLISHING", "FUNNEL", "AUTOMATIONS"]`; drop `OFFER` with no offer, drop `CREATOR_SOURCING` for `self`. Tracking only: `[]` and `"isPublished": true`.
    - With an offer: `promotions: [{ "promoId": "<new-uuid>", "type": "basic", "basic": { "title": "...", "price"?: 29.99, "canPrePay"?: true } }]`, `imageUrl: { "type": "s3", "key": "..." }`, and if there is no description, `"Prepay for <offer>"` or `"Earn <offer>"`.
 
@@ -41,7 +41,22 @@ Setting `isPublished: true` with `updateCampaign` puts the campaign in front of 
 
 A short approval like "save it" or "looks good" is not a go-live instruction when the readiness check has not passed. Report what is missing first.
 
-**Reading a campaign back:** `getCampaign` returns the full config for one campaign (funnel/offer config, referrers, status); `listCampaigns` is the summary list; performance is covered in "Reading a campaign's performance" below. Read with `getCampaign` before any `updateCampaign`.
+**Reading campaigns:** `queryData` on `attribution.campaign`, one row per campaign. `id` is the Feast campaign id (a UUID) every campaign tool takes as `campaignId`, not the Meta campaign id nested in `fbCampaigns`. The list, newest first:
+
+```json
+{ "schemaName": "attribution", "objectTypeName": "campaign",
+  "args": { "fields": ["id", "name", "shorthand", "isPublished", "isInactive", "createdAt"],
+            "order": { "field": "createdAt", "direction": "DESC" } } }
+```
+
+One campaign's full configuration (offers, referrers, ad copy, status), with no `fields`:
+
+```json
+{ "schemaName": "attribution", "objectTypeName": "campaign",
+  "commands": [{ "type": "filter", "filter": { "$id": { "string": "<campaignId>", "match": "EQ" } } }] }
+```
+
+Read the full row before any `updateCampaign`. Performance is covered in "Reading a campaign's performance" below.
 
 **Updating a campaign:** `updateCampaign` takes `{ "campaignId": "...", "update": { ... } }`. The update is merged one level deep: each top-level field you pass replaces the stored value whole. `promotions` is an array, so pass the full list with your change applied, never just the one promotion you edited. Other things to know:
 - `imageUrl` (the offer image) whose url or key contains the word `placeholder` counts as unset, and onboarding keeps asking for an image.
@@ -53,7 +68,7 @@ A short approval like "save it" or "looks good" is not a go-live instruction whe
 
 ## Reading a campaign's performance
 
-Three tools, all keyed by the Feast campaign `id` from `listCampaigns` (a UUID), never the Meta campaign id nested inside the campaign. They share one set of camelCase metric ids (`signupRate`, `thumbStopRatio`, `uniqueClickthrough`, `revenue`, ...) and one set of units.
+Three tools, all keyed by the Feast campaign `id` from `attribution.campaign` (a UUID), never the Meta campaign id nested inside the campaign. They share one set of camelCase metric ids (`signupRate`, `thumbStopRatio`, `uniqueClickthrough`, `revenue`, ...) and one set of units.
 
 **Units.** `count`; `percent` as 0 to 100 (not 0 to 1); `usd` in dollars (not cents); `days`; `multiple` for ROAS (2 means 2x). In the breakdown: sessions, visitors, signups, impressions and reach are counts; every `*Rate`, `thumbStopRatio`, `holdRate` and `uniqueClickthrough` are percents; spend, cpm, revenue, costPerSignup and revenuePerSignup are USD; averageTimeToShow is days from signup to first scan.
 
@@ -73,7 +88,7 @@ Three tools, all keyed by the Feast campaign `id` from `listCampaigns` (a UUID),
 
 ## Offers and promotions
 
-- A campaign's **promotions** are part of the campaign record: read them with `getCampaign`, edit them with `updateCampaign` (including a promotion's `staffInstructions`, and prices, noting the Stripe-products warning in `updateCampaign`'s description).
+- A campaign's **promotions** are part of the campaign record: read them from the campaign row (`attribution.campaign` filtered on `id`), edit them with `updateCampaign` (including a promotion's `staffInstructions`, and prices, noting the Stripe-products warning in `updateCampaign`'s description).
 - **Real menu data** for grounding any offer or promotion copy comes from `queryData` on `interface.catalogItem`: POS-agnostic, hierarchical via `parentId`/`catalogItemLink`.
 - When you write guest-facing offer language anywhere, frame it as an "offer," never a "discount" or "deal."
 

@@ -81,7 +81,7 @@ The creator landing page is `/creator-landing` on the org's subdomain with `orgI
 
 One `updateCampaign` call writes `recruitmentAdCopy`. Read `updateCampaign`'s input schema for the fields: alongside the headlines and primary texts it wants the landing page URL, the creative mix, a timestamp, and optional indices for the variation you're recommending.
 
-**The one thing the schema won't tell you: `update.recruitmentAdCopy` replaces the whole object rather than merging into it.** Read the campaign with `getCampaign` first and send back everything you want kept, not just what changed.
+**The one thing the schema won't tell you: `update.recruitmentAdCopy` replaces the whole object rather than merging into it.** Read the campaign first (`attribution.campaign` filtered on `id`) and send back everything you want kept, not just what changed.
 
 ## Publishing
 

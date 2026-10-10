@@ -105,7 +105,7 @@ When an automation's trigger is `receiveAutomation`, ask the user whether it sho
 2. **Lead with the wallet link**: the first post-signup text MUST include the link that adds the guest's card to Apple or Google Wallet, written with the `passLink` text variable (see the variables below).
 3. **Every link starts with https**: carriers block links written without it.
 4. **Mobile Google Maps links only**: `https://maps.app.goo.gl/...`, never desktop `maps.google.com`.
-5. **Correct reservation links**: `https://{subdomain}.feastalytics.com/i/{shorthand}/reservation` using the *current* campaign's shorthand (from `listCampaigns`) and a valid subdomain. Never reuse another campaign's link.
+5. **Correct reservation links**: `https://{subdomain}.feastalytics.com/i/{shorthand}/reservation` using the *current* campaign's shorthand (`shorthand` on `attribution.campaign`) and a valid subdomain. Never reuse another campaign's link.
 6. **Personalize** with the `firstName` variable; **vary** tone/wording across automations; **re-share** useful info (wallet link, hours, maps, reservation) in reminders; keep **empty lines** between blocks for readability.
 7. **Align offer expirations with open hours**: never expire an offer while the restaurant is closed.
 

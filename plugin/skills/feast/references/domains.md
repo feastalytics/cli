@@ -13,7 +13,7 @@ A campaign is an acquisition effort. It bundles:
 - **automations** (see below) scoped to that campaign,
 - **promotions/offers** attached to it.
 
-`listCampaigns` resolves a `campaignId`: use each summary's `id` (a UUID), not the nested Meta campaign id. Summaries also carry the name, `shorthand` (used in reservation links), publish state and referrers; `getCampaign` has the full configuration.
+`queryData` on `attribution.campaign` resolves a `campaignId`: use each row's `id` (a UUID), not the Meta campaign id nested in `fbCampaigns`. Rows also carry the name, `shorthand` (used in reservation links), publish state, referrers and the full configuration; see the list and get recipes in `workflows/campaigns.md`.
 
 Typical flow: `createCampaign`, then `updateCampaign` with `isCreating: false` to finish setup, then a funnel template and automations (`workflows/campaigns.md`). To copy an existing campaign (funnel, automations and offers), call `createCampaign` with `sourceCampaignId`; `campaign.referrers` is left out (keeps the source's) or holds exactly one subdomain from the org's `subdomains2`. A copy of a finished campaign is finished, so it skips the `updateCampaign` step.
 
@@ -27,7 +27,7 @@ Typical flow: `createCampaign`, then `updateCampaign` with `isCreating: false` t
 
 ## Offers and promotions
 
-Promotions live on the campaign record (`getCampaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
+Promotions live on the campaign record (`attribution.campaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
 
 ## Members program (retention)
 

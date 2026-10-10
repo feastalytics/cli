@@ -21,7 +21,7 @@ The other reason to write more than one is that the restaurant may want to pick,
 Generic copy is the failure mode, and specifics are the entire job. The difference between an ad that works and one that doesn't is almost never cleverness. It's whether the copy contains something only this restaurant could have said. So go get those things first:
 
 1. `getOrganization`: brand name, cuisine, and the subdomains in `subdomains2[].subdomain`.
-2. `getCampaign`: `name`, `description`, `bannerConfig`, `promotions`, `referrers`, `shorthand`.
+2. The campaign row (`attribution.campaign` filtered on `id`, see `campaigns.md`): `name`, `description`, `promotions`, `referrers`, `shorthand`.
 3. `listFunnelScreens` `{ "referrer": "<subdomain>", "campaignId": "<id>" }`: **the actual landing-page copy the guest sees after the click.** This is your source of truth for congruence: the trip from ad to landing page should feel like one continuous thing, not a bait-and-switch. Copy that promises something the landing page doesn't deliver burns the click.
 4. `queryData` on `interface.catalogItem`: real menu item names and real prices, not approximations of them. It's hierarchical; walk the tree with `parentId` or `catalogItemLink`.
 
@@ -117,7 +117,7 @@ So for a `video_only` or `mixed` campaign, either work from a description or tra
 
 One `updateCampaign` call writes `adCopy`. Read `updateCampaign`'s input schema for the fields: alongside the headlines and primary texts it wants the landing page URL, the creative mix, a timestamp, and optional indices for the variation you're recommending.
 
-**The one thing the schema won't tell you: `update.adCopy` replaces the whole object rather than merging into it.** Read the campaign with `getCampaign` first and send back everything you want kept, not just what changed.
+**The one thing the schema won't tell you: `update.adCopy` replaces the whole object rather than merging into it.** Read the campaign first (`attribution.campaign` filtered on `id`) and send back everything you want kept, not just what changed.
 
 ## Publishing
 

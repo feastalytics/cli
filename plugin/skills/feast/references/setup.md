@@ -2,7 +2,7 @@
 
 One-time and troubleshooting material: connecting the Feastalytics MCP server or installing and logging in to the `feast` CLI, keeping the CLI and this skill current, and working out which organization to act on. The day-to-day loop lives in `SKILL.md`; you only need this file when something isn't working yet.
 
-Some environments hand you the tools already connected and authenticated, pinned to a single organization. Nothing in this file applies there: if a read such as `listCampaigns` works and your calls are going to the right restaurant, you are already set up.
+Some environments hand you the tools already connected and authenticated, pinned to a single organization. Nothing in this file applies there: if a read such as `getOrganization` works and your calls are going to the right restaurant, you are already set up.
 
 ## The MCP server
 

@@ -16,7 +16,7 @@ The same tools, with the same names and inputs, are reachable two ways. Use whic
 
 | | MCP server | `feast` CLI |
 |---|---|---|
-| How you know you have it | Tools such as `listCampaigns` and `listOrganizations` are in your tool list | `feast tools` runs |
+| How you know you have it | Tools such as `queryData` and `listOrganizations` are in your tool list | `feast tools` runs |
 | See every tool | Your tool list | `feast tools` |
 | One tool's input schema | Its entry in your tool list | `feast describe <tool>` |
 | A schema that says "Named type X. Call describeSchema…" | Call `describeSchema` with `{ "names": ["X"] }` | `feast describe <tool>` prints it in full |
@@ -24,7 +24,7 @@ The same tools, with the same names and inputs, are reachable two ways. Use whic
 | Choose the organization | The `organizationId` argument on each call | `--org <organizationId>` |
 | Call a tool | Call it directly with its input | `feast call <tool> --org <id> --input '<json>'` (or `--input-file <path>`) |
 
-Setting either one up (installing the CLI, logging in, connecting the MCP server) is in `references/setup.md`. Some environments hand you either one already connected and pinned to one organization; if a read such as `listCampaigns` works, you are set.
+Setting either one up (installing the CLI, logging in, connecting the MCP server) is in `references/setup.md`. Some environments hand you either one already connected and pinned to one organization; if a read such as `getOrganization` works, you are set.
 
 The rest of this skill and every workflow file names tools and their JSON input only. Translate to your transport with the table above.
 
@@ -63,7 +63,7 @@ That last point matters most for the tools that reach the real world rather than
 
 Treat those as irreversible, and get the user's intent straight *before* the call. For a text, show the user the exact message and get their go-ahead first. The one schema-level gate is `publishAds`, which requires `confirm: true` in its input; that is you confirming, not anyone asking.
 
-Prefer reading before writing: `listCampaigns` to find the right `campaignId` before `updateCampaign`, or `listAutomationFlows` before creating a flow.
+Prefer reading before writing: `queryData` on `attribution.campaign` to find the right `campaignId` and read the campaign before `updateCampaign`, or `listAutomationFlows` before creating a flow.
 
 ## Building good input
 
