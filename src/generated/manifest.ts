@@ -451,7 +451,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createAvailability",
       "domain": "creators",
-      "description": "Open a window creators can book visits in, as a 'once' or 'weekly' block. Times and weekly days are UTC: convert the restaurant's local day and time together (see the creators workflow). Set campaignId as well as locationId, or the Set booking windows task stays open.",
+      "description": "Open a window creators can book visits in, as a 'once' or 'weekly' block, or close a day with a 'closed' block. Once and weekly times and weekly days are UTC: convert the restaurant's local day and time together (see the creators workflow). A 'closed' block takes the restaurant's local date (YYYY-MM-DD) and optional local HH:mm start and end, closes the whole day when both times are left out, and wins over every open window at that location, so creators cannot book it. Use it when the restaurant says a day is off, already full, or must not be booked. Set campaignId as well as locationId on open windows, or the Set booking windows task stays open; a closed block needs only locationId.",
       "type": "mutation",
       "path": [
         "api",
@@ -542,6 +542,42 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "type",
                       "weekly"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "closed"
+                      },
+                      "closed": {
+                        "type": "object",
+                        "properties": {
+                          "localDate": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "description": "The closed day in the organization's timezone, YYYY-MM-DD"
+                          },
+                          "localStartTime": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                            "description": "Start of the closed part of the day, HH:mm local. Omit both times to close the whole day"
+                          },
+                          "localEndTime": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                            "description": "End of the closed part of the day, HH:mm local, exclusive"
+                          }
+                        },
+                        "required": [
+                          "localDate"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "closed"
                     ]
                   }
                 ]
@@ -1381,30 +1417,6 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": null
     },
     {
-      "id": "getCampaign",
-      "domain": "campaigns",
-      "description": "Full configuration for one acquisition campaign: name, status, funnel and landing page config, ad config, offers, settings. campaignId is the Feast campaign id from listCampaigns (a UUID), not the nested Meta campaignId. Read before updateCampaign. For performance use getCampaignKpis.",
-      "type": "query",
-      "path": [
-        "api",
-        "campaigns",
-        "app",
-        "get"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "campaignId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "campaignId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "getCampaignBenchmarks",
       "domain": "campaigns",
       "description": "The definition (label, unit, description, formula) and target band of every metric id that getCampaignKpis and getCampaignBreakdown return. Bands are fleet-wide, not per organization. Call once and reuse; the table is the same for every campaign.",
@@ -1420,7 +1432,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaignBreakdown",
       "domain": "campaigns",
-      "description": "A campaign's metrics as a tree (channel, ad, creator, variant). Pass node refs; get back metrics and child refs to drill into. Start from { type: \"campaign\", campaign: { campaignId } } (id from listCampaigns). A missing metric key means it does not apply; null means it could not be computed.",
+      "description": "A campaign's metrics as a tree (channel, ad, creator, variant). Pass node refs; get back metrics and child refs to drill into. Start from { type: \"campaign\", campaign: { campaignId } } (id from queryData attribution.campaign). A missing metric key means it does not apply; null means it could not be computed.",
       "type": "query",
       "path": [
         "api",
@@ -1804,7 +1816,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getCampaignKpis",
       "domain": "campaigns",
-      "description": "Headline metrics for one acquisition campaign, one { id, type, value, unit } row per metric. campaignId is the Feast campaign id from listCampaigns, not the Meta campaignId. Metrics whose value is zero are omitted: no spend row means no spend or no Facebook sync yet, never a confirmed $0.",
+      "description": "Headline metrics for one acquisition campaign, one { id, type, value, unit } row per metric. campaignId is the Feast campaign id (the id on queryData attribution.campaign), not the Meta campaignId. Metrics whose value is zero are omitted: no spend row means no spend or no Facebook sync yet, never a confirmed $0.",
       "type": "query",
       "path": [
         "api",
@@ -2036,23 +2048,6 @@ export const CLI_MANIFEST: CliManifest = {
         "loadCurrentOrganization"
       ],
       "inputJsonSchema": null
-    },
-    {
-      "id": "getPassConfiguration",
-      "domain": "passBuilder",
-      "description": "The live wallet pass configuration: content sections, features, locations, metadata and the current version. Returns null when none has been saved. Read this before changing the pass: updatePassConfiguration is a full-document save, so the returned document is what you modify.",
-      "type": "query",
-      "path": [
-        "api",
-        "passBuilder",
-        "get"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {},
-        "default": {},
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
     },
     {
       "id": "getTaskboard",
@@ -2398,7 +2393,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCampaigns",
       "domain": "core",
-      "description": "The organization's acquisition campaigns, newest first, as summaries. Use the `id` field (a UUID) as campaignId in every other campaign tool, not the nested Meta campaign id. getCampaign returns one campaign's full configuration.",
+      "description": "The organization's acquisition campaigns, newest first, as summaries. Use the `id` field (a UUID) as campaignId in every other campaign tool, not the nested Meta campaign id. To read one campaign's full configuration, queryData attribution.campaign filtered on id.",
       "type": "query",
       "path": [
         "api",
@@ -7261,7 +7256,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateAvailability",
       "domain": "creators",
-      "description": "Change a booking window (availabilityId is the id from queryData creators.creatorAvailability). block is replaced whole, so send the complete block. Times and weekly days are UTC: convert the local day and time together (see the creators workflow). Returns nothing; re-read it with queryData creators.creatorAvailability filtered on id to confirm.",
+      "description": "Change a booking window (availabilityId is the id from queryData creators.creatorAvailability). block is replaced whole, so send the complete block. Once and weekly times and weekly days are UTC: convert the local day and time together (see the creators workflow). A 'closed' block's date and times are the restaurant's local time. Returns nothing; re-read it with queryData creators.creatorAvailability filtered on id to confirm.",
       "type": "mutation",
       "path": [
         "api",
@@ -7355,6 +7350,42 @@ export const CLI_MANIFEST: CliManifest = {
                     "required": [
                       "type",
                       "weekly"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "closed"
+                      },
+                      "closed": {
+                        "type": "object",
+                        "properties": {
+                          "localDate": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                            "description": "The closed day in the organization's timezone, YYYY-MM-DD"
+                          },
+                          "localStartTime": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                            "description": "Start of the closed part of the day, HH:mm local. Omit both times to close the whole day"
+                          },
+                          "localEndTime": {
+                            "type": "string",
+                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                            "description": "End of the closed part of the day, HH:mm local, exclusive"
+                          }
+                        },
+                        "required": [
+                          "localDate"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "closed"
                     ]
                   }
                 ]
@@ -7608,7 +7639,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateCampaign",
       "domain": "campaigns",
-      "description": "Updates one campaign. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read with getCampaign first. A promotion sent with the promoId of a stored one keeps its Stripe product and price ids when it omits them. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices.",
+      "description": "Updates one campaign. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read the campaign first with queryData attribution.campaign filtered on id. A promotion sent with the promoId of a stored one keeps its Stripe product and price ids when it omits them. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices.",
       "type": "mutation",
       "path": [
         "api",
@@ -9580,7 +9611,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updatePassConfiguration",
       "domain": "passBuilder",
-      "description": "Save the wallet pass configuration. A full-document save, not a patch: anything omitted is dropped, so read getPassConfiguration, modify it, and send the whole document back. A change to sections, features, locations or passStyle re-pushes every pass already in a guest's wallet. Omit passStyle to keep the current style.",
+      "description": "Save the wallet pass configuration. A full-document save, not a patch: anything omitted is dropped, so read the live configuration (queryData core.passConfiguration, order version DESC, limit 1), modify it, and send the whole document back. A change to sections, features, locations or passStyle re-pushes every pass already in a guest's wallet. Omit passStyle to keep the current style.",
       "type": "mutation",
       "path": [
         "api",
