@@ -63,7 +63,7 @@ That last point matters most for the tools that reach the real world rather than
 
 Treat those as irreversible, and get the user's intent straight *before* the call. For a text, show the user the exact message and get their go-ahead first. The one schema-level gate is `publishAds`, which requires `confirm: true` in its input; that is you confirming, not anyone asking.
 
-Prefer reading before writing: `listCampaigns` to find the right `campaignId` before `updateCampaign`, or `listAutomationFlows` before creating a flow.
+Prefer reading before writing: `listCampaigns` to find the right `campaignId` and the campaign's row (`queryData` on `attribution.campaign`) before `updateCampaign`, or `listAutomationFlows` before creating a flow.
 
 ## Building good input
 

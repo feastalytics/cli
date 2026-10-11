@@ -13,7 +13,7 @@ A campaign is an acquisition effort. It bundles:
 - **automations** (see below) scoped to that campaign,
 - **promotions/offers** attached to it.
 
-`listCampaigns` resolves a `campaignId`: use each summary's `id` (a UUID), not the nested Meta campaign id. Summaries also carry the name, `shorthand` (used in reservation links), publish state and referrers; `getCampaign` has the full configuration.
+`listCampaigns` resolves a `campaignId`: use each summary's `id` (a UUID), not the nested Meta campaign id. Summaries also carry the name, `shorthand` (used in reservation links), publish state and referrers; the full configuration is the campaign's row from `queryData` on `attribution.campaign` (see `workflows/campaigns.md`).
 
 Typical flow: `createCampaign`, then `updateCampaign` with `isCreating: false` to finish setup, then a funnel template and automations (`workflows/campaigns.md`). To copy an existing campaign (funnel, automations and offers), call `createCampaign` with `sourceCampaignId`; `campaign.referrers` is left out (keeps the source's) or holds exactly one subdomain from the org's `subdomains2`. A copy of a finished campaign is finished, so it skips the `updateCampaign` step.
 
@@ -27,11 +27,11 @@ Typical flow: `createCampaign`, then `updateCampaign` with `isCreating: false` t
 
 ## Offers and promotions
 
-Promotions live on the campaign record (`getCampaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
+Promotions live on the campaign record (`attribution.campaign` / `updateCampaign`), and real menu items come from `queryData` on `interface.catalogItem`.
 
 ## Members program (retention)
 
-The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (`getPassConfiguration` / `updatePassConfiguration`). See `workflows/members-program.md`.
+The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (read `core.passConfiguration` with `queryData`, save with `updatePassConfiguration`). See `workflows/members-program.md`.
 
 ## Creator sourcing
 

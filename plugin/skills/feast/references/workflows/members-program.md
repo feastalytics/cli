@@ -25,6 +25,13 @@ The retention counterpart to campaigns: flows with no `campaignId`.
 
 The pass (the wallet membership card) is read and written as a whole document.
 
-- **`getPassConfiguration`** `{}`: returns the latest live configuration (`sections`, `features`, `locations`, `metadata`, and its `version`), or `null` when none has been saved.
+- **Read it with `queryData`**: `core.passConfiguration` has one row per saved version, and the live one is the highest `version`. No rows means none has been saved.
+
+  ```json
+  { "schemaName": "core", "objectTypeName": "passConfiguration",
+    "args": { "order": { "field": "version", "direction": "DESC" }, "limit": 1 } }
+  ```
+
+  The row carries `sections`, `features`, `locations`, `passStyle`, `metadata` and its `version`. Drop the `limit` to see the save history.
 - **`updatePassConfiguration`**: **a full-document save, not a patch.** Anything you omit is dropped from the new version. The only safe workflow is read → modify the returned document → save the complete result. `sections` is a `PassSections` and `features` a `PassFeatures`. Saving appends a new version (history is preserved server-side), and a change to sections, features, locations or `passStyle` re-pushes the pass to every member's wallet. `passStyle` is the Apple pass style every one of the organization's passes is built with (`eventTicket`, `storeCard`, `generic`, `coupon`); unset means `eventTicket`. There is no confirmation prompt, so treat it with the same care as a live send. Omit `passStyle` to keep the current style; `null` clears it back to `eventTicket`.
 - Pass **image generation** (punch-card strips etc.) is not exposed; image workflows go through the app.
