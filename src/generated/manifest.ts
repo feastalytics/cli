@@ -9202,17 +9202,6 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete"
             ]
           },
-          "phone": {
-            "type": "object",
-            "properties": {
-              "phoneNumber": {
-                "type": "string"
-              },
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
           "facebook": {
             "type": "object",
             "properties": {
@@ -9252,9 +9241,6 @@ export const CLI_MANIFEST: CliManifest = {
           "staffTraining": {
             "type": "object",
             "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
               "step1Complete": {
                 "type": "boolean"
               },
@@ -9313,35 +9299,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "deferredAt"
               ]
             }
-          },
-          "subdomains": {
-            "type": "object",
-            "properties": {
-              "locations": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "referrer": {
-                      "type": "string"
-                    },
-                    "homepageUrl": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "referrer",
-                    "homepageUrl"
-                  ]
-                }
-              },
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "locations"
-            ]
           },
           "dataAudit": {
             "type": "object",
