@@ -31,7 +31,7 @@ Promotions live on the campaign record (`attribution.campaign` / `updateCampaign
 
 ## Members program (retention)
 
-The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (`getPassConfiguration` / `updatePassConfiguration`). See `workflows/members-program.md`.
+The retention counterpart to campaigns: rewards and pass configuration for returning guests. Members-program automations are the flows with no `campaignId` (`scope: "membersProgram"` above). Rewards are fully manageable (`listMembersProgramRewards` / `createMembersProgramReward` / `updateMembersProgramReward` / `deleteMembersProgramReward`), and the wallet pass is a read-modify-write document (read `core.passConfiguration` with `queryData`, save with `updatePassConfiguration`). See `workflows/members-program.md`.
 
 ## Creator sourcing
 
