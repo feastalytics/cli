@@ -41,15 +41,7 @@ Setting `isPublished: true` with `updateCampaign` puts the campaign in front of 
 
 A short approval like "save it" or "looks good" is not a go-live instruction when the readiness check has not passed. Report what is missing first.
 
-**Reading campaigns:** `queryData` on `attribution.campaign`, one row per campaign. `id` is the Feast campaign id (a UUID) every campaign tool takes as `campaignId`, not the Meta campaign id nested in `fbCampaigns`. The list, newest first:
-
-```json
-{ "schemaName": "attribution", "objectTypeName": "campaign",
-  "args": { "fields": ["id", "name", "shorthand", "isPublished", "isInactive", "createdAt"],
-            "order": { "field": "createdAt", "direction": "DESC" } } }
-```
-
-One campaign's full configuration (offers, referrers, ad copy, status), with no `fields`:
+**Reading campaigns:** `listCampaigns` is the summary list, newest first. `id` is the Feast campaign id (a UUID) every campaign tool takes as `campaignId`, not the Meta campaign id nested in `fbCampaigns`. One campaign's full configuration (offers, referrers, ad copy, status) is its row in `queryData` on `attribution.campaign`, with no `fields`:
 
 ```json
 { "schemaName": "attribution", "objectTypeName": "campaign",
@@ -68,7 +60,7 @@ Read the full row before any `updateCampaign`. Performance is covered in "Readin
 
 ## Reading a campaign's performance
 
-Three tools, all keyed by the Feast campaign `id` from `attribution.campaign` (a UUID), never the Meta campaign id nested inside the campaign. They share one set of camelCase metric ids (`signupRate`, `thumbStopRatio`, `uniqueClickthrough`, `revenue`, ...) and one set of units.
+Three tools, all keyed by the Feast campaign `id` from `listCampaigns` (a UUID), never the Meta campaign id nested inside the campaign. They share one set of camelCase metric ids (`signupRate`, `thumbStopRatio`, `uniqueClickthrough`, `revenue`, ...) and one set of units.
 
 **Units.** `count`; `percent` as 0 to 100 (not 0 to 1); `usd` in dollars (not cents); `days`; `multiple` for ROAS (2 means 2x). In the breakdown: sessions, visitors, signups, impressions and reach are counts; every `*Rate`, `thumbStopRatio`, `holdRate` and `uniqueClickthrough` are percents; spend, cpm, revenue, costPerSignup and revenuePerSignup are USD; averageTimeToShow is days from signup to first scan.
 

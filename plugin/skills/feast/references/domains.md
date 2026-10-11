@@ -13,7 +13,7 @@ A campaign is an acquisition effort. It bundles:
 - **automations** (see below) scoped to that campaign,
 - **promotions/offers** attached to it.
 
-`queryData` on `attribution.campaign` resolves a `campaignId`: use each row's `id` (a UUID), not the Meta campaign id nested in `fbCampaigns`. Rows also carry the name, `shorthand` (used in reservation links), publish state, referrers and the full configuration; see the list and get recipes in `workflows/campaigns.md`.
+`listCampaigns` resolves a `campaignId`: use each summary's `id` (a UUID), not the nested Meta campaign id. Summaries also carry the name, `shorthand` (used in reservation links), publish state and referrers; the full configuration is the campaign's row from `queryData` on `attribution.campaign` (see `workflows/campaigns.md`).
 
 Typical flow: `createCampaign`, then `updateCampaign` with `isCreating: false` to finish setup, then a funnel template and automations (`workflows/campaigns.md`). To copy an existing campaign (funnel, automations and offers), call `createCampaign` with `sourceCampaignId`; `campaign.referrers` is left out (keeps the source's) or holds exactly one subdomain from the org's `subdomains2`. A copy of a finished campaign is finished, so it skips the `updateCampaign` step.
 
