@@ -229,7 +229,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "applyAutomationTemplate",
       "domain": "automations",
-      "description": "Applies an automation template and creates automations. Only use when the campaign or members program has no existing flows; otherwise edit the existing flows through the draft loop (createAutomationDraft, stageAutomationEdits, saveAutomationEdits).",
+      "description": "Applies an automation template and creates automations. Only use when the campaign or members program has no existing flows; otherwise edit the existing flows through the draft loop (stageAutomationEdits, which starts a draft when draftId is omitted, then saveAutomationEdits).",
       "type": "mutation",
       "path": [
         "api",
@@ -328,7 +328,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "awardReward",
       "domain": "membersProgram",
-      "description": "Give one member a reward in their wallet pass now, like the dashboard's Give Reward button (createMembersProgramReward only defines a reward the program offers). serialNumber from searchUsers, itemId from listMembersProgramRewards. Re-evaluates the member's automations, so a flow triggered by earning a reward fires. No undo and no idempotency key: a retried call grants a second reward, so confirm with the user and call once per member.",
+      "description": "Give one member a reward in their wallet pass now, like the dashboard's Give Reward button (createMembersProgramReward only defines a reward the program offers). serialNumber from searchUsers, itemId from a queryData membersProgram.reward query. Re-evaluates the member's automations, so a flow triggered by earning a reward fires. No undo and no idempotency key: a retried call grants a second reward, so confirm with the user and call once per member.",
       "type": "mutation",
       "path": [
         "api",
@@ -359,29 +359,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "serialNumber",
           "itemId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "createAutomationDraft",
-      "domain": "automations",
-      "description": "Start a draft of automation changes for a human to preview before they go live; the default way to change automations. `title` is what the reviewer sees. Keep the returned draftId (drafts cannot be listed), add changes with stageAutomationEdits, check them with simulateAutomationDraft, share `previewUrls` for sign-off, then saveAutomationEdits.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "automation",
-        "createDraft"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "title"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -1006,7 +983,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createMembersProgramReward",
       "domain": "membersProgram",
-      "description": "Create a members program reward over a catalog item. Prefer type 'item' with an existing itemId (from a catalog query). type 'name' matches the name exactly across the Feast and POS catalogs and creates a new Feast item when nothing matches, so a near-miss silently duplicates a menu item.",
+      "description": "Create a members program reward over a catalog item. Prefer type 'item' with an existing itemId (from a queryData interface.catalogItem query; check membersProgram.reward first so the item is not a reward already). type 'name' matches the name exactly across the Feast and POS catalogs and creates a new Feast item when nothing matches, so a near-miss silently duplicates a menu item.",
       "type": "mutation",
       "path": [
         "api",
@@ -1193,7 +1170,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "deleteMembersProgramReward",
       "domain": "membersProgram",
-      "description": "Remove a members program reward so it is no longer offered (the cleanup for an orphan no automation grants). rewardId from listMembersProgramRewards. The catalog item is left alone, and guests who already redeemed keep what they were given.",
+      "description": "Remove a members program reward so it is no longer offered (the cleanup for an orphan no automation grants). rewardId from a queryData membersProgram.reward query. The catalog item is left alone, and guests who already redeemed keep what they were given.",
       "type": "mutation",
       "path": [
         "api",
@@ -1248,29 +1225,6 @@ export const CLI_MANIFEST: CliManifest = {
             "description": "Whether to include the query grammar for queryData. Defaults to true; pass false once you already have it."
           }
         },
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "discardAutomationDraft",
-      "domain": "automations",
-      "description": "Discard an automation draft without promoting its staged changes. Live automations are untouched.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "automation",
-        "discardDraft"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "draftId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "draftId"
-        ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
@@ -2551,23 +2505,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "listMembersProgramRewards",
-      "domain": "membersProgram",
-      "description": "Members program rewards with their catalog item name, staff instructions, points cost and source catalog (Feast, Toast, Square or Clover). A null name means the item no longer exists in any catalog.",
-      "type": "query",
-      "path": [
-        "api",
-        "membersProgram",
-        "listRewards"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {},
-        "default": {},
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "planAds",
       "domain": "ads",
       "description": "Resolve an ad template and its variables into the exact campaigns, ad sets and ads publishAds would create. Creates nothing. Returns the tree, planHash, defaulted variables and issues; fix severity error issues and re-plan, then pass variables, overrides and planHash to publishAds unchanged.",
@@ -3708,7 +3645,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "stageAutomationEdits",
       "domain": "automations",
-      "description": "Append create/update/delete operations to an open automation draft, in order. A `create` op needs a flowId from listAutomationFlows or createAutomationFlow. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up. An `update` replaces each field it sends, so send the full current `actions` array.",
+      "description": "Stage create/update/delete operations on an automation draft, in order, for a human to preview before they go live; the default way to change automations. On the first call, omit draftId and pass `title` (what the reviewer sees) to start a new draft; then pass the returned draftId on every later stageAutomationEdits, getAutomationDraft, simulateAutomationDraft and saveAutomationEdits call. Omitting draftId again starts a separate draft, and drafts cannot be listed, so keep the draftId. `title` is ignored when draftId is passed. A `create` op needs a flowId from listAutomationFlows or createAutomationFlow. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up, check it with simulateAutomationDraft and share `previewUrls` for sign-off. An `update` replaces each field it sends, so send the full current `actions` array.",
       "type": "mutation",
       "path": [
         "api",
@@ -3719,6 +3656,9 @@ export const CLI_MANIFEST: CliManifest = {
         "type": "object",
         "properties": {
           "draftId": {
+            "type": "string"
+          },
+          "title": {
             "type": "string"
           },
           "operations": {
@@ -5447,7 +5387,6 @@ export const CLI_MANIFEST: CliManifest = {
           }
         },
         "required": [
-          "draftId",
           "operations"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
@@ -7175,7 +7114,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateAutomationFlow",
       "domain": "automations",
-      "description": "Update a flow's metadata (the group that holds automations). Pass flowId plus the new title (required), and optionally description and isCampaignCheckDisabled. Does not touch the automations inside the flow. Change those through an automation draft (createAutomationDraft, stageAutomationEdits, saveAutomationEdits).",
+      "description": "Update a flow's metadata (the group that holds automations). Pass flowId plus the new title (required), and optionally description and isCampaignCheckDisabled. Does not touch the automations inside the flow. Change those through an automation draft (stageAutomationEdits, which starts a draft when draftId is omitted, then saveAutomationEdits).",
       "type": "mutation",
       "path": [
         "api",
@@ -8856,7 +8795,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateMembersProgramReward",
       "domain": "membersProgram",
-      "description": "Correct a members program reward in place instead of creating a second one. rewardId from listMembersProgramRewards. Omitted fields are left alone; pointsCost: null clears it, turning a points reward into one only an automation grants.",
+      "description": "Correct a members program reward in place instead of creating a second one. rewardId from a queryData membersProgram.reward query. Omitted fields are left alone; pointsCost: null clears it, turning a points reward into one only an automation grants.",
       "type": "mutation",
       "path": [
         "api",
