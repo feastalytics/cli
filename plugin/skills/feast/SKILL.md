@@ -85,6 +85,7 @@ Many tasks are multi-step and have a required ordering the app normally enforces
 | Writing guest-facing Meta ad copy (`adCopy`) | `references/workflows/ad-copy-guest.md` |
 | Writing creator-recruitment ad copy (`recruitmentAdCopy`) | `references/workflows/ad-copy-creator.md` |
 | Publishing, pausing, budgeting or diagnosing Meta ads | `references/workflows/ads.md` |
+| Changing who a live ad set reaches (location, age, audiences); creating lookalike, website, engagement or customer-list audiences | `references/workflows/meta-targeting-audiences.md` |
 | Making a video ad with Bevyl: prompt, generate, edit, approve | `references/workflows/videos.md` |
 | Creator sourcing: approving applicants, reviewing content, creatives, payouts, reimbursements, texting a creator | `references/workflows/creators.md` |
 | Members-program rewards, granting a reward to one member; reading or saving the wallet pass configuration | `references/workflows/members-program.md` |
