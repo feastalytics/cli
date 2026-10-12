@@ -300,7 +300,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "approveVideo",
       "domain": "videos",
-      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one getVideo's exportUrl plays), so pass it only to approve an earlier run from listCampaignVideos. Fails until that run's export is ready (getVideo pipeline.status ready). Only once the human has watched the video and approved it.",
+      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one exportUrl plays), so pass it only to approve an earlier run: runs are latestRun.runId and exports[].runId on videos.video in queryData. Fails until that run's export is ready (pipelineStatus ready). Only once the human has watched the video and approved it.",
       "type": "mutation",
       "path": [
         "api",
@@ -1301,7 +1301,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "generateVideo",
       "domain": "videos",
-      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll getVideo with the projectId every 30 seconds or so until pipeline.status is ready (exportUrl is the MP4) or failed (message says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. Optional: angleId from listCampaignVideos to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scope creativeLibraryBroll; omit to use every clip already synced to Bevyl).",
+      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll it every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (exportUrl is the MP4) or failed (pipelineStatusMessage says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. Optional: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scope creativeLibraryBroll; omit to use every clip already synced to Bevyl).",
       "type": "mutation",
       "path": [
         "api",
@@ -2211,30 +2211,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "getVideo",
-      "domain": "videos",
-      "description": "Read one Content Studio video by projectId. pipeline.status moves uploading, processing, creating, rendering, exporting, then ready (exportUrl is the MP4 to watch) or failed (message says why). pipeline is null for videos made before the server pipeline; use listCampaignVideos for those. Reads Feastalytics only, so it is cheap to poll.",
-      "type": "query",
-      "path": [
-        "api",
-        "bevyl",
-        "getProject"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "projectId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "projectId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "getVideoPromptOptions",
       "domain": "videos",
       "description": "The building blocks for a generateVideo prompt for one campaign. defaultPrompt is what Content Studio would send with its default picks: plain text in four sections (Campaign, Concept, Creative direction, CTA), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from, and direction options a suggestedFormat to pass as generateVideo's format. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. Reads Feastalytics only.",
@@ -2402,30 +2378,6 @@ export const CLI_MANIFEST: CliManifest = {
         "listSummaries"
       ],
       "inputJsonSchema": null
-    },
-    {
-      "id": "listCampaignVideos",
-      "domain": "videos",
-      "description": "Every Content Studio video for a campaign, newest first: projectId, angleId and angleTitle (videos are grouped into angles), the concept and direction they were made from, latestRun (the Bevyl run, whose runId approveVideo needs), approvedRunId, edits, and pipeline (status, message, exportUrl) for videos made through generateVideo. Calls Bevyl to read run status, so prefer getVideo to poll a single video.",
-      "type": "query",
-      "path": [
-        "api",
-        "bevyl",
-        "listCampaignProjects"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "campaignId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "campaignId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
     },
     {
       "id": "listCreatives",
@@ -2946,7 +2898,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "requestVideoEdit",
       "domain": "videos",
-      "description": "Ask Bevyl to remake a video with one change, for example \"make the hook punchier\" or \"use the patio shots first\". Send only the change in note (600 characters at most); Bevyl builds from the video's current state. On-screen text cannot be moved or resized. Starts a new run: getVideo moves back to rendering, then ready with the new export. Spends Bevyl generation credits, so only with the human's explicit approval.",
+      "description": "Ask Bevyl to remake a video with one change, for example \"make the hook punchier\" or \"use the patio shots first\". Send only the change in note (600 characters at most); Bevyl builds from the video's current state. On-screen text cannot be moved or resized. Starts a new run: the video's pipelineStatus (queryData videos.video) moves back to rendering, then ready with the new export. Spends Bevyl generation credits, so only with the human's explicit approval.",
       "type": "mutation",
       "path": [
         "api",
@@ -7415,7 +7367,7 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "updateBrandIdentity",
       "domain": "core",
-      "description": "Update a branded site's config: business data, theme, tracking pixel IDs, OpenTable links, Google Place link. A partial patch; businessData, trackingIds and googleConfig are deep-merged. A new googleConfig.placeId starts a review and photo scrape, and with coordinates can also buy and bill a nearby texting number if the organization has none. Replacing an existing placeId orphans the old place's scraped data, so confirm with the customer first.",
+      "description": "Update a branded site's config: business data, theme, tracking pixel IDs, Google Place link. A partial patch; businessData, trackingIds and googleConfig are deep-merged. A new googleConfig.placeId starts a review and photo scrape, and with coordinates can also buy and bill a nearby texting number if the organization has none. Replacing an existing placeId orphans the old place's scraped data, so confirm with the customer first.",
       "type": "mutation",
       "path": [
         "api",
@@ -7545,32 +7497,6 @@ export const CLI_MANIFEST: CliManifest = {
                       }
                     }
                   }
-                }
-              },
-              "openTableConfigs": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "displayName": {
-                      "type": "string"
-                    },
-                    "baseUrl": {
-                      "type": "string"
-                    },
-                    "numDaysCanReserveAhead": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "displayName",
-                    "baseUrl",
-                    "numDaysCanReserveAhead"
-                  ]
                 }
               },
               "facebookConfig": {
