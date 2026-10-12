@@ -45,7 +45,7 @@ than 1.5s and fails silently offline.
 ```bash
 feast login <username>          # authenticate once; tokens cached in ~/.config/feast-cli
 feast whoami                    # your user + every organization (with names) you can act on
-feast tools                     # list every available tool
+feast tools                     # one line per tool, grouped by domain (--include-descriptions for full text)
 feast describe <tool>           # a tool's description + input JSON schema
 feast call <tool> --org <organizationId> --input '<json>'
 feast logout
@@ -60,6 +60,8 @@ feast tools
 feast describe updateCampaign
 feast call listCampaigns --org <organizationId>
 ```
+
+`feast tools` prints an index: one line per tool under its domain, with `r` for reads and `w` for writes. `--domain <domain>` narrows it, `--include-descriptions` prints each tool's full description, and `--json` prints ids, domains and types for scripts.
 
 `--input` is validated locally against the tool's JSON schema before anything is sent, so a bad payload fails fast with a clear message.
 
