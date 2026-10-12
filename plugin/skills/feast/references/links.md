@@ -48,7 +48,7 @@ https://feastalytics.com/automation-preview/<organizationId>/<flowId>?draftId=<d
 
 Without `draftId` it dry-runs the live flow as a text-message thread. With one, the same page diffs the draft's staged changes against live (added messages tinted, removed struck through, edited showing the old copy above the new), which is the link to hand someone before you promote.
 
-A `flowId` contains `:` and `;` and **must be percent-encoded** in the path. Easier: `createAutomationDraft` and `stageAutomationEdits` both return `previewUrls`, already built and encoded, one per flow the draft touches. Use those rather than assembling your own.
+A `flowId` contains `:` and `;` and **must be percent-encoded** in the path. Easier: `stageAutomationEdits` returns `previewUrls`, already built and encoded, one per flow the draft touches. Use those rather than assembling your own.
 
 ## Public pages
 

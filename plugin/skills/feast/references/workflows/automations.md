@@ -15,8 +15,16 @@ Automations have a staging tier, and it is the default path. Changes accumulate 
 1. `listAutomationFlows`: find an existing flow. Pass `{ "campaignId": "<id>" }` for a campaign's flows, or `{ "scope": "membersProgram" }` for members-program flows. Reuse a matching flow when one fits.
 2. If none fits, `createAutomationFlow` to make one. If the campaign/members-program has **no flows at all**, strongly prefer `applyAutomationTemplate` (then customize) over building from scratch. Only apply a template when there are no existing flows.
 3. `listAutomations` with `{ "flowId": "<id>" }` to see the automations already in that flow before editing (omit the input to list every automation in the org). **Do this immediately before every `update` op you stage, not just once at the start of the session.** An `update` replaces an automation's entire `actions` array; it does not merge one action in. If you reconstruct `actions` from an earlier tool result or from what you remember discussing, rather than the automation's current live state, you silently drop whatever isn't in your reconstruction (a reward grant, a task action, anything not under discussion in that turn). This is true even a few messages later in the same conversation, once the user has asked for a second or third change to the same automation.
-4. `createAutomationDraft` with a short `title` describing the change in the user's terms ("Shorten the day-3 nudge"). That title is what the reviewer sees. Keep the returned `draftId`; **there is no way to list drafts, so if you lose it the draft is unreachable.**
-5. `stageAutomationEdits` with `{ "draftId": "<id>", "operations": [...] }`. Each operation is the named type `AutomationOperation`, and its automation fields use the named types `UserCondition`, `AutomationTrigger`, `AutomationAction`, `AutomationSendTime` and `AutomationVariant`. Fetch those shapes once before writing your first op:
+4. `stageAutomationEdits` stages operations on a draft, and **the first call starts the draft**: omit `draftId` and pass a short `title` describing the change in the user's terms. That title is what the reviewer sees.
+   ```json
+   { "title": "Shorten the day-3 nudge", "operations": [ { "type": "update", "automationId": "<id>", "automation": { "actions": [ ... ] } } ] }
+   ```
+   The response carries the new `draftId`. **Pass it on every later `stageAutomationEdits`, `getAutomationDraft`, `simulateAutomationDraft` and `saveAutomationEdits` call**; `title` is ignored once `draftId` is there:
+   ```json
+   { "draftId": "<draftId from the first response>", "operations": [ ... ] }
+   ```
+   Omitting `draftId` again starts a **separate** draft. Keep the `draftId`; **there is no way to list drafts, so if you lose it the draft is unreachable.**
+5. The `operations` array is applied in order. Each operation is the named type `AutomationOperation`, and its automation fields use the named types `UserCondition`, `AutomationTrigger`, `AutomationAction`, `AutomationSendTime` and `AutomationVariant`. Fetch those shapes once before writing your first op:
    - `{ "type": "create", "automation": { "automationId": "<new-uuid>", "flowId": "<id>", "title": "...", "isActive": true, "triggers": [...], "conditions": [...], "actions": [...], "time": {...} } }`: generate a fresh UUID for `automationId` (the key is `automationId`, not `id`). `automationId`, `isActive`, `triggers`, `conditions`, `actions` and `time` are required; set the `flowId` and a descriptive title too. Create ops require the flowId.
    - `{ "type": "update", "automationId": "<id>", "automation": { ...changed fields... } }`
    - `{ "type": "delete", "automationId": "<id>" }`: blocked at save time if the automation already has sends.
@@ -29,7 +37,7 @@ Automations have a staging tier, and it is the default path. Changes accumulate 
 7. **Give the user the `previewUrls` from the draft** and let them look before you promote. Each entry is one flow's before/after view. Don't promote unprompted work on the user's behalf; staging exists so a human sees the change first.
 8. `saveAutomationEdits` with `{ "draftId": "<id>" }`: this is the write to production. It refuses if any automation the draft touches was changed by someone else since you staged, naming which; re-stage against the current state rather than retrying.
 
-`discardAutomationDraft` throws a draft away without promoting. `getAutomationDraft` re-reads one by id, including `resultingAutomations` (each touched automation as it will look after the save); check it for fields that changed or disappeared. Drafts expire after 14 days.
+To abandon a draft, just stop using it: nothing is live until `saveAutomationEdits`, and drafts expire 14 days after they're started. `getAutomationDraft` re-reads one by id, including `resultingAutomations` (each touched automation as it will look after the save); check it for fields that changed or disappeared.
 
 `updateAutomationFlow` renames/retitles a flow; `deleteAutomationFlow` removes a flow and its automations (blocked at ≥20 sends; turn it off instead).
 
