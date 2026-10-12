@@ -114,7 +114,7 @@ User: "add a Free Dessert reward members can redeem for 100 points in my Plum Vi
 
 1. Find the organization's id with `listOrganizations` (CLI: `feast whoami`), unless you were given it.
 2. Read the `createMembersProgramReward` schema to learn the input shape (`type: "item"` vs `type: "name"`).
-3. Call `listMembersProgramRewards` to avoid duplicating an existing reward or catalog item.
+3. Read the existing rewards with `queryData` (`membersProgram.reward`, then their items in `interface.catalogItem`) to avoid duplicating an existing reward or catalog item.
 4. Call `createMembersProgramReward` with `{ "type": "name", "name": "Free Dessert", "pointsCost": 100 }`.
 
 On the CLI, step 4 is:
