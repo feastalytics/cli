@@ -43,7 +43,7 @@ A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publish
 
 ## Video ads (Content Studio)
 
-Bevyl edits a campaign's b-roll into ad videos, grouped into angles. One `projectId` per video: `getVideoPromptOptions` → `generateVideo` → poll `getVideo` → `requestVideoEdit` or `approveVideo`. See `workflows/videos.md`.
+Bevyl edits a campaign's b-roll into ad videos, grouped into angles. One `projectId` per video: `getVideoPromptOptions` → `generateVideo` → poll `queryData` on `videos.video` by `projectId` → `requestVideoEdit` or `approveVideo`. A campaign's videos are the same object filtered on `campaignId`. See `workflows/videos.md`.
 
 ## The data catalog
 
