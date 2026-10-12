@@ -48,7 +48,7 @@ https://feastalytics.com/automation-preview/<organizationId>/<flowId>?draftId=<d
 
 Without `draftId` it dry-runs the live flow as a text-message thread. With one, the same page diffs the draft's staged changes against live (added messages tinted, removed struck through, edited showing the old copy above the new), which is the link to hand someone before you promote.
 
-A `flowId` contains `:` and `;` and **must be percent-encoded** in the path. Easier: `createAutomationDraft` and `stageAutomationEdits` both return `previewUrls`, already built and encoded, one per flow the draft touches. Use those rather than assembling your own.
+A `flowId` contains `:` and `;` and **must be percent-encoded** in the path. Easier: `stageAutomationEdits` returns `previewUrls`, already built and encoded, one per flow the draft touches. Use those rather than assembling your own.
 
 ## Public pages
 
@@ -61,7 +61,7 @@ The guest-facing site lives on the organization's own subdomain, `https://<subdo
 /preview/<draftId>/<campaignId>  the same draft, scoped to one campaign
 ```
 
-Get `<subdomain>` from `getOrganization` → `organization.subdomains2[].subdomain`. When the link is about a campaign, pick the subdomain matching that campaign's `referrers` rather than the first one. The funnel draft tools (`createFunnelDraft`, `getFunnelDraft`) already return the draft's `referrer`, so use that instead of looking it up again.
+Get `<subdomain>` from `getOrganization` → `organization.subdomains2[].subdomain`. When the link is about a campaign, pick the subdomain matching that campaign's `referrers` rather than the first one. The funnel draft tools (`stageFunnelEdit`, `getFunnelDraft`) already return the draft's `referrer`, so use that instead of looking it up again.
 
 The `/preview/<draftId>` route is the payoff of the draft → preview → promote loop in `workflows/funnels.md`: it renders every screen of the staged funnel as a tree, so it's the right link to hand over after `stageFunnelEdit` and before `saveFunnelEdits`. It stops working once the draft is discarded or expires.
 
