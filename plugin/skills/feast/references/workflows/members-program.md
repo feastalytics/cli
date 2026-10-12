@@ -5,8 +5,22 @@
 The retention counterpart to campaigns: flows with no `campaignId`.
 
 - **Automations are authorable** (see the automations workflow): use `listAutomationFlows` with `{ "scope": "membersProgram" }`, then the same create/edit loop. Remember the members-program 30-day `awardReward` default.
-- **Rewards are fully manageable.** `listMembersProgramRewards` returns every reward with its catalog item's `name`, `staffInstructions`, `pointsCost` and `source`. The item is resolved across the Feast, Toast, Square and Clover catalogs, and a `null` name means it doesn't exist in any of them.
-- **Creating takes one of two shapes.** `{ "type": "item", "itemId" }` promotes an existing catalog item; prefer it whenever the item already exists in the POS. `{ "type": "name", "name" }` looks the name up across all four catalogs and creates a new Feast item only if nothing matches; **the match is exact, so a near-miss silently duplicates a menu item the restaurant already has**. Check `listMembersProgramRewards` or the catalog first. When several items share the name, a Feast item among them wins; otherwise you get a CONFLICT listing the candidates so you can pass `itemId` instead. `staffInstructions` only exist on Feast items and are rejected for POS-sourced ones.
+- **Rewards are fully manageable.** Read them with `queryData` in two steps. `membersProgram.reward` has one row per reward with `rewardId`, `itemId` and `pointsCost`:
+
+  ```json
+  { "schemaName": "membersProgram", "objectTypeName": "reward" }
+  ```
+
+  The name, `staffInstructions` and `source` live on the catalog item, so look the `itemId`s up in `interface.catalogItem` and match `itemId` to `id`:
+
+  ```json
+  { "schemaName": "interface", "objectTypeName": "catalogItem",
+    "commands": [{ "type": "filter", "filter": { "$id": { "strings": ["<itemId>", "<itemId>"] } } }],
+    "args": { "fields": ["id", "name", "staffInstructions", "source"] } }
+  ```
+
+  The item is resolved across the Feast, Toast, Square and Clover catalogs, and an `itemId` with no row means it doesn't exist in any of them. `membersProgram.reward` needs the retention flag; without it `describeData` doesn't list it.
+- **Creating takes one of two shapes.** `{ "type": "item", "itemId" }` promotes an existing catalog item; prefer it whenever the item already exists in the POS. `{ "type": "name", "name" }` looks the name up across all four catalogs and creates a new Feast item only if nothing matches; **the match is exact, so a near-miss silently duplicates a menu item the restaurant already has**. Check `membersProgram.reward` and `interface.catalogItem` first. When several items share the name, a Feast item among them wins; otherwise you get a CONFLICT listing the candidates so you can pass `itemId` instead. `staffInstructions` only exist on Feast items and are rejected for POS-sourced ones.
 - **The `pointsCost` fork matters.** A reward with `pointsCost` set is redeemed *by the member with points* and is never auto-awarded. Omit `pointsCost` for automation-awarded rewards, and then actually pair the reward with an `awardReward` automation (see the automations workflow), or it will never reach anyone. To find orphans, cross-reference `listAutomations` for `awardReward` actions carrying the reward's `itemId`.
 - `updateMembersProgramReward` corrects a reward in place; `pointsCost: null` converts a points reward into an automation-granted one. `deleteMembersProgramReward` is the orphan cleanup; it leaves the catalog item alone (it may be a real menu item) and doesn't claw back anything already redeemed.
 
@@ -14,7 +28,7 @@ The retention counterpart to campaigns: flows with no `campaignId`.
 
 `awardReward` grants a reward to a single member right now, like the dashboard's Give Reward button. It is **not** `createMembersProgramReward`: that defines a reward the program offers, this puts one into a specific guest's wallet pass.
 
-- Input: `{ "serialNumber": "...", "itemId": "...", "expiresInDays": 14 }`. Get `serialNumber` from `searchUsers` and `itemId` from `listMembersProgramRewards` (or a catalog query). Both are checked against the organization, and a wrong id is rejected rather than granted.
+- Input: `{ "serialNumber": "...", "itemId": "...", "expiresInDays": 14 }`. Get `serialNumber` from `searchUsers` and `itemId` from `membersProgram.reward` (or an `interface.catalogItem` query). Both are checked against the organization, and a wrong id is rejected rather than granted.
 - Expiry is optional, and a reward with none never expires. `expiresInDays` ends at the end of that day in the restaurant's timezone (what a guest reads "14 days" to mean). `locationId` restricts redemption to one participating location.
 - It recomputes the member's progress, which **re-evaluates their automations**, so a flow triggered by earning a reward will fire (and may text them).
 - **No undo and no idempotency key: a retried call grants a second reward.** Confirm the member, item and expiry with the user before calling, call once per member, and if a call's outcome is unclear, check the member's `rewardAwarded` events with `getMemberConversation` before retrying.
