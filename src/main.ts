@@ -22,6 +22,7 @@ import {
   type CliTool,
   findTool,
   toolInputJsonSchema,
+  toolSummary,
   validateToolInput,
 } from "./registry";
 import {
@@ -39,7 +40,7 @@ Commands:
   login --password [username]           Log in with username/password (headless/CI)
   logout                                Delete stored tokens
   whoami                                Show the logged-in user and their organizations
-  tools [--domain <domain>] [--json]    List available tools
+  tools [--domain <domain>] [--include-descriptions] [--json]\n                                        List available tools, one line each
   describe <tool>                       Show a tool's description and input JSON schema
   call <tool> [options]                 Invoke a tool
   skill list                            List the skills you can install
@@ -184,11 +185,45 @@ async function loadOrganizationNames(
   return namesByOrgId;
 }
 
+const TOOLS_DESCRIPTION_WIDTH = 96;
+
+function wrapText(text: string, width: number, indent: string): string {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/).filter((w) => w.length > 0)) {
+    if (line.length > 0 && line.length + 1 + word.length > width) {
+      lines.push(indent + line);
+      line = word;
+    } else {
+      line = line.length > 0 ? `${line} ${word}` : word;
+    }
+  }
+  if (line.length > 0) {
+    lines.push(indent + line);
+  }
+  return lines.join("\n");
+}
+
+function groupToolsByDomain(tools: CliTool[]): [string, CliTool[]][] {
+  const byDomain = new Map<string, CliTool[]>();
+  for (const tool of tools) {
+    byDomain.set(tool.domain, [...(byDomain.get(tool.domain) ?? []), tool]);
+  }
+  return [...byDomain.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([domain, list]) => [domain, [...list].sort((a, b) => a.id.localeCompare(b.id))]);
+}
+
 function commandTools(args: ParsedArgs): void {
   const domainFilter = args.flags["domain"] as string | undefined;
-  const tools = buildToolRegistry().filter(
+  const allTools = buildToolRegistry();
+  const tools = allTools.filter(
     (tool) => domainFilter == null || tool.domain === domainFilter
   );
+  if (domainFilter != null && tools.length === 0) {
+    const domains = [...new Set(allTools.map((tool) => tool.domain))].sort();
+    throw new Error(`No tools in domain "${domainFilter}". Domains: ${domains.join(", ")}`);
+  }
   if (args.flags["json"] === true) {
     console.info(
       JSON.stringify(
@@ -204,10 +239,21 @@ function commandTools(args: ParsedArgs): void {
     );
     return;
   }
-  for (const tool of tools) {
-    console.info(`${tool.id} [${tool.domain}] (${tool.type})`);
-    console.info(`    ${tool.description.split("\n")[0]}`);
-  }
+  const includeDescriptions = args.flags["include-descriptions"] === true;
+  const kind = (tool: CliTool) => (tool.type === "mutation" ? "w" : "r");
+  const idWidth = Math.max(...tools.map((tool) => tool.id.length)) + 2;
+  const sections = groupToolsByDomain(tools).map(([domain, list]) => {
+    const rows = list.map((tool) =>
+      includeDescriptions
+        ? `  ${tool.id}  ${kind(tool)}\n${wrapText(tool.description, TOOLS_DESCRIPTION_WIDTH, "      ")}`
+        : `  ${tool.id.padEnd(idWidth)}${kind(tool)}  ${toolSummary(tool)}`
+    );
+    return [`${domain} (${list.length})`, ...rows].join("\n");
+  });
+  const legend = includeDescriptions
+    ? "r = read, w = write. Inputs: feast describe <tool>."
+    : "r = read, w = write. Inputs: feast describe <tool>. Full text: --include-descriptions.";
+  console.info([legend, ...sections].join("\n\n"));
 }
 
 function commandDescribe(args: ParsedArgs): void {

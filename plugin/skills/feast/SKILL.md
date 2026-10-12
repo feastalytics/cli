@@ -17,7 +17,7 @@ The same tools, with the same names and inputs, are reachable two ways. Use whic
 | | MCP server | `feast` CLI |
 |---|---|---|
 | How you know you have it | Tools such as `listCampaigns` and `listOrganizations` are in your tool list | `feast tools` runs |
-| See every tool | Your tool list | `feast tools` |
+| See every tool | Your tool list | `feast tools`: one line per tool, grouped by domain. Read it whole once rather than grepping it; `--include-descriptions` prints the full text |
 | One tool's input schema | Its entry in your tool list | `feast describe <tool>` |
 | A schema that says "Named type X. Call describeSchema…" | Call `describeSchema` with `{ "names": ["X"] }` | `feast describe <tool>` prints it in full |
 | Which organizations you can act on | `listOrganizations` | `feast whoami` |
