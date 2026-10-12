@@ -9202,20 +9202,6 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete"
             ]
           },
-          "facebook": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
-              "hasAttemptedConnect": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "isComplete"
-            ]
-          },
           "metaCapi": {
             "type": "object",
             "properties": {
