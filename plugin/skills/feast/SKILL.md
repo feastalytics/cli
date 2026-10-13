@@ -19,6 +19,7 @@ The same tools, names and inputs, over either transport. Use whichever this sess
 | Input schemas | Each tool's entry; `describeSchema` with `{ "names": ["X"] }` for a named type | `feast describe <tool> [<tool> ...]`, several in one call, named types inlined |
 | Your organizations | `listOrganizations` | `feast whoami` |
 | Call a tool | Pass `organizationId` and the input | `feast call <tool> --org <id> --input '<json>'` (or `--input-file <path>`) |
+| Keep only some fields | Not available | `--fields files.key,nextCursor,total` on `feast call`: dotted paths, arrays mapped. Use it instead of piping the result into python to pick fields |
 
 Setup (installing, logging in, connecting MCP) is in `references/setup.md`. If a read such as `listCampaigns` works, you are set. The workflow files name tools and JSON input only; translate with this table.
 
