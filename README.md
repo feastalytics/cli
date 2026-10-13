@@ -10,7 +10,7 @@ Feastalytics ships as a plugin (the `feast` skill plus the hosted MCP server at 
 
 - **Claude Code**: `/plugin marketplace add feastalytics/cli`, then `/plugin install feastalytics@feast`.
 - **claude.ai and Claude Desktop**: add a custom connector with the URL `https://mcp.feast-api.com/mcp`. A directory listing is to follow.
-- **ChatGPT**: `npm run build:chatgpt` writes `dist/feastalytics-chatgpt.zip` (`plugin/plugin.json`, `plugin/mcp.json`, the icon and `plugin/skills/`).
+- **ChatGPT**: `npm run build:chatgpt` writes two archives to `dist/`, and each release attaches both. `feastalytics-skill.zip` holds the `feast` skill alone and installs on ChatGPT web and mobile next to a custom MCP server plugin pointed at `https://mcp.feast-api.com/mcp`. `feastalytics-chatgpt.zip` adds `plugin/mcp.json`; ChatGPT treats a plugin that carries `mcp.json` as local, so that one installs in the desktop app only.
 - **Skill only** (Claude Code, Codex, Cursor and other agents): `npx skills add feastalytics/cli`.
 
 ### CLI
