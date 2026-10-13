@@ -170,7 +170,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "ads_update_entity",
       "domain": "ads",
       "summary": "Rename, re-budget, pause or turn on a Meta campaign, ad set or ad.",
-      "description": "Rename, re-budget, pause or turn on a Meta campaign, ad set or ad. adAccountId must own the entity. Budgets are integer cents and replace the current value, and spend changes the moment it lands: read the entity with ads_get_ad_entities and confirm the new number with the human first. status ACTIVE spends real money: send it only after the human explicitly confirms. It does not cascade, so activate top-down (campaign, then ad set, then ad); the response's willDeliver false with pausedAncestors listed means the entity is live in name only, so say so. Combined with name or budget changes, those are applied first and the entity is activated after, so the budget is set before spend starts. For a campaign Feastalytics published, use setAdCampaignStatus instead, which cascades. Creatives cannot be edited.",
+      "description": "Rename, re-budget, pause or turn on a Meta campaign, ad set or ad. adAccountId must own the entity. Budgets are integer cents and replace the current value, and spend changes the moment it lands: read the entity with ads_get_ad_entities and confirm the new number with the human first. status ACTIVE spends real money: send it only after the human explicitly confirms. Without cascade only this entity changes, so activate top-down (campaign, then ad set, then ad); the response's willDeliver false with pausedAncestors listed means the entity is live in name only, so say so. To start or pause a whole campaign (for example right after publishAds, which creates everything paused), send entityType campaign, fields.status and cascade true: ACTIVE also turns on every ad set and ad, and is refused when the campaign has no ad sets, no ads or no daily budget; check the preflight counts, adSetsTouched and adsTouched in the response. PAUSED pauses the campaign, which stops everything under it. cascade is only valid with entityType campaign and fields.status. Combined with name or budget changes, those are applied first and the status after, so the budget is set before spend starts (a daily budget sent in the same call satisfies the check). A creator recruitment campaign's status is also saved on its location's creator program (recruitmentLocationIds), and a manual change cancels any pending monthly-cap reactivation. Creatives cannot be edited.",
       "type": "mutation",
       "path": [
         "api",
@@ -220,6 +220,10 @@ export const CLI_MANIFEST: CliManifest = {
                 ]
               }
             }
+          },
+          "cascade": {
+            "type": "boolean",
+            "description": "Campaign status changes only: true applies fields.status to the whole campaign, turning on every ad set and ad for ACTIVE after checking it has ad sets, ads and a daily budget. Omit or false to change only this entity."
           }
         },
         "required": [
@@ -2456,8 +2460,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "publishAds",
       "domain": "ads",
-      "summary": "Publish a planAds plan to Meta, everything paused; setAdCampaignStatus starts spending.",
-      "description": "Publish a planAds plan to Meta, everything paused; setAdCampaignStatus starts spending. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome, or pass wait: true to hold the call up to 20 seconds and get the job back (still check its status; a long publish returns unfinished). Only with the human's explicit approval.",
+      "summary": "Publish a planAds plan to Meta, everything paused.",
+      "description": "Publish a planAds plan to Meta, everything paused. ads_update_entity on the campaign with status ACTIVE and cascade true starts spending, only with the human's explicit approval. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome, or pass wait: true to hold the call up to 20 seconds and get the job back (still check its status; a long publish returns unfinished). Only with the human's explicit approval.",
       "type": "mutation",
       "path": [
         "api",
@@ -3024,40 +3028,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "to",
           "message"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "setAdCampaignStatus",
-      "domain": "ads",
-      "summary": "Start or pause a Meta campaign published from Feastalytics.",
-      "description": "Start or pause a Meta campaign published from Feastalytics. This includes a location's creator recruitment campaign. ACTIVE cascades to every ad set and ad and spends real money: confirm with the human first, then check the preflight counts in the response. On a recruitment campaign the status is saved on the location's creator program, and a manual change cancels any pending monthly-cap reactivation.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "setCampaignStatus"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "facebookCampaignId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "PAUSED"
-            ]
-          }
-        },
-        "required": [
-          "facebookCampaignId",
-          "status"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -6051,6 +6021,10 @@ export const CLI_MANIFEST: CliManifest = {
                                         "required": [
                                           "isEnabled"
                                         ]
+                                      },
+                                      "confirmationScreenId": {
+                                        "type": "string",
+                                        "description": "Screen the guest lands on after paying. Defaults to payment-confirmation."
                                       }
                                     }
                                   }
@@ -8702,7 +8676,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "null"
               }
             ],
-            "description": "The saved status of this location's recruitment campaign. This does not start or pause anything on Meta; use setAdCampaignStatus for that. Omit to preserve; send null to clear."
+            "description": "The saved status of this location's recruitment campaign. This does not start or pause anything on Meta; use ads_update_entity on the campaign with fields.status for that. Omit to preserve; send null to clear."
           }
         },
         "required": [
@@ -8780,45 +8754,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "boolean"
               }
             }
-          },
-          "contentReadiness": {
-            "type": "object",
-            "properties": {
-              "outcome": {
-                "type": "string",
-                "enum": [
-                  "has_content",
-                  "creator_lined_up",
-                  "needs_sourcing"
-                ]
-              },
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "outcome",
-              "isComplete"
-            ]
-          },
-          "firstCampaignFunnel": {
-            "type": "object",
-            "properties": {
-              "funnelType": {
-                "type": "string",
-                "enum": [
-                  "offer",
-                  "reservation"
-                ]
-              },
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "funnelType",
-              "isComplete"
-            ]
           },
           "invite": {
             "type": "object",
@@ -9044,9 +8979,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "boolean"
               }
             }
-          },
-          "plannedLaunchDate": {
-            "type": "string"
           },
           "deferrals": {
             "type": "object",
