@@ -39,7 +39,7 @@ Restaurants recruit local content creators to visit and post. One config per loc
 
 ## Meta ads
 
-A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `setAdCampaignStatus`, plus `ads_*` tools for reading and steering what's already on the ad account. See `workflows/ads.md`.
+A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `ads_update_entity` (campaign `status`, `cascade: true`), plus `ads_*` tools for reading and steering what's already on the ad account. See `workflows/ads.md`.
 
 ## Video ads (Content Studio)
 

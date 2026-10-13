@@ -121,7 +121,7 @@ One `updateCampaign` call writes `adCopy`. Read `updateCampaign`'s input schema 
 
 ## Publishing
 
-**Drivable through the tools; read `ads.md`.** The loop is `listAdTemplates` → gather variables → `planAds` → `publishAds` (with its effects) → `getJob` → `setAdCampaignStatus`, and that file carries the ordering, the idempotency-key discipline, and the effect declarations that make the publish self-bookkeeping.
+**Drivable through the tools; read `ads.md`.** The loop is `listAdTemplates` → gather variables → `planAds` → `publishAds` (with its effects) → `getJob` → `ads_update_entity` on the campaign with `cascade: true`, and that file carries the ordering, the idempotency-key discipline, and the effect declarations that make the publish self-bookkeeping.
 
 ---
 
