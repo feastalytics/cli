@@ -40,22 +40,35 @@ No row means the location has no program; drop the filter to see every location'
 
 ### Booking windows
 
-Read windows with `queryData` on `creators.creatorAvailability` (one row per window), and write them with `createAvailability`, `updateAvailability` and `deleteAvailability`. A location's windows:
+Read windows with `queryData` on `creators.creatorAvailability` (one row per window), and write them with `setAvailability`. A location's windows:
 
 ```json
 { "schemaName": "creators", "objectTypeName": "creatorAvailability",
   "commands": [{ "type": "filter", "filter": { "$locationId": { "string": "<locationId>", "match": "EQ" } } }] }
 ```
 
-Filter on `campaignId` instead for one campaign's windows, or drop the filter for every window in the organization. `id` is the `availabilityId` the write tools take.
+Filter on `campaignId` instead for one campaign's windows, or drop the filter for every window in the organization.
 
-A window's `block` is one of two shapes: `once`, with a `utcStart` and `utcEnd`; or `weekly`, with start and end hour/minute, the `utcDaysOfWeek` it repeats on, and `blockUtcStart` for when the repetition begins.
+A window's `block` is one of three shapes: `once`, with a `utcStart` and `utcEnd`; `weekly`, with start and end hour/minute, the `utcDaysOfWeek` it repeats on, and `blockUtcStart` for when the repetition begins; or `closed`, a day (or part of one) creators cannot book, with a local `localDate` (YYYY-MM-DD) and optional local `localStartTime` / `localEndTime` (HH:mm, both or neither). A closed block wins over every open window at that location.
 
 **Everything is UTC and the restaurant will describe it in local time.** For weekly blocks `utcDaysOfWeek` is the day of week *in UTC*, so an evening local window that crosses midnight UTC lands on the **following** day: 9pm Friday New York is 02:00 Saturday UTC, and writing `Friday` there opens the wrong night. Convert the day and the time together, never just the time. This fails silently: you get a valid window on a day nobody asked for. The same applies in reverse when you read windows back: convert each window to local day and time before describing it to the restaurant.
 
 **Set `campaignId`, not just `locationId`.** It's optional in the schema and required by the task: *Set booking windows* completes only when a window carries the first campaign's id. Without it the window books fine and the task stays open forever.
 
-`updateAvailability` replaces `block` whole rather than merging it, so send the complete block including the parts you aren't changing, and it returns nothing: re-read it from `creatorAvailability` filtered on `id` to confirm. `deleteAvailability` **succeeds silently on an id that doesn't exist**, so no error is not proof anything was removed; take ids from `creatorAvailability`. Deleting closes future slots but does not cancel visits already booked inside the window; those are separate rows.
+**`setAvailability` replaces a whole scope, so read before you set.** The scope is one `locationId` plus one `campaignId`. `campaignId: null` is the location-wide scope: windows with no campaign, and every closed day. Each call sends the full list of blocks that scope should end up with:
+
+1. Read the scope: the `creatorAvailability` query above filtered on `locationId`, keeping the rows whose `campaignId` matches (no `campaignId` for the null scope). Leave out rows with a `visitEventId`; those are windows made for one visit, and `setAvailability` never touches them.
+2. Edit that list: change, add or drop blocks. Keep each entry to `block`, `allowOverlappingVisits` and `strategyId`.
+3. Send `{ locationId, campaignId, blocks }` with the whole list. A block you send back unchanged keeps its id; a block you leave out is deleted; anything new is created. An empty `blocks` clears the scope.
+
+```json
+{ "locationId": "<locationId>", "campaignId": "<campaignId>",
+  "blocks": [{ "block": { "type": "weekly", "weekly": { "utcStartHour": 16, "utcStartMinute": 0, "utcEndHour": 19, "utcEndMinute": 0, "utcDaysOfWeek": [3], "blockUtcStart": "2026-10-01T00:00:00.000Z" } }, "allowOverlappingVisits": false }] }
+```
+
+It returns the scope's rows after the write, with their ids, and `{ created, deleted, unchanged }`. Check the counts: `deleted` you did not expect means a block was left out of the list.
+
+To close a day, read the location-wide scope (`campaignId: null`), add `{ "block": { "type": "closed", "closed": { "localDate": "2026-10-14" } } }` to it and send it back with `campaignId: null`. A closed block sent with a `campaignId` is rejected. To reopen the day, send the scope again without it. Deleting or narrowing an open window closes future slots but does not cancel visits already booked inside it; those are separate rows.
 
 ### The creative brief
 
