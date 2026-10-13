@@ -7456,54 +7456,6 @@ export const CLI_MANIFEST: CliManifest = {
                       "properties": {
                         "type": {
                           "type": "string",
-                          "const": "google"
-                        },
-                        "google": {
-                          "type": "object",
-                          "properties": {
-                            "campaignId": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "campaignId"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "google"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "const": "tiktok"
-                        },
-                        "tiktok": {
-                          "type": "object",
-                          "properties": {
-                            "campaignId": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "campaignId"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "tiktok"
-                      ]
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
                           "const": "conjunctiveFilter"
                         },
                         "conjunctiveFilter": {
@@ -7600,13 +7552,13 @@ export const CLI_MANIFEST: CliManifest = {
                               ]
                             },
                             "restRefSource": {
-                              "$ref": "#/properties/update/properties/attributionRules/items/anyOf/6/properties/reservationFilter/properties/restRefCampaignName"
+                              "$ref": "#/properties/update/properties/attributionRules/items/anyOf/4/properties/reservationFilter/properties/restRefCampaignName"
                             },
                             "onlineSource": {
-                              "$ref": "#/properties/update/properties/attributionRules/items/anyOf/6/properties/reservationFilter/properties/restRefCampaignName"
+                              "$ref": "#/properties/update/properties/attributionRules/items/anyOf/4/properties/reservationFilter/properties/restRefCampaignName"
                             },
                             "experienceTitle": {
-                              "$ref": "#/properties/update/properties/attributionRules/items/anyOf/6/properties/reservationFilter/properties/restRefCampaignName"
+                              "$ref": "#/properties/update/properties/attributionRules/items/anyOf/4/properties/reservationFilter/properties/restRefCampaignName"
                             },
                             "rid": {
                               "type": "number"
