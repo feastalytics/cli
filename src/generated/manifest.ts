@@ -436,166 +436,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "createAvailability",
-      "domain": "creators",
-      "summary": "Open a window creators can book visits in, or close a day.",
-      "description": "Open a window creators can book visits in, or close a day. Open with a 'once' or 'weekly' block; close a day with a 'closed' block. Once and weekly times and weekly days are UTC: convert the restaurant's local day and time together (see the creators workflow). A 'closed' block takes the restaurant's local date (YYYY-MM-DD) and optional local HH:mm start and end, closes the whole day when both times are left out, and wins over every open window at that location, so creators cannot book it. Use it when the restaurant says a day is off, already full, or must not be booked. Set campaignId as well as locationId on open windows, or the Set booking windows task stays open; a closed block needs only locationId.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "scheduling",
-        "createAvailability"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "availability": {
-            "type": "object",
-            "properties": {
-              "locationId": {
-                "type": "string"
-              },
-              "block": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "once"
-                      },
-                      "once": {
-                        "type": "object",
-                        "properties": {
-                          "utcStart": {
-                            "type": "string"
-                          },
-                          "utcEnd": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "utcStart",
-                          "utcEnd"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "once"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "weekly"
-                      },
-                      "weekly": {
-                        "type": "object",
-                        "properties": {
-                          "utcStartHour": {
-                            "type": "number"
-                          },
-                          "utcStartMinute": {
-                            "type": "number"
-                          },
-                          "utcEndHour": {
-                            "type": "number"
-                          },
-                          "utcEndMinute": {
-                            "type": "number"
-                          },
-                          "utcDaysOfWeek": {
-                            "type": "array",
-                            "items": {
-                              "type": "number"
-                            }
-                          },
-                          "blockUtcStart": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "utcStartHour",
-                          "utcStartMinute",
-                          "utcEndHour",
-                          "utcEndMinute",
-                          "utcDaysOfWeek",
-                          "blockUtcStart"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "weekly"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "closed"
-                      },
-                      "closed": {
-                        "type": "object",
-                        "properties": {
-                          "localDate": {
-                            "type": "string",
-                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                            "description": "The closed day in the organization's timezone, YYYY-MM-DD"
-                          },
-                          "localStartTime": {
-                            "type": "string",
-                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
-                            "description": "Start of the closed part of the day, HH:mm local. Omit both times to close the whole day"
-                          },
-                          "localEndTime": {
-                            "type": "string",
-                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
-                            "description": "End of the closed part of the day, HH:mm local, exclusive"
-                          }
-                        },
-                        "required": [
-                          "localDate"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "closed"
-                    ]
-                  }
-                ]
-              },
-              "allowOverlappingVisits": {
-                "type": "boolean"
-              },
-              "visitEventId": {
-                "type": "string"
-              },
-              "strategyId": {
-                "type": "string"
-              },
-              "campaignId": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "locationId",
-              "block"
-            ]
-          }
-        },
-        "required": [
-          "availability"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "createBrandIdentity",
       "domain": "core",
       "summary": "Create the restaurant's branded site: a subdomain (referrer), its layout config and default screens.",
@@ -1123,30 +963,6 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "flowId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "deleteAvailability",
-      "domain": "creators",
-      "summary": "Remove a window creators can book visits in.",
-      "description": "Remove a window creators can book visits in. Deleting closes future booking slots for that window; visits already scheduled inside it are separate rows and are not cancelled. An unknown availabilityId succeeds silently, so confirm the id came from queryData creators.creatorAvailability rather than trusting a no-error result.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "scheduling",
-        "deleteAvailability"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "availabilityId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "availabilityId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2523,7 +2339,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "listMedia",
       "domain": "core",
       "summary": "Uploaded media files, across one or more scopes.",
-      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. syncedBroll and unsyncedBroll list the video b-roll generateVideo can use, from both the creative library and creator content submissions: syncedBroll is on the org's Bevyl workspace (processed, or still processing), unsyncedBroll is not yet (generateVideo uploads it before creating the video). A clip Bevyl failed to process is in neither. Pass a file's key in generateVideo's brollKeys.",
+      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. syncedBroll and unsyncedBroll list the video b-roll generateVideo can use, from both the creative library and creator content submissions: syncedBroll is on the org's Bevyl workspace (processed, or still processing), unsyncedBroll is not yet (generateVideo uploads it before creating the video). A clip Bevyl failed to process is in neither. Pass a file's key in generateVideo's brollKeys. Files come newest first, limit at a time; total is the count across every page, and when nextCursor is not null pass it as cursor for the next page.",
       "type": "query",
       "path": [
         "api",
@@ -2553,10 +2369,21 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "mediaOnly": {
             "type": "boolean"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "description": "Files per page, newest first. 50 suits most lookups; raise it only to scan a whole library."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "The nextCursor from the previous page. Omit for the newest files."
           }
         },
         "required": [
-          "scopes"
+          "scopes",
+          "limit"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -3231,6 +3058,178 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "facebookCampaignId",
           "status"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "setAvailability",
+      "domain": "creators",
+      "summary": "Replace every booking window for one location and campaign.",
+      "description": "Replace every booking window for one location and campaign. The scope is locationId plus campaignId; campaignId null is the location-wide scope, which holds the windows with no campaign and every closed day. Windows made for one visit (visitEventId) are never touched. Read the current blocks first with queryData creators.creatorAvailability filtered on locationId (and campaignId), then send the full intended list: blocks sent unchanged keep their ids, blocks left out are deleted, new ones are created, and an empty list clears the scope. Once and weekly times and weekly days are UTC: convert the restaurant's local day and time together (see the creators workflow). A 'closed' block takes the restaurant's local date (YYYY-MM-DD) and optional local HH:mm start and end, closes the whole day when both times are left out, and wins over every open window at that location, so creators cannot book it; send closed blocks with campaignId null. Set campaignId on open windows, or the Set booking windows task stays open.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "scheduling",
+        "setAvailability"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "locationId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The location's id from queryData interface.location."
+          },
+          "campaignId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The campaign whose windows these are, or null for the location-wide scope (windows with no campaign and closed days)."
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "block": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "once"
+                        },
+                        "once": {
+                          "type": "object",
+                          "properties": {
+                            "utcStart": {
+                              "type": "string"
+                            },
+                            "utcEnd": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "utcStart",
+                            "utcEnd"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "once"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "weekly"
+                        },
+                        "weekly": {
+                          "type": "object",
+                          "properties": {
+                            "utcStartHour": {
+                              "type": "number"
+                            },
+                            "utcStartMinute": {
+                              "type": "number"
+                            },
+                            "utcEndHour": {
+                              "type": "number"
+                            },
+                            "utcEndMinute": {
+                              "type": "number"
+                            },
+                            "utcDaysOfWeek": {
+                              "type": "array",
+                              "items": {
+                                "type": "number"
+                              }
+                            },
+                            "blockUtcStart": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "utcStartHour",
+                            "utcStartMinute",
+                            "utcEndHour",
+                            "utcEndMinute",
+                            "utcDaysOfWeek",
+                            "blockUtcStart"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "weekly"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "closed"
+                        },
+                        "closed": {
+                          "type": "object",
+                          "properties": {
+                            "localDate": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                              "description": "The closed day in the organization's timezone, YYYY-MM-DD"
+                            },
+                            "localStartTime": {
+                              "type": "string",
+                              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                              "description": "Start of the closed part of the day, HH:mm local. Omit both times to close the whole day"
+                            },
+                            "localEndTime": {
+                              "type": "string",
+                              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                              "description": "End of the closed part of the day, HH:mm local, exclusive"
+                            }
+                          },
+                          "required": [
+                            "localDate"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "closed"
+                      ]
+                    }
+                  ]
+                },
+                "allowOverlappingVisits": {
+                  "type": "boolean"
+                },
+                "strategyId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "block"
+              ]
+            }
+          }
+        },
+        "required": [
+          "locationId",
+          "campaignId",
+          "blocks"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -7213,166 +7212,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "flowId",
           "title"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "updateAvailability",
-      "domain": "creators",
-      "summary": "Change a booking window (availabilityId is the id from queryData creators.creatorAvailability).",
-      "description": "Change a booking window (availabilityId is the id from queryData creators.creatorAvailability). block is replaced whole, so send the complete block. Once and weekly times and weekly days are UTC: convert the local day and time together (see the creators workflow). A 'closed' block's date and times are the restaurant's local time. Returns nothing; re-read it with queryData creators.creatorAvailability filtered on id to confirm.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "scheduling",
-        "updateAvailability"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "availabilityId": {
-            "type": "string"
-          },
-          "update": {
-            "type": "object",
-            "properties": {
-              "locationId": {
-                "type": "string"
-              },
-              "block": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "once"
-                      },
-                      "once": {
-                        "type": "object",
-                        "properties": {
-                          "utcStart": {
-                            "type": "string"
-                          },
-                          "utcEnd": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "utcStart",
-                          "utcEnd"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "once"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "weekly"
-                      },
-                      "weekly": {
-                        "type": "object",
-                        "properties": {
-                          "utcStartHour": {
-                            "type": "number"
-                          },
-                          "utcStartMinute": {
-                            "type": "number"
-                          },
-                          "utcEndHour": {
-                            "type": "number"
-                          },
-                          "utcEndMinute": {
-                            "type": "number"
-                          },
-                          "utcDaysOfWeek": {
-                            "type": "array",
-                            "items": {
-                              "type": "number"
-                            }
-                          },
-                          "blockUtcStart": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "utcStartHour",
-                          "utcStartMinute",
-                          "utcEndHour",
-                          "utcEndMinute",
-                          "utcDaysOfWeek",
-                          "blockUtcStart"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "weekly"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "closed"
-                      },
-                      "closed": {
-                        "type": "object",
-                        "properties": {
-                          "localDate": {
-                            "type": "string",
-                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                            "description": "The closed day in the organization's timezone, YYYY-MM-DD"
-                          },
-                          "localStartTime": {
-                            "type": "string",
-                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
-                            "description": "Start of the closed part of the day, HH:mm local. Omit both times to close the whole day"
-                          },
-                          "localEndTime": {
-                            "type": "string",
-                            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
-                            "description": "End of the closed part of the day, HH:mm local, exclusive"
-                          }
-                        },
-                        "required": [
-                          "localDate"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "closed"
-                    ]
-                  }
-                ]
-              },
-              "allowOverlappingVisits": {
-                "type": "boolean"
-              },
-              "visitEventId": {
-                "type": "string"
-              },
-              "strategyId": {
-                "type": "string"
-              },
-              "campaignId": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "required": [
-          "availabilityId",
-          "update"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
