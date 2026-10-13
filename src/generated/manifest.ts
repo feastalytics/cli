@@ -1174,19 +1174,6 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "getBillingStatus",
-      "domain": "core",
-      "summary": "Read-only billing state for the organization.",
-      "description": "Read-only billing state for the organization. hasAccess answers \"can they use the product\" (paid, no charge in flight); needsPayment flags PENDING, FAILED or a charge in flight. initialDepositCents is in cents. Every billing change stays in the dashboard.",
-      "type": "query",
-      "path": [
-        "api",
-        "organization",
-        "checkPaymentStatus"
-      ],
-      "inputJsonSchema": null
-    },
-    {
       "id": "getCampaignBenchmarks",
       "domain": "campaigns",
       "summary": "Get the definition and target band of every campaign metric.",
@@ -2016,41 +2003,6 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "campaignId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "inviteUser",
-      "domain": "core",
-      "summary": "Invite someone to the organization by email.",
-      "description": "Invite someone to the organization by email. Sends a real email immediately; someone who already has a Feast account joins right away with no acceptance step. OWNER has full billing and settings access, VIEWER is read-only, SCANNER is for staff running the scanner app.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "onboarding",
-        "inviteUser"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "OWNER",
-              "VIEWER",
-              "SCANNER"
-            ],
-            "description": "The invitee's role. Ask the user which one; OWNER grants full billing and settings access."
-          }
-        },
-        "required": [
-          "email",
-          "role"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
