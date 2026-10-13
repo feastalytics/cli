@@ -37,7 +37,7 @@ On the CLI, results are JSON on stdout and the `Acting on organization ...` line
 Reads are safe. Mutations change production the moment they run: the CLI never asks, an MCP client may not, and nothing undoes them. Get the user's intent straight first, and show the exact text before sending any message. These reach the real world:
 
 - `sendText` texts one person now. Approving or denying a visit (`updateCreatorVisit`) or deciding a submission (`updateCreatorSubmission` with `decision`) texts the creator; preview with `dryRun: true` or skip with `sideEffects: false` / `decision.skipApprovalText`.
-- `createInfluencerPayout` (CLI only) charges the organization's card. `awardReward` grants a real reward, and a retry grants a second. `inviteUser` sends an email.
+- `createInfluencerPayout` (CLI only) charges the organization's card. `awardReward` grants a real reward, and a retry grants a second.
 - Publishing a campaign puts it live; pricing a recurring promotion creates Stripe products. Activating a Meta campaign spends budget (`publishAds` needs `confirm: true`). Saving automation edits changes what guests receive.
 
 ## Workflows: read the file before a multi-step task
