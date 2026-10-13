@@ -9020,17 +9020,6 @@ export const CLI_MANIFEST: CliManifest = {
                 "required": [
                   "type"
                 ]
-              },
-              "resultsCall": {
-                "type": "object",
-                "properties": {
-                  "isComplete": {
-                    "type": "boolean"
-                  },
-                  "firstBookedAt": {
-                    "type": "string"
-                  }
-                }
               }
             }
           }
