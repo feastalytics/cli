@@ -63,7 +63,7 @@ feast call listCampaigns --org <organizationId>
 
 `feast tools` prints an index: one line per tool under its domain, with `r` for reads and `w` for writes. `--domain <domain>` narrows it, `--include-descriptions` prints each tool's full description, and `--json` prints ids, domains and types for scripts.
 
-`--input` is validated locally against the tool's JSON schema before anything is sent, so a bad payload fails fast with a clear message.
+`--input` is validated locally against the tool's JSON schema before anything is sent, so a bad payload fails fast. The error lists what is wrong (for a union input, only the issues of the variant the input is closest to) and prints the expected shape at the failing path, not the whole schema. When the server rejects an input as invalid, its error gets the same expected shape.
 
 ### Organizations
 
