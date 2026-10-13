@@ -14,6 +14,7 @@ import {
 import { browserLogin } from "./browserLogin";
 import { getWebBaseUrl } from "./config";
 import { getCredentialsPath } from "./credentials";
+import { explainInputMismatch, explainServerInputError } from "./inputErrors";
 import { callProcedure, createHttpCaller } from "./http";
 import { listOrgRoles } from "./orgs";
 import { promptHidden, promptText } from "./prompt";
@@ -23,7 +24,6 @@ import {
   findTool,
   toolInputJsonSchema,
   toolSummary,
-  validateToolInput,
 } from "./registry";
 import {
   defaultSkillsDir,
@@ -352,11 +352,9 @@ async function commandCall(args: ParsedArgs): Promise<void> {
   const tool = requireTool(toolId);
   const input = readCallInput(args);
 
-  const issues = validateToolInput(tool, input);
-  if (issues.length > 0) {
-    throw new Error(
-      `Input does not match the tool schema:\n${issues.join("\n")}\n\nRun: feast describe ${tool.id}`
-    );
+  const mismatch = explainInputMismatch(tool, input);
+  if (mismatch != null) {
+    throw new Error(mismatch);
   }
 
   const acting = await resolveActingContext(
@@ -383,7 +381,16 @@ async function commandCall(args: ParsedArgs): Promise<void> {
     console.error(`Running ${tool.id} (${tool.type}) against ${orgLabel}`);
   }
 
-  const result = await callProcedure(client, tool.path, tool.type, input);
+  let result: unknown;
+  try {
+    result = await callProcedure(client, tool.path, tool.type, input);
+  } catch (error) {
+    const rejection = explainServerInputError(tool, input, error);
+    if (rejection != null) {
+      throw new Error(rejection);
+    }
+    throw error;
+  }
   console.info(JSON.stringify(result ?? null, null, 2));
 }
 

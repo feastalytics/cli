@@ -70,5 +70,5 @@ After you create, change or publish something, close with links to see, edit or 
 
 - Not logged in, `feast` not on PATH, or MCP asks you to authenticate: `references/setup.md`.
 - "You belong to multiple organizations": pass one explicitly.
-- Input doesn't match the schema: the error names the fields; fix those rather than guessing again.
+- Input doesn't match the schema: the error names the fields, and with the CLI it also prints the expected shape at the failing path. Fix the call from that; there is no need to run `feast describe` again.
 - An expected tool isn't listed: don't fabricate it; it's a dashboard task.
