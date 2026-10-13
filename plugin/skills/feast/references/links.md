@@ -29,7 +29,7 @@ Campaign panels: `overview`, `funnel-v2`, `automations`, `promotions`, `metrics`
 
 Members-program panels: `overview`, `funnel`, `automations`, `pass-builder`, `rewards`.
 
-Settings tabs: `account`, `general`, `members`, `integrations`, `notifications`, `usage`, `scanning`, `texting`, `subscription`. Point people at `/settings/integrations` when a task needs a POS or Meta connection you can't make for them. Billing status, payment problems and plan changes are `/settings/subscription`; adding or removing team members is `/settings/members`. Neither is a tool action: send the owner there and name the tab.
+Settings tabs: `account`, `general`, `members`, `integrations`, `notifications`, `usage`, `scanning`, `texting`, `subscription`. Point people at `/settings/integrations` when a task needs a POS or Meta connection you can't make for them. Billing status, payment problems and plan changes are `/settings/subscription`; adding or removing team members is `/settings/members`. Neither is a tool action: send the owner there and name the tab. Billing status itself is readable: `getOrganization` returns `paymentStatus` and `isPendingPayment`.
 
 Funnels are always edited inside a panel, never on a page of their own: a campaign's `funnel-v2` panel, or the members program's `funnel` panel.
 
