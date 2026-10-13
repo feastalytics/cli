@@ -25,37 +25,6 @@ export const CLI_MANIFEST: CliManifest = {
   ],
   "tools": [
     {
-      "id": "ads_create_dataset",
-      "domain": "ads",
-      "summary": "Create a dataset (Meta pixel) on an ad account.",
-      "description": "Create a dataset (Meta pixel) on an ad account. Datasets cannot be deleted and a second one splits a funnel's events, so check ads_get_assets with include datasets first. Creating connects nothing: write the returned id to the layout config with updateBrandIdentity.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "ads",
-        "facebook",
-        "createDataset"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "adAccountId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "adAccountId",
-          "name"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
       "id": "ads_get_ad_entities",
       "domain": "ads",
       "summary": "Read the campaigns, ad sets or ads on an ad account; ads include their creative.",
@@ -8973,30 +8942,6 @@ export const CLI_MANIFEST: CliManifest = {
               "isComplete": {
                 "type": "boolean"
               }
-            }
-          },
-          "deferrals": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "reason": {
-                  "type": "string",
-                  "enum": [
-                    "WAITING_ON_SOMEONE",
-                    "MISSING_INFO",
-                    "NOT_SURE_HOW",
-                    "PREFER_SOMETHING_ELSE"
-                  ]
-                },
-                "deferredAt": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "reason",
-                "deferredAt"
-              ]
             }
           },
           "dataAudit": {
