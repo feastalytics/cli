@@ -65,6 +65,27 @@ feast call listCampaigns --org <organizationId>
 
 `--input` is validated locally against the tool's JSON schema before anything is sent, so a bad payload fails fast. The error lists what is wrong (for a union input, only the issues of the variant the input is closest to) and prints the expected shape at the failing path, not the whole schema. When the server rejects an input as invalid, its error gets the same expected shape.
 
+`--fields` prints only the fields you name, as comma-separated dotted paths. Arrays map over their elements, so the output keeps the result's shape, just pruned, and stays pretty-printed for `grep`, `head` and `tail`:
+
+```bash
+feast call listMedia --org <organizationId> --fields files.key,files.lastModified,nextCursor,total
+```
+
+```json
+{
+  "files": [
+    {
+      "key": "media/burger.jpg",
+      "lastModified": "2026-10-01T18:22:04.000Z"
+    }
+  ],
+  "nextCursor": "eyJvZmZzZXQiOjUwfQ",
+  "total": 73
+}
+```
+
+A top-level array works the same way (`--fields id,name`). A path that matches nothing is named on stderr with the keys available where it stopped matching; the command exits non-zero only when no path matched.
+
 ### Organizations
 
 Most tools act on one organization, and you may belong to several. Pass `--org <organizationId>`:

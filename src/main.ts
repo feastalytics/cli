@@ -14,6 +14,7 @@ import {
 import { browserLogin } from "./browserLogin";
 import { getWebBaseUrl } from "./config";
 import { getCredentialsPath } from "./credentials";
+import { parseFieldPaths, projectFields, unmatchedFieldsMessage } from "./fields";
 import { explainInputMismatch, explainServerInputError } from "./inputErrors";
 import { callProcedure, createHttpCaller } from "./http";
 import { listOrgRoles } from "./orgs";
@@ -55,6 +56,8 @@ Call options:
   --role <role|roleArn>     Role to act as, e.g. OWNER (required when FEAST_ACCESS_TOKEN is set)
   --input <json>            Tool input as a JSON string (default: {})
   --input-file <path>       Tool input from a JSON file
+  --fields <list>           Print only these comma-separated dotted fields, e.g.
+                            files.key,nextCursor (arrays map over their elements)
 
 Environment:
   FEAST_API_URL             Override the API base URL (default: production)
@@ -81,6 +84,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     "role",
     "input",
     "input-file",
+    "fields",
     "domain",
     "dir",
   ]);
@@ -351,6 +355,8 @@ async function commandCall(args: ParsedArgs): Promise<void> {
   }
   const tool = requireTool(toolId);
   const input = readCallInput(args);
+  const fieldsFlag = args.flags["fields"] as string | undefined;
+  const fieldPaths = fieldsFlag != null ? parseFieldPaths(fieldsFlag) : undefined;
 
   const mismatch = explainInputMismatch(tool, input);
   if (mismatch != null) {
@@ -391,7 +397,18 @@ async function commandCall(args: ParsedArgs): Promise<void> {
     }
     throw error;
   }
-  console.info(JSON.stringify(result ?? null, null, 2));
+  if (fieldPaths == null) {
+    console.info(JSON.stringify(result ?? null, null, 2));
+    return;
+  }
+  const projection = projectFields(result ?? null, fieldPaths);
+  console.info(JSON.stringify(projection.value, null, 2));
+  if (projection.unmatched.length > 0) {
+    console.error(unmatchedFieldsMessage(result ?? null, projection.unmatched));
+  }
+  if (projection.matched.length === 0) {
+    process.exitCode = 1;
+  }
 }
 
 async function commandSkill(args: ParsedArgs): Promise<void> {
