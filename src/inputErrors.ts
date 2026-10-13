@@ -13,7 +13,10 @@ interface Issue {
   message: string;
   contextPointer: string;
   contextPath: string;
+  fromUnion?: boolean;
 }
+
+const MAX_PLAIN_SHAPE_LINES = 15;
 
 interface Walk {
   root: any;
@@ -180,7 +183,9 @@ function explain(
   }
   const unionKeyword = UNION_KEYWORDS.find((keyword) => Array.isArray(node[keyword]));
   if (unionKeyword != null) {
-    return explainUnion(walk, resolved.pointer, unionKeyword, path, value, context);
+    return explainUnion(walk, resolved.pointer, unionKeyword, path, value, context).map(
+      (issue) => ({ ...issue, fromUnion: true })
+    );
   }
   const isObjectNode =
     node.type === "object" || (node.type == null && isPlainObject(node.properties));
@@ -417,17 +422,23 @@ function walkFor(tool: CliTool): Walk | undefined {
 
 function formatReport(walk: Walk, heading: string, issues: Issue[]): string {
   const lines = [...new Set(issues.map((issue) => `  ${displayPath(issue.path)}: ${issue.message}`))];
-  const contexts = new Map<string, { pointer: string; path: string }>();
+  const contexts = new Map<string, { pointer: string; path: string; fromUnion: boolean }>();
   for (const issue of issues) {
     const id = `${issue.contextPath}\u0000${issue.contextPointer}`;
-    if (!contexts.has(id) && contexts.size < MAX_CONTEXTS) {
-      contexts.set(id, { pointer: issue.contextPointer, path: issue.contextPath });
+    const existing = contexts.get(id);
+    if (existing != null) {
+      existing.fromUnion = existing.fromUnion || issue.fromUnion === true;
+    } else if (contexts.size < MAX_CONTEXTS) {
+      contexts.set(id, { pointer: issue.contextPointer, path: issue.contextPath, fromUnion: issue.fromUnion === true });
     }
   }
-  const sections = [...contexts.values()].map(
-    (context) => `Expected at ${displayPath(context.path)}:\n${renderSchema(walk, context.pointer)}`
-  );
-  return [heading, ...lines, "", ...sections.flatMap((section, index) => (index === 0 ? [section] : ["", section]))].join("\n");
+  const sections = [...contexts.values()].flatMap((context) => {
+    const shape = renderSchema(walk, context.pointer);
+    return context.fromUnion || shape.split("\n").length <= MAX_PLAIN_SHAPE_LINES
+      ? [`Expected at ${displayPath(context.path)}:\n${shape}`]
+      : [];
+  });
+  return [heading, ...lines, ...sections.flatMap((section) => ["", section])].join("\n");
 }
 
 export function explainInputMismatch(tool: CliTool, input: unknown): string | undefined {
