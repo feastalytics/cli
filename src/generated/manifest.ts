@@ -8931,20 +8931,6 @@ export const CLI_MANIFEST: CliManifest = {
               }
             }
           },
-          "onboardingMeeting": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
-              "firstBookedAt": {
-                "type": "string"
-              },
-              "wasSkipped": {
-                "type": "boolean"
-              }
-            }
-          },
           "staffTraining": {
             "type": "object",
             "properties": {
