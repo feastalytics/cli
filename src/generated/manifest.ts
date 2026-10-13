@@ -5434,8 +5434,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "stageFunnelEdit",
       "domain": "funnel",
-      "summary": "Stage a single renderable edit onto a funnel draft.",
-      "description": "Stage a single renderable edit onto a funnel draft. The edit is validated against the current screen but not saved to production. Returns a summary of the draft, not its edits: use getFunnelDraft to read them back, or listFunnelScreens with the draftId to see the funnel with the edits applied.",
+      "summary": "Stage one or more renderable edits on a funnel draft in one call.",
+      "description": "Stage one or more renderable edits on a funnel draft in one call. Pass edits: [{ screenId, edit }], applied in order and each validated against the draft as the earlier edits leave it, so a create followed by an update of the created id works in one batch. Any invalid edit refuses the whole batch and stages nothing. Nothing reaches production until saveFunnelEdits. Returns a summary of the draft plus applied: [{ index, screenId, type, id }], not the screens: read the staged funnel with listFunnelScreens { draftId }.",
       "type": "mutation",
       "path": [
         "api",
@@ -5449,1671 +5449,1683 @@ export const CLI_MANIFEST: CliManifest = {
           "draftId": {
             "type": "string"
           },
-          "screenId": {
-            "type": "string"
-          },
-          "edit": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "const": "create"
-                  },
-                  "renderable": {
-                    "anyOf": [
-                      {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "text"
-                                  },
-                                  "text": {
-                                    "type": "object",
-                                    "properties": {
-                                      "align": {
-                                        "type": "string",
-                                        "enum": [
-                                          "left",
-                                          "center",
-                                          "right",
-                                          "justify"
-                                        ]
-                                      },
-                                      "segments": {
-                                        "type": "array",
-                                        "items": {
+          "edits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "screenId": {
+                  "type": "string"
+                },
+                "edit": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "create"
+                        },
+                        "renderable": {
+                          "anyOf": [
+                            {
+                              "allOf": [
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "text"
+                                        },
+                                        "text": {
                                           "type": "object",
                                           "properties": {
-                                            "text": {
-                                              "type": "string"
-                                            },
-                                            "italic": {
-                                              "type": "boolean"
-                                            },
-                                            "underline": {
-                                              "type": "boolean"
-                                            },
-                                            "strikethrough": {
-                                              "type": "boolean"
-                                            },
-                                            "color": {
-                                              "anyOf": [
-                                                {
-                                                  "type": "string",
-                                                  "pattern": "^#[0-9A-Fa-f]{3,8}$"
-                                                },
-                                                {
-                                                  "type": "string"
-                                                }
-                                              ]
-                                            },
-                                            "fontWeight": {
+                                            "align": {
                                               "type": "string",
                                               "enum": [
-                                                "bold",
-                                                "normal",
-                                                "light",
-                                                "medium",
-                                                "semibold",
-                                                "thin",
-                                                "extrabold"
+                                                "left",
+                                                "center",
+                                                "right",
+                                                "justify"
                                               ]
+                                            },
+                                            "segments": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "text": {
+                                                    "type": "string"
+                                                  },
+                                                  "italic": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "underline": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "strikethrough": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "color": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "pattern": "^#[0-9A-Fa-f]{3,8}$"
+                                                      },
+                                                      {
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "fontWeight": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "bold",
+                                                      "normal",
+                                                      "light",
+                                                      "medium",
+                                                      "semibold",
+                                                      "thin",
+                                                      "extrabold"
+                                                    ]
+                                                  },
+                                                  "variant": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "h1",
+                                                      "h2",
+                                                      "h3",
+                                                      "h4",
+                                                      "h5",
+                                                      "h6",
+                                                      "subtitle1",
+                                                      "subtitle2",
+                                                      "body1",
+                                                      "body2",
+                                                      "caption",
+                                                      "button",
+                                                      "overline",
+                                                      "inherit"
+                                                    ]
+                                                  },
+                                                  "fontFamily": {
+                                                    "type": "string"
+                                                  },
+                                                  "link": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "text"
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "segments"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "text"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "image"
+                                        },
+                                        "image": {
+                                          "type": "object",
+                                          "properties": {
+                                            "src": {
+                                              "type": "string"
+                                            },
+                                            "alt": {
+                                              "type": "string"
+                                            },
+                                            "size": {
+                                              "type": "string",
+                                              "enum": [
+                                                "small",
+                                                "medium",
+                                                "large",
+                                                "xl"
+                                              ]
+                                            },
+                                            "maxHeight": {
+                                              "type": "number"
+                                            },
+                                            "maxWidth": {
+                                              "type": "number"
+                                            },
+                                            "objectFit": {
+                                              "type": "string",
+                                              "enum": [
+                                                "contain",
+                                                "cover",
+                                                "fill",
+                                                "none",
+                                                "scale-down"
+                                              ]
+                                            },
+                                            "borderRadius": {
+                                              "type": "number"
+                                            },
+                                            "crop": {
+                                              "type": "object",
+                                              "properties": {
+                                                "x": {
+                                                  "type": "number"
+                                                },
+                                                "y": {
+                                                  "type": "number"
+                                                },
+                                                "width": {
+                                                  "type": "number"
+                                                },
+                                                "height": {
+                                                  "type": "number"
+                                                },
+                                                "croppedImageUrl": {
+                                                  "type": "string"
+                                                },
+                                                "cropPosition": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "x": {
+                                                      "type": "number"
+                                                    },
+                                                    "y": {
+                                                      "type": "number"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "x",
+                                                    "y"
+                                                  ]
+                                                },
+                                                "zoom": {
+                                                  "type": "number"
+                                                }
+                                              },
+                                              "required": [
+                                                "x",
+                                                "y",
+                                                "width",
+                                                "height",
+                                                "croppedImageUrl"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "src"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "image"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "carousel"
+                                        },
+                                        "carousel": {
+                                          "type": "object",
+                                          "properties": {
+                                            "images": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "alt": {
+                                              "type": "string"
+                                            },
+                                            "maxHeight": {
+                                              "type": "number"
+                                            },
+                                            "maxWidth": {
+                                              "type": "number"
+                                            },
+                                            "objectFit": {
+                                              "type": "string",
+                                              "enum": [
+                                                "contain",
+                                                "cover",
+                                                "fill",
+                                                "none",
+                                                "scale-down"
+                                              ]
+                                            },
+                                            "borderRadius": {
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": [
+                                            "images"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "carousel"
+                                      ],
+                                      "description": "Displays multiple images in a swipeable carousel format. Users can swipe through the image array. Supports the same styling options as single images including dimensions, object fit, and border radius."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "button"
+                                        },
+                                        "button": {
+                                          "type": "object",
+                                          "properties": {
+                                            "label": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
                                             },
                                             "variant": {
                                               "type": "string",
                                               "enum": [
-                                                "h1",
-                                                "h2",
-                                                "h3",
-                                                "h4",
-                                                "h5",
-                                                "h6",
-                                                "subtitle1",
-                                                "subtitle2",
-                                                "body1",
-                                                "body2",
-                                                "caption",
-                                                "button",
-                                                "overline",
-                                                "inherit"
+                                                "contained",
+                                                "outlined",
+                                                "text"
                                               ]
                                             },
-                                            "fontFamily": {
-                                              "type": "string"
+                                            "backgroundColor": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
                                             },
-                                            "link": {
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "text"
-                                          ]
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "segments"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "text"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "image"
-                                  },
-                                  "image": {
-                                    "type": "object",
-                                    "properties": {
-                                      "src": {
-                                        "type": "string"
-                                      },
-                                      "alt": {
-                                        "type": "string"
-                                      },
-                                      "size": {
-                                        "type": "string",
-                                        "enum": [
-                                          "small",
-                                          "medium",
-                                          "large",
-                                          "xl"
-                                        ]
-                                      },
-                                      "maxHeight": {
-                                        "type": "number"
-                                      },
-                                      "maxWidth": {
-                                        "type": "number"
-                                      },
-                                      "objectFit": {
-                                        "type": "string",
-                                        "enum": [
-                                          "contain",
-                                          "cover",
-                                          "fill",
-                                          "none",
-                                          "scale-down"
-                                        ]
-                                      },
-                                      "borderRadius": {
-                                        "type": "number"
-                                      },
-                                      "crop": {
-                                        "type": "object",
-                                        "properties": {
-                                          "x": {
-                                            "type": "number"
-                                          },
-                                          "y": {
-                                            "type": "number"
-                                          },
-                                          "width": {
-                                            "type": "number"
-                                          },
-                                          "height": {
-                                            "type": "number"
-                                          },
-                                          "croppedImageUrl": {
-                                            "type": "string"
-                                          },
-                                          "cropPosition": {
-                                            "type": "object",
-                                            "properties": {
-                                              "x": {
-                                                "type": "number"
-                                              },
-                                              "y": {
-                                                "type": "number"
-                                              }
+                                            "outlineColor": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
                                             },
-                                            "required": [
-                                              "x",
-                                              "y"
-                                            ]
-                                          },
-                                          "zoom": {
-                                            "type": "number"
-                                          }
-                                        },
-                                        "required": [
-                                          "x",
-                                          "y",
-                                          "width",
-                                          "height",
-                                          "croppedImageUrl"
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "src"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "image"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "carousel"
-                                  },
-                                  "carousel": {
-                                    "type": "object",
-                                    "properties": {
-                                      "images": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "alt": {
-                                        "type": "string"
-                                      },
-                                      "maxHeight": {
-                                        "type": "number"
-                                      },
-                                      "maxWidth": {
-                                        "type": "number"
-                                      },
-                                      "objectFit": {
-                                        "type": "string",
-                                        "enum": [
-                                          "contain",
-                                          "cover",
-                                          "fill",
-                                          "none",
-                                          "scale-down"
-                                        ]
-                                      },
-                                      "borderRadius": {
-                                        "type": "number"
-                                      }
-                                    },
-                                    "required": [
-                                      "images"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "carousel"
-                                ],
-                                "description": "Displays multiple images in a swipeable carousel format. Users can swipe through the image array. Supports the same styling options as single images including dimensions, object fit, and border radius."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "button"
-                                  },
-                                  "button": {
-                                    "type": "object",
-                                    "properties": {
-                                      "label": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
-                                      },
-                                      "variant": {
-                                        "type": "string",
-                                        "enum": [
-                                          "contained",
-                                          "outlined",
-                                          "text"
-                                        ]
-                                      },
-                                      "backgroundColor": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                      },
-                                      "outlineColor": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                      },
-                                      "destination": {
-                                        "anyOf": [
-                                          {
-                                            "type": "object",
-                                            "properties": {
-                                              "type": {
-                                                "type": "string",
-                                                "const": "external"
-                                              },
-                                              "external": {
-                                                "type": "object",
-                                                "properties": {
-                                                  "url": {
-                                                    "type": "string"
-                                                  }
+                                            "destination": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "external"
+                                                    },
+                                                    "external": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "url": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "url"
+                                                      ]
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "external"
+                                                  ]
                                                 },
-                                                "required": [
-                                                  "url"
-                                                ]
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "external"
-                                            ]
-                                          },
-                                          {
-                                            "type": "object",
-                                            "properties": {
-                                              "type": {
-                                                "type": "string",
-                                                "const": "internal"
-                                              },
-                                              "internal": {
-                                                "type": "object",
-                                                "properties": {
-                                                  "screenId": {
-                                                    "type": "string"
-                                                  }
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "internal"
+                                                    },
+                                                    "internal": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "screenId": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "screenId"
+                                                      ]
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "internal"
+                                                  ]
                                                 },
-                                                "required": [
-                                                  "screenId"
-                                                ]
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "internal"
-                                            ]
-                                          },
-                                          {
-                                            "type": "object",
-                                            "properties": {
-                                              "type": {
-                                                "type": "string",
-                                                "const": "back"
-                                              },
-                                              "back": {
-                                                "type": "object",
-                                                "properties": {}
-                                              }
-                                            },
-                                            "required": [
-                                              "type",
-                                              "back"
-                                            ]
-                                          },
-                                          {
-                                            "type": "object",
-                                            "properties": {
-                                              "type": {
-                                                "type": "string",
-                                                "const": "submit"
-                                              },
-                                              "submit": {
-                                                "type": "object",
-                                                "properties": {
-                                                  "screenId": {
-                                                    "type": "string"
-                                                  }
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "back"
+                                                    },
+                                                    "back": {
+                                                      "type": "object",
+                                                      "properties": {}
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "back"
+                                                  ]
                                                 },
-                                                "required": [
-                                                  "screenId"
-                                                ]
-                                              }
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "const": "submit"
+                                                    },
+                                                    "submit": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "screenId": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "screenId"
+                                                      ]
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "submit"
+                                                  ]
+                                                }
+                                              ]
                                             },
-                                            "required": [
-                                              "type",
-                                              "submit"
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      "openInNewTab": {
-                                        "type": "boolean"
-                                      }
-                                    },
-                                    "required": [
-                                      "label",
-                                      "destination"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "button"
-                                ],
-                                "description": "Clickable button that can navigate to external URLs, internal screens, or go back to the previous screen."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "divider"
-                                  },
-                                  "divider": {
-                                    "type": "object",
-                                    "properties": {
-                                      "color": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                      },
-                                      "thickness": {
-                                        "type": "number"
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "divider"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "starRating"
-                                  },
-                                  "starRating": {
-                                    "type": "object",
-                                    "properties": {
-                                      "align": {
-                                        "type": "string",
-                                        "enum": [
-                                          "left",
-                                          "center",
-                                          "right"
-                                        ]
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "starRating"
-                                ],
-                                "description": "Displays restaurant's average rating and review count. Clickable to navigate to reviews section."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "punchStatus"
-                                  },
-                                  "punchStatus": {
-                                    "type": "object",
-                                    "properties": {}
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "punchStatus"
-                                ],
-                                "description": "Shows punch card progress and next reward. Displays signup button if user hasn't joined yet."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "openTable"
-                                  },
-                                  "openTable": {
-                                    "type": "object",
-                                    "properties": {
-                                      "selectedConfigIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "source": {
-                                        "type": "string"
-                                      },
-                                      "campaign": {
-                                        "type": "string"
-                                      },
-                                      "experienceIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "number"
-                                        }
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "openTable"
-                                ],
-                                "description": "OpenTable reservation widget that finds available time slots and redirects to OpenTable to book."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "stripeCheckout"
-                                  },
-                                  "stripeCheckout": {
-                                    "type": "object",
-                                    "properties": {
-                                      "isOneTimePurchase": {
-                                        "type": "boolean"
-                                      },
-                                      "quantitySelection": {
-                                        "type": "object",
-                                        "properties": {
-                                          "isEnabled": {
-                                            "type": "boolean"
-                                          },
-                                          "maxQuantity": {
-                                            "type": "number"
-                                          }
-                                        },
-                                        "required": [
-                                          "isEnabled"
-                                        ]
-                                      },
-                                      "confirmationScreenId": {
-                                        "type": "string",
-                                        "description": "Screen the guest lands on after paying. Defaults to payment-confirmation."
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "stripeCheckout"
-                                ],
-                                "description": "Embedded Stripe checkout for prepay options and bundles."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "cart"
-                                  },
-                                  "cart": {
-                                    "type": "object",
-                                    "properties": {
-                                      "promoIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string"
-                                        }
-                                      },
-                                      "quantitySelector": {
-                                        "type": "string",
-                                        "enum": [
-                                          "stepper",
-                                          "radio"
-                                        ]
-                                      },
-                                      "minQuantity": {
-                                        "type": "integer",
-                                        "minimum": 0
-                                      },
-                                      "maxQuantity": {
-                                        "type": "integer",
-                                        "minimum": 1
-                                      },
-                                      "units": {
-                                        "type": "object",
-                                        "additionalProperties": {
-                                          "type": "string"
-                                        }
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "cart"
-                                ],
-                                "description": "Cart widget with quantity selectors for promotions. Supports both one-time and recurring (subscription) checkout."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "passButton"
-                                  },
-                                  "passButton": {
-                                    "type": "object",
-                                    "properties": {
-                                      "disableWalletButton": {
-                                        "type": "boolean"
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "passButton"
-                                ],
-                                "description": "Button to add pass to Apple Wallet or Google Wallet. Automatically detects device type."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "form"
-                                  },
-                                  "form": {
-                                    "type": "object",
-                                    "properties": {
-                                      "properties": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "object",
-                                          "properties": {
-                                            "propertyId": {
-                                              "type": "string"
-                                            }
-                                          },
-                                          "required": [
-                                            "propertyId"
-                                          ]
-                                        }
-                                      },
-                                      "submitButton": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/3"
-                                      }
-                                    },
-                                    "required": [
-                                      "properties",
-                                      "submitButton"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "form"
-                                ],
-                                "description": "Form with input fields that prevents duplicate submissions and shows previous values if already submitted. **IMPORTANT RESTRICTION**: This component can ONLY be used in screens that come AFTER the signup screen. Signups happen on screens with a signUpForm widget. Do NOT use form components in any screen that appears before or is a screen with a signUpForm in the funnel flow."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "signUpForm"
-                                  },
-                                  "signUpForm": {
-                                    "type": "object",
-                                    "properties": {
-                                      "requireSmsVerification": {
-                                        "type": "boolean"
-                                      },
-                                      "collectEmail": {
-                                        "type": "boolean"
-                                      },
-                                      "properties": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "object",
-                                          "properties": {
-                                            "propertyId": {
-                                              "type": "string"
-                                            },
-                                            "required": {
+                                            "openInNewTab": {
                                               "type": "boolean"
                                             }
                                           },
                                           "required": [
-                                            "propertyId"
+                                            "label",
+                                            "destination"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "button"
+                                      ],
+                                      "description": "Clickable button that can navigate to external URLs, internal screens, or go back to the previous screen."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "divider"
+                                        },
+                                        "divider": {
+                                          "type": "object",
+                                          "properties": {
+                                            "color": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
+                                            },
+                                            "thickness": {
+                                              "type": "number"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "divider"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "starRating"
+                                        },
+                                        "starRating": {
+                                          "type": "object",
+                                          "properties": {
+                                            "align": {
+                                              "type": "string",
+                                              "enum": [
+                                                "left",
+                                                "center",
+                                                "right"
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "starRating"
+                                      ],
+                                      "description": "Displays restaurant's average rating and review count. Clickable to navigate to reviews section."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "punchStatus"
+                                        },
+                                        "punchStatus": {
+                                          "type": "object",
+                                          "properties": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "punchStatus"
+                                      ],
+                                      "description": "Shows punch card progress and next reward. Displays signup button if user hasn't joined yet."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "openTable"
+                                        },
+                                        "openTable": {
+                                          "type": "object",
+                                          "properties": {
+                                            "selectedConfigIds": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "source": {
+                                              "type": "string"
+                                            },
+                                            "campaign": {
+                                              "type": "string"
+                                            },
+                                            "experienceIds": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "number"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "openTable"
+                                      ],
+                                      "description": "OpenTable reservation widget that finds available time slots and redirects to OpenTable to book."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "stripeCheckout"
+                                        },
+                                        "stripeCheckout": {
+                                          "type": "object",
+                                          "properties": {
+                                            "isOneTimePurchase": {
+                                              "type": "boolean"
+                                            },
+                                            "quantitySelection": {
+                                              "type": "object",
+                                              "properties": {
+                                                "isEnabled": {
+                                                  "type": "boolean"
+                                                },
+                                                "maxQuantity": {
+                                                  "type": "number"
+                                                }
+                                              },
+                                              "required": [
+                                                "isEnabled"
+                                              ]
+                                            },
+                                            "confirmationScreenId": {
+                                              "type": "string",
+                                              "description": "Screen the guest lands on after paying. Defaults to payment-confirmation."
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "stripeCheckout"
+                                      ],
+                                      "description": "Embedded Stripe checkout for prepay options and bundles."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "cart"
+                                        },
+                                        "cart": {
+                                          "type": "object",
+                                          "properties": {
+                                            "promoIds": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "quantitySelector": {
+                                              "type": "string",
+                                              "enum": [
+                                                "stepper",
+                                                "radio"
+                                              ]
+                                            },
+                                            "minQuantity": {
+                                              "type": "integer",
+                                              "minimum": 0
+                                            },
+                                            "maxQuantity": {
+                                              "type": "integer",
+                                              "minimum": 1
+                                            },
+                                            "units": {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "cart"
+                                      ],
+                                      "description": "Cart widget with quantity selectors for promotions. Supports both one-time and recurring (subscription) checkout."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "passButton"
+                                        },
+                                        "passButton": {
+                                          "type": "object",
+                                          "properties": {
+                                            "disableWalletButton": {
+                                              "type": "boolean"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "passButton"
+                                      ],
+                                      "description": "Button to add pass to Apple Wallet or Google Wallet. Automatically detects device type."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "form"
+                                        },
+                                        "form": {
+                                          "type": "object",
+                                          "properties": {
+                                            "properties": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "propertyId": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "propertyId"
+                                                ]
+                                              }
+                                            },
+                                            "submitButton": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/3"
+                                            }
+                                          },
+                                          "required": [
+                                            "properties",
+                                            "submitButton"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "form"
+                                      ],
+                                      "description": "Form with input fields that prevents duplicate submissions and shows previous values if already submitted. **IMPORTANT RESTRICTION**: This component can ONLY be used in screens that come AFTER the signup screen. Signups happen on screens with a signUpForm widget. Do NOT use form components in any screen that appears before or is a screen with a signUpForm in the funnel flow."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "signUpForm"
+                                        },
+                                        "signUpForm": {
+                                          "type": "object",
+                                          "properties": {
+                                            "requireSmsVerification": {
+                                              "type": "boolean"
+                                            },
+                                            "collectEmail": {
+                                              "type": "boolean"
+                                            },
+                                            "properties": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "propertyId": {
+                                                    "type": "string"
+                                                  },
+                                                  "required": {
+                                                    "type": "boolean"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "propertyId"
+                                                ]
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "signUpForm"
+                                      ],
+                                      "description": "Sign up form widget with MemberInfoForm. Submit buttons are controlled by other renderables. Optionally collects additional custom properties alongside the member's name, phone and email; those values are written against the new member as form submissions before any sign up automation runs."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "card"
+                                        },
+                                        "card": {
+                                          "type": "object",
+                                          "properties": {
+                                            "content": {
+                                              "type": "array",
+                                              "items": {
+                                                "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
+                                              }
+                                            },
+                                            "variant": {
+                                              "type": "string",
+                                              "enum": [
+                                                "elevation",
+                                                "outlined"
+                                              ]
+                                            },
+                                            "elevation": {
+                                              "type": "number"
+                                            },
+                                            "sx": {
+                                              "type": "object",
+                                              "properties": {
+                                                "borderRadius": {
+                                                  "type": [
+                                                    "number",
+                                                    "string"
+                                                  ]
+                                                },
+                                                "backgroundColor": {
+                                                  "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
+                                                },
+                                                "borderColor": {
+                                                  "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
+                                                },
+                                                "width": {
+                                                  "type": [
+                                                    "number",
+                                                    "string"
+                                                  ]
+                                                },
+                                                "borderWidth": {
+                                                  "type": "number"
+                                                },
+                                                "flexShrink": {
+                                                  "type": "number"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "content"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "card"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "collapse"
+                                        },
+                                        "collapse": {
+                                          "type": "object",
+                                          "properties": {
+                                            "title": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
+                                            },
+                                            "content": {
+                                              "type": "array",
+                                              "items": {
+                                                "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "title",
+                                            "content"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "collapse"
+                                      ],
+                                      "description": "Expandable/collapsible section. Click title to toggle content visibility."
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "stack"
+                                        },
+                                        "stack": {
+                                          "type": "object",
+                                          "properties": {
+                                            "direction": {
+                                              "type": "string",
+                                              "enum": [
+                                                "row",
+                                                "column"
+                                              ]
+                                            },
+                                            "spacing": {
+                                              "type": "number"
+                                            },
+                                            "justifyContent": {
+                                              "type": "string",
+                                              "enum": [
+                                                "flex-start",
+                                                "center",
+                                                "flex-end",
+                                                "space-between",
+                                                "space-around",
+                                                "space-evenly"
+                                              ]
+                                            },
+                                            "content": {
+                                              "type": "array",
+                                              "items": {
+                                                "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
+                                              }
+                                            },
+                                            "overflowX": {
+                                              "type": "string",
+                                              "enum": [
+                                                "visible",
+                                                "hidden",
+                                                "scroll",
+                                                "auto"
+                                              ]
+                                            },
+                                            "backgroundColor": {
+                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
+                                            },
+                                            "padding": {
+                                              "type": "number"
+                                            },
+                                            "fullBleed": {
+                                              "type": "boolean"
+                                            }
+                                          },
+                                          "required": [
+                                            "content"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "stack"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "footer"
+                                        },
+                                        "footer": {
+                                          "type": "object",
+                                          "properties": {
+                                            "content": {
+                                              "type": "array",
+                                              "items": {
+                                                "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "content"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "footer"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "list"
+                                        },
+                                        "list": {
+                                          "type": "object",
+                                          "properties": {
+                                            "items": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "id": {
+                                                    "type": "string"
+                                                  },
+                                                  "type": {
+                                                    "type": "string",
+                                                    "const": "listItem"
+                                                  },
+                                                  "listItem": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "enumerator": {
+                                                        "anyOf": [
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "bullet"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "type"
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "number"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "type"
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "none"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "type"
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "icon"
+                                                              },
+                                                              "icon": {
+                                                                "type": "string"
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "type",
+                                                              "icon"
+                                                            ]
+                                                          }
+                                                        ]
+                                                      },
+                                                      "item": {
+                                                        "anyOf": [
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/1"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/2"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/3"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/4"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/5"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/6"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/8"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/9"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/7"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/10"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/11"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/12"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/13"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/14"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/15"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/16"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17"
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items"
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "tabs"
+                                                              },
+                                                              "tabs": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "content": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                      "type": "object",
+                                                                      "properties": {
+                                                                        "id": {
+                                                                          "type": "string"
+                                                                        },
+                                                                        "type": {
+                                                                          "type": "string",
+                                                                          "const": "tab"
+                                                                        },
+                                                                        "tab": {
+                                                                          "type": "object",
+                                                                          "properties": {
+                                                                            "label": {
+                                                                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
+                                                                            },
+                                                                            "content": {
+                                                                              "type": "array",
+                                                                              "items": {
+                                                                                "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0"
+                                                                              }
+                                                                            }
+                                                                          },
+                                                                          "required": [
+                                                                            "label",
+                                                                            "content"
+                                                                          ]
+                                                                        }
+                                                                      },
+                                                                      "required": [
+                                                                        "id",
+                                                                        "type",
+                                                                        "tab"
+                                                                      ]
+                                                                    }
+                                                                  }
+                                                                },
+                                                                "required": [
+                                                                  "content"
+                                                                ]
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "tabs"
+                                                            ],
+                                                            "description": "Tabbed interface where users switch between content sections. Only one tab visible at a time."
+                                                          },
+                                                          {
+                                                            "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19/properties/tabs/properties/content/items"
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "reviews"
+                                                              },
+                                                              "reviews": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "minimumRating": {
+                                                                    "type": "number",
+                                                                    "minimum": 1,
+                                                                    "maximum": 5
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "reviews"
+                                                            ],
+                                                            "description": "Displays restaurant reviews from Google Reviews."
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "menu"
+                                                              },
+                                                              "menu": {
+                                                                "type": "object",
+                                                                "properties": {}
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "menu"
+                                                            ],
+                                                            "description": "Displays restaurant menu items organized by categories."
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "photos"
+                                                              },
+                                                              "photos": {
+                                                                "type": "object",
+                                                                "properties": {}
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "photos"
+                                                            ],
+                                                            "description": "Displays photo gallery from restaurant's Google Business profile."
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "locationInfo"
+                                                              },
+                                                              "locationInfo": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "name": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "address": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "phone": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "website": {
+                                                                    "type": "string"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "locationInfo"
+                                                            ],
+                                                            "description": "Displays restaurant location info with clickable phone and website links."
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "hours"
+                                                              },
+                                                              "hours": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "operatingHours": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                      "Mon": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "type": "object",
+                                                                          "properties": {
+                                                                            "startLocalHour": {
+                                                                              "type": "number"
+                                                                            },
+                                                                            "startLocalMinute": {
+                                                                              "type": "number"
+                                                                            },
+                                                                            "endLocalHour": {
+                                                                              "type": "number"
+                                                                            },
+                                                                            "endLocalMinute": {
+                                                                              "type": "number"
+                                                                            }
+                                                                          },
+                                                                          "required": [
+                                                                            "startLocalHour",
+                                                                            "startLocalMinute",
+                                                                            "endLocalHour",
+                                                                            "endLocalMinute"
+                                                                          ]
+                                                                        }
+                                                                      },
+                                                                      "Tue": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
+                                                                        }
+                                                                      },
+                                                                      "Wed": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
+                                                                        }
+                                                                      },
+                                                                      "Thu": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
+                                                                        }
+                                                                      },
+                                                                      "Fri": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
+                                                                        }
+                                                                      },
+                                                                      "Sat": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
+                                                                        }
+                                                                      },
+                                                                      "Sun": {
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                    "required": [
+                                                                      "Mon",
+                                                                      "Tue",
+                                                                      "Wed",
+                                                                      "Thu",
+                                                                      "Fri",
+                                                                      "Sat",
+                                                                      "Sun"
+                                                                    ]
+                                                                  }
+                                                                },
+                                                                "required": [
+                                                                  "operatingHours"
+                                                                ]
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "hours"
+                                                            ]
+                                                          },
+                                                          {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "id": {
+                                                                "type": "string"
+                                                              },
+                                                              "type": {
+                                                                "type": "string",
+                                                                "const": "video"
+                                                              },
+                                                              "video": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "src": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "poster": {
+                                                                    "type": "string"
+                                                                  },
+                                                                  "autoplay": {
+                                                                    "type": "boolean"
+                                                                  },
+                                                                  "loop": {
+                                                                    "type": "boolean"
+                                                                  },
+                                                                  "muted": {
+                                                                    "type": "boolean"
+                                                                  },
+                                                                  "controls": {
+                                                                    "type": "boolean"
+                                                                  },
+                                                                  "maxHeight": {
+                                                                    "type": "number"
+                                                                  },
+                                                                  "maxWidth": {
+                                                                    "type": "number"
+                                                                  },
+                                                                  "objectFit": {
+                                                                    "type": "string",
+                                                                    "enum": [
+                                                                      "contain",
+                                                                      "cover",
+                                                                      "fill",
+                                                                      "none",
+                                                                      "scale-down"
+                                                                    ]
+                                                                  },
+                                                                  "borderRadius": {
+                                                                    "type": "number"
+                                                                  }
+                                                                },
+                                                                "required": [
+                                                                  "src"
+                                                                ]
+                                                              }
+                                                            },
+                                                            "required": [
+                                                              "id",
+                                                              "type",
+                                                              "video"
+                                                            ],
+                                                            "description": "Displays a video from an S3 URL. Supports autoplay, loop, muted, and controls options."
+                                                          }
+                                                        ]
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "enumerator",
+                                                      "item"
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "id",
+                                                  "type",
+                                                  "listItem"
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "items"
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "list"
+                                      ]
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19/properties/tabs/properties/content/items"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/21"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/22"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/23"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/24"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25"
+                                    },
+                                    {
+                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/26"
+                                    }
+                                  ],
+                                  "description": "Renderable widget schemas. Each renderable has an 'id' field that must be a UUID. When creating new renderables, generate new UUIDs. When editing existing renderables, preserve their existing IDs."
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "rootConfig": {
+                                      "type": "object",
+                                      "properties": {
+                                        "paddingTop": {
+                                          "type": "number"
+                                        },
+                                        "paddingBottom": {
+                                          "type": "number"
+                                        },
+                                        "paddingX": {
+                                          "type": "number"
+                                        },
+                                        "background": {
+                                          "anyOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "color"
+                                                },
+                                                "color": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "color": {
+                                                      "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "color"
+                                                  ]
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "color"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "image"
+                                                },
+                                                "image": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "src": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "src"
+                                                  ]
+                                                }
+                                              },
+                                              "required": [
+                                                "type",
+                                                "image"
+                                              ]
+                                            }
                                           ]
                                         }
                                       }
                                     }
                                   }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "signUpForm"
-                                ],
-                                "description": "Sign up form widget with MemberInfoForm. Submit buttons are controlled by other renderables. Optionally collects additional custom properties alongside the member's name, phone and email; those values are written against the new member as form submissions before any sign up automation runs."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "card"
-                                  },
-                                  "card": {
-                                    "type": "object",
-                                    "properties": {
-                                      "content": {
-                                        "type": "array",
-                                        "items": {
-                                          "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
-                                        }
-                                      },
-                                      "variant": {
-                                        "type": "string",
-                                        "enum": [
-                                          "elevation",
-                                          "outlined"
-                                        ]
-                                      },
-                                      "elevation": {
-                                        "type": "number"
-                                      },
-                                      "sx": {
-                                        "type": "object",
-                                        "properties": {
-                                          "borderRadius": {
-                                            "type": [
-                                              "number",
-                                              "string"
-                                            ]
-                                          },
-                                          "backgroundColor": {
-                                            "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                          },
-                                          "borderColor": {
-                                            "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                          },
-                                          "width": {
-                                            "type": [
-                                              "number",
-                                              "string"
-                                            ]
-                                          },
-                                          "borderWidth": {
-                                            "type": "number"
-                                          },
-                                          "flexShrink": {
-                                            "type": "number"
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "content"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "card"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "collapse"
-                                  },
-                                  "collapse": {
-                                    "type": "object",
-                                    "properties": {
-                                      "title": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
-                                      },
-                                      "content": {
-                                        "type": "array",
-                                        "items": {
-                                          "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "title",
-                                      "content"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "collapse"
-                                ],
-                                "description": "Expandable/collapsible section. Click title to toggle content visibility."
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "stack"
-                                  },
-                                  "stack": {
-                                    "type": "object",
-                                    "properties": {
-                                      "direction": {
-                                        "type": "string",
-                                        "enum": [
-                                          "row",
-                                          "column"
-                                        ]
-                                      },
-                                      "spacing": {
-                                        "type": "number"
-                                      },
-                                      "justifyContent": {
-                                        "type": "string",
-                                        "enum": [
-                                          "flex-start",
-                                          "center",
-                                          "flex-end",
-                                          "space-between",
-                                          "space-around",
-                                          "space-evenly"
-                                        ]
-                                      },
-                                      "content": {
-                                        "type": "array",
-                                        "items": {
-                                          "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
-                                        }
-                                      },
-                                      "overflowX": {
-                                        "type": "string",
-                                        "enum": [
-                                          "visible",
-                                          "hidden",
-                                          "scroll",
-                                          "auto"
-                                        ]
-                                      },
-                                      "backgroundColor": {
-                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                      },
-                                      "padding": {
-                                        "type": "number"
-                                      },
-                                      "fullBleed": {
-                                        "type": "boolean"
-                                      }
-                                    },
-                                    "required": [
-                                      "content"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "stack"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "footer"
-                                  },
-                                  "footer": {
-                                    "type": "object",
-                                    "properties": {
-                                      "content": {
-                                        "type": "array",
-                                        "items": {
-                                          "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0"
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "content"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "footer"
-                                ]
-                              },
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string"
-                                  },
-                                  "type": {
-                                    "type": "string",
-                                    "const": "list"
-                                  },
-                                  "list": {
-                                    "type": "object",
-                                    "properties": {
-                                      "items": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "object",
-                                          "properties": {
-                                            "id": {
-                                              "type": "string"
-                                            },
-                                            "type": {
-                                              "type": "string",
-                                              "const": "listItem"
-                                            },
-                                            "listItem": {
-                                              "type": "object",
-                                              "properties": {
-                                                "enumerator": {
-                                                  "anyOf": [
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "bullet"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "number"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "none"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "icon"
-                                                        },
-                                                        "icon": {
-                                                          "type": "string"
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "type",
-                                                        "icon"
-                                                      ]
-                                                    }
-                                                  ]
-                                                },
-                                                "item": {
-                                                  "anyOf": [
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/1"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/2"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/3"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/4"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/5"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/6"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/8"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/9"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/7"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/10"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/11"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/12"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/13"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/14"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/15"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/16"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17"
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items"
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "tabs"
-                                                        },
-                                                        "tabs": {
-                                                          "type": "object",
-                                                          "properties": {
-                                                            "content": {
-                                                              "type": "array",
-                                                              "items": {
-                                                                "type": "object",
-                                                                "properties": {
-                                                                  "id": {
-                                                                    "type": "string"
-                                                                  },
-                                                                  "type": {
-                                                                    "type": "string",
-                                                                    "const": "tab"
-                                                                  },
-                                                                  "tab": {
-                                                                    "type": "object",
-                                                                    "properties": {
-                                                                      "label": {
-                                                                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0"
-                                                                      },
-                                                                      "content": {
-                                                                        "type": "array",
-                                                                        "items": {
-                                                                          "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0"
-                                                                        }
-                                                                      }
-                                                                    },
-                                                                    "required": [
-                                                                      "label",
-                                                                      "content"
-                                                                    ]
-                                                                  }
-                                                                },
-                                                                "required": [
-                                                                  "id",
-                                                                  "type",
-                                                                  "tab"
-                                                                ]
-                                                              }
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "content"
-                                                          ]
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "tabs"
-                                                      ],
-                                                      "description": "Tabbed interface where users switch between content sections. Only one tab visible at a time."
-                                                    },
-                                                    {
-                                                      "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19/properties/tabs/properties/content/items"
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "reviews"
-                                                        },
-                                                        "reviews": {
-                                                          "type": "object",
-                                                          "properties": {
-                                                            "minimumRating": {
-                                                              "type": "number",
-                                                              "minimum": 1,
-                                                              "maximum": 5
-                                                            }
-                                                          }
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "reviews"
-                                                      ],
-                                                      "description": "Displays restaurant reviews from Google Reviews."
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "menu"
-                                                        },
-                                                        "menu": {
-                                                          "type": "object",
-                                                          "properties": {}
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "menu"
-                                                      ],
-                                                      "description": "Displays restaurant menu items organized by categories."
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "photos"
-                                                        },
-                                                        "photos": {
-                                                          "type": "object",
-                                                          "properties": {}
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "photos"
-                                                      ],
-                                                      "description": "Displays photo gallery from restaurant's Google Business profile."
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "locationInfo"
-                                                        },
-                                                        "locationInfo": {
-                                                          "type": "object",
-                                                          "properties": {
-                                                            "name": {
-                                                              "type": "string"
-                                                            },
-                                                            "address": {
-                                                              "type": "string"
-                                                            },
-                                                            "phone": {
-                                                              "type": "string"
-                                                            },
-                                                            "website": {
-                                                              "type": "string"
-                                                            }
-                                                          }
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "locationInfo"
-                                                      ],
-                                                      "description": "Displays restaurant location info with clickable phone and website links."
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "hours"
-                                                        },
-                                                        "hours": {
-                                                          "type": "object",
-                                                          "properties": {
-                                                            "operatingHours": {
-                                                              "type": "object",
-                                                              "properties": {
-                                                                "Mon": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "type": "object",
-                                                                    "properties": {
-                                                                      "startLocalHour": {
-                                                                        "type": "number"
-                                                                      },
-                                                                      "startLocalMinute": {
-                                                                        "type": "number"
-                                                                      },
-                                                                      "endLocalHour": {
-                                                                        "type": "number"
-                                                                      },
-                                                                      "endLocalMinute": {
-                                                                        "type": "number"
-                                                                      }
-                                                                    },
-                                                                    "required": [
-                                                                      "startLocalHour",
-                                                                      "startLocalMinute",
-                                                                      "endLocalHour",
-                                                                      "endLocalMinute"
-                                                                    ]
-                                                                  }
-                                                                },
-                                                                "Tue": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
-                                                                  }
-                                                                },
-                                                                "Wed": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
-                                                                  }
-                                                                },
-                                                                "Thu": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
-                                                                  }
-                                                                },
-                                                                "Fri": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
-                                                                  }
-                                                                },
-                                                                "Sat": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
-                                                                  }
-                                                                },
-                                                                "Sun": {
-                                                                  "type": "array",
-                                                                  "items": {
-                                                                    "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25/properties/hours/properties/operatingHours/properties/Mon/items"
-                                                                  }
-                                                                }
-                                                              },
-                                                              "required": [
-                                                                "Mon",
-                                                                "Tue",
-                                                                "Wed",
-                                                                "Thu",
-                                                                "Fri",
-                                                                "Sat",
-                                                                "Sun"
-                                                              ]
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "operatingHours"
-                                                          ]
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "hours"
-                                                      ]
-                                                    },
-                                                    {
-                                                      "type": "object",
-                                                      "properties": {
-                                                        "id": {
-                                                          "type": "string"
-                                                        },
-                                                        "type": {
-                                                          "type": "string",
-                                                          "const": "video"
-                                                        },
-                                                        "video": {
-                                                          "type": "object",
-                                                          "properties": {
-                                                            "src": {
-                                                              "type": "string"
-                                                            },
-                                                            "poster": {
-                                                              "type": "string"
-                                                            },
-                                                            "autoplay": {
-                                                              "type": "boolean"
-                                                            },
-                                                            "loop": {
-                                                              "type": "boolean"
-                                                            },
-                                                            "muted": {
-                                                              "type": "boolean"
-                                                            },
-                                                            "controls": {
-                                                              "type": "boolean"
-                                                            },
-                                                            "maxHeight": {
-                                                              "type": "number"
-                                                            },
-                                                            "maxWidth": {
-                                                              "type": "number"
-                                                            },
-                                                            "objectFit": {
-                                                              "type": "string",
-                                                              "enum": [
-                                                                "contain",
-                                                                "cover",
-                                                                "fill",
-                                                                "none",
-                                                                "scale-down"
-                                                              ]
-                                                            },
-                                                            "borderRadius": {
-                                                              "type": "number"
-                                                            }
-                                                          },
-                                                          "required": [
-                                                            "src"
-                                                          ]
-                                                        }
-                                                      },
-                                                      "required": [
-                                                        "id",
-                                                        "type",
-                                                        "video"
-                                                      ],
-                                                      "description": "Displays a video from an S3 URL. Supports autoplay, loop, muted, and controls options."
-                                                    }
-                                                  ]
-                                                }
-                                              },
-                                              "required": [
-                                                "enumerator",
-                                                "item"
-                                              ]
-                                            }
-                                          },
-                                          "required": [
-                                            "id",
-                                            "type",
-                                            "listItem"
-                                          ]
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "items"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "id",
-                                  "type",
-                                  "list"
-                                ]
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/19/properties/tabs/properties/content/items"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/21"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/22"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/23"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/24"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/25"
-                              },
-                              {
-                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item/anyOf/26"
-                              }
-                            ],
-                            "description": "Renderable widget schemas. Each renderable has an 'id' field that must be a UUID. When creating new renderables, generate new UUIDs. When editing existing renderables, preserve their existing IDs."
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "rootConfig": {
-                                "type": "object",
-                                "properties": {
-                                  "paddingTop": {
-                                    "type": "number"
-                                  },
-                                  "paddingBottom": {
-                                    "type": "number"
-                                  },
-                                  "paddingX": {
-                                    "type": "number"
-                                  },
-                                  "background": {
-                                    "anyOf": [
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "type": {
-                                            "type": "string",
-                                            "const": "color"
-                                          },
-                                          "color": {
-                                            "type": "object",
-                                            "properties": {
-                                              "color": {
-                                                "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/0/properties/text/properties/segments/items/properties/color"
-                                              }
-                                            },
-                                            "required": [
-                                              "color"
-                                            ]
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "color"
-                                        ]
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "type": {
-                                            "type": "string",
-                                            "const": "image"
-                                          },
-                                          "image": {
-                                            "type": "object",
-                                            "properties": {
-                                              "src": {
-                                                "type": "string"
-                                              }
-                                            },
-                                            "required": [
-                                              "src"
-                                            ]
-                                          }
-                                        },
-                                        "required": [
-                                          "type",
-                                          "image"
-                                        ]
-                                      }
-                                    ]
-                                  }
                                 }
-                              }
+                              ]
+                            },
+                            {
+                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item"
                             }
-                          }
-                        ]
+                          ]
+                        },
+                        "targetId": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "type": "string",
+                          "enum": [
+                            "before",
+                            "after",
+                            "inside"
+                          ]
+                        }
                       },
-                      {
-                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item"
-                      }
-                    ]
-                  },
-                  "targetId": {
-                    "type": "string"
-                  },
-                  "position": {
-                    "type": "string",
-                    "enum": [
-                      "before",
-                      "after",
-                      "inside"
-                    ]
-                  }
-                },
-                "required": [
-                  "type",
-                  "renderable"
-                ]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "const": "update"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "renderable": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0"
+                      "required": [
+                        "type",
+                        "renderable"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "update"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "renderable": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0"
+                            },
+                            {
+                              "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item"
+                            }
+                          ]
+                        }
                       },
-                      {
-                        "$ref": "#/properties/edit/anyOf/0/properties/renderable/anyOf/0/allOf/0/anyOf/17/properties/list/properties/items/items/properties/listItem/properties/item"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "type",
-                  "id",
-                  "renderable"
-                ]
+                      "required": [
+                        "type",
+                        "id",
+                        "renderable"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "delete"
+                        },
+                        "id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "move"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "targetId": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "$ref": "#/properties/edits/items/properties/edit/anyOf/0/properties/position"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id",
+                        "targetId",
+                        "position"
+                      ]
+                    }
+                  ]
+                }
               },
-              {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "const": "delete"
-                  },
-                  "id": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "type",
-                  "id"
-                ]
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "const": "move"
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "targetId": {
-                    "type": "string"
-                  },
-                  "position": {
-                    "$ref": "#/properties/edit/anyOf/0/properties/position"
-                  }
-                },
-                "required": [
-                  "type",
-                  "id",
-                  "targetId",
-                  "position"
-                ]
-              }
-            ]
+              "required": [
+                "screenId",
+                "edit"
+              ]
+            },
+            "description": "Applied in order, each validated against the draft as the earlier edits leave it"
           }
         },
         "required": [
           "draftId",
-          "screenId",
-          "edit"
+          "edits"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -7960,9 +7972,6 @@ export const CLI_MANIFEST: CliManifest = {
                     "promoId"
                   ]
                 }
-              },
-              "isReservationFunnel": {
-                "type": "boolean"
               },
               "isCreating": {
                 "type": "boolean"
