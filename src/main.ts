@@ -41,7 +41,7 @@ Commands:
   logout                                Delete stored tokens
   whoami                                Show the logged-in user and their organizations
   tools [--domain <domain>] [--include-descriptions] [--json]\n                                        List available tools, one line each
-  describe <tool>                       Show a tool's description and input JSON schema
+  describe <tool> [<tool> ...]          Show each tool's description and input JSON schema
   call <tool> [options]                 Invoke a tool
   skill list                            List the skills you can install
   skill install <name> [options]        Install a skill into ~/.claude/skills/<name>
@@ -251,24 +251,36 @@ function commandTools(args: ParsedArgs): void {
     return [`${domain} (${list.length})`, ...rows].join("\n");
   });
   const legend = includeDescriptions
-    ? "r = read, w = write. Inputs: feast describe <tool>."
-    : "r = read, w = write. Inputs: feast describe <tool>. Full text: --include-descriptions.";
+    ? "r = read, w = write. Inputs: feast describe <tool> [<tool> ...]."
+    : "r = read, w = write. Inputs: feast describe <tool> [<tool> ...]. Full text: --include-descriptions.";
   console.info([legend, ...sections].join("\n\n"));
 }
 
+function describeTool(tool: CliTool): string {
+  return [
+    `Tool: ${tool.id}`,
+    `Domain: ${tool.domain}`,
+    `Type: ${tool.type}`,
+    `Procedure: ${tool.path.join(".")}`,
+    "",
+    tool.description,
+    "",
+    "Input schema:",
+    JSON.stringify(toolInputJsonSchema(tool), null, 2),
+  ].join("\n");
+}
+
 function commandDescribe(args: ParsedArgs): void {
-  const toolId = args.positional[0];
-  if (toolId == null) {
-    throw new Error("Usage: feast describe <tool>");
+  const toolIds = [...new Set(args.positional)];
+  if (toolIds.length === 0) {
+    throw new Error("Usage: feast describe <tool> [<tool> ...]");
   }
-  const tool = requireTool(toolId);
-  console.info(`Tool: ${tool.id}`);
-  console.info(`Domain: ${tool.domain}`);
-  console.info(`Type: ${tool.type}`);
-  console.info(`Procedure: ${tool.path.join(".")}`);
-  console.info(`\n${tool.description}`);
-  console.info("\nInput schema:");
-  console.info(JSON.stringify(toolInputJsonSchema(tool), null, 2));
+  const tools = toolIds.map(requireTool);
+  if (tools.length === 1) {
+    console.info(describeTool(tools[0]!));
+    return;
+  }
+  console.info(tools.map((tool) => `=== ${tool.id} ===\n${describeTool(tool)}`).join("\n\n"));
 }
 
 function requireTool(toolId: string): CliTool {
@@ -276,10 +288,15 @@ function requireTool(toolId: string): CliTool {
   if (tool != null) {
     return tool;
   }
-  const available = buildToolRegistry()
-    .map((candidate) => `  ${candidate.id}`)
-    .join("\n");
-  throw new Error(`Unknown tool "${toolId}". Available tools:\n${available}`);
+  const needle = toolId.toLowerCase();
+  const suggestions = buildToolRegistry()
+    .map((candidate) => candidate.id)
+    .filter((id) => id.toLowerCase().includes(needle) || needle.includes(id.toLowerCase()));
+  const hint =
+    suggestions.length > 0
+      ? `Did you mean: ${suggestions.join(", ")}?`
+      : "Run `feast tools` for the list of tools.";
+  throw new Error(`Unknown tool "${toolId}". ${hint}`);
 }
 
 function readCallInput(args: ParsedArgs): unknown {

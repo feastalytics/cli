@@ -6,128 +6,69 @@ description: >-
 
 # Feast
 
-Drive the Feastalytics platform with the same tool surface the in-app AI agent uses: campaigns, automations, funnels, members program, creator sourcing, Meta ads, texting, onboarding and data queries. Every tool hits the production API as the logged-in user.
-
-The live tool list is the source of truth for *which* tools exist and *what* they accept. Read it at runtime rather than assuming, because the tool set grows as new endpoints are tagged. Your job is to pick the right tool, scope it to the right organization, and hand it valid input.
+Drive Feastalytics with the same tools the in-app agent uses. Every tool hits the production API as the logged-in user. The live tool list is the source of truth for which tools exist and what they accept, so read it rather than assuming.
 
 ## Two ways in
 
-The same tools, with the same names and inputs, are reachable two ways. Use whichever this session has.
+The same tools, names and inputs, over either transport. Use whichever this session has.
 
 | | MCP server | `feast` CLI |
 |---|---|---|
-| How you know you have it | Tools such as `listCampaigns` and `listOrganizations` are in your tool list | `feast tools` runs |
-| See every tool | Your tool list | `feast tools`: one line per tool, grouped by domain. Read it whole once rather than grepping it; `--include-descriptions` prints the full text |
-| One tool's input schema | Its entry in your tool list | `feast describe <tool>` |
-| A schema that says "Named type X. Call describeSchema…" | Call `describeSchema` with `{ "names": ["X"] }` | `feast describe <tool>` prints it in full |
-| Which organizations you can act on | `listOrganizations` | `feast whoami` |
-| Choose the organization | The `organizationId` argument on each call | `--org <organizationId>` |
-| Call a tool | Call it directly with its input | `feast call <tool> --org <id> --input '<json>'` (or `--input-file <path>`) |
+| You have it when | `listCampaigns` and `listOrganizations` are in your tool list | `feast tools` runs |
+| Every tool | Your tool list | `feast tools`: one line per tool by domain. Read it whole once; don't grep it or rerun it |
+| Input schemas | Each tool's entry; `describeSchema` with `{ "names": ["X"] }` for a named type | `feast describe <tool> [<tool> ...]`, several in one call, named types inlined |
+| Your organizations | `listOrganizations` | `feast whoami` |
+| Call a tool | Pass `organizationId` and the input | `feast call <tool> --org <id> --input '<json>'` (or `--input-file <path>`) |
 
-Setting either one up (installing the CLI, logging in, connecting the MCP server) is in `references/setup.md`. Some environments hand you either one already connected and pinned to one organization; if a read such as `listCampaigns` works, you are set.
+Setup (installing, logging in, connecting MCP) is in `references/setup.md`. If a read such as `listCampaigns` works, you are set. The workflow files name tools and JSON input only; translate with this table.
 
-The rest of this skill and every workflow file names tools and their JSON input only. Translate to your transport with the table above.
+On the CLI, results are JSON on stdout and the `Acting on organization ...` line goes to stderr. Never merge stderr into a parser (`2>&1 | python3`, `2>&1 > file.json`); pipe stdout alone. Before a mutation runs, stderr also prints `Running <tool> against "<restaurant>"`: check it names the restaurant you meant.
 
-## The core loop: discover, read the schema, call
+## Before each call
 
-Don't guess tool names or input shapes. Before calling an unfamiliar tool, read its input schema (and, over MCP, `describeSchema` for any named type it points to). The schema tells you the exact required fields. The CLI also validates input locally before sending, so a bad payload fails with the field named; over MCP the server validates and returns the same kind of error as a tool error.
+- **Read the schema of a tool before its first use**, and describe every tool a step needs in one call. Schemas don't change during a session, so don't describe a tool twice. Never guess names, fields or ids: look ids up with the matching list or read tool.
+- **Ask only what the schema can take.** Before a clarifying question, check the tool has a field for the answer.
+- **Name the organization.** Resolve a named org to its id. With one org it is used automatically; with several, an unscoped call is refused with the list, so confirm which one. Acting on the wrong restaurant is worse than asking.
+- **Read before you write**: the campaign row before `updateCampaign`, the flows before creating one. `references/domains.md` explains fields the schema doesn't.
 
-That schema is also the boundary for what's worth asking the user about. Before sending a clarifying question, check whether the tool you're about to call has a field for the answer. A question about something the schema can't accept (a limit, a repeat rule, anything not in the schema) wastes a message and never gets used. Only ask about what the call in front of you can actually configure.
+## Writes run immediately
 
-## Organizations: never let the API guess
+Reads are safe. Mutations change production the moment they run: the CLI never asks, an MCP client may not, and nothing undoes them. Get the user's intent straight first, and show the exact text before sending any message. These reach the real world:
 
-Most tools act on one organization, and which one must be explicit. Acting on the wrong restaurant is worse than stopping to ask.
+- `sendText` texts one person now. Approving or denying a visit (`updateCreatorVisit`) or deciding a submission (`updateCreatorSubmission` with `decision`) texts the creator; preview with `dryRun: true` or skip with `sideEffects: false` / `decision.skipApprovalText`.
+- `createInfluencerPayout` (CLI only) charges the organization's card. `awardReward` grants a real reward, and a retry grants a second. `inviteUser` sends an email.
+- Publishing a campaign puts it live; pricing a recurring promotion creates Stripe products. Activating a Meta campaign spends budget (`publishAds` needs `confirm: true`). Saving automation edits changes what guests receive.
 
-- If the user names an organization, resolve it to its id (`listOrganizations` or `feast whoami`) and pass that id.
-- If the user belongs to exactly one, it is used automatically.
-- If they belong to several and you don't say which, the call is refused with a list of their organizations rather than silently picking one. Show the list and confirm which one they mean.
+## Workflows: read the file before a multi-step task
 
-## Reads vs. writes
-
-Query tools (listing, describing, reading) are safe and read-only; over MCP they carry a read-only hint. Mutation tools (create, update, clone, delete, apply, send) change production data.
-
-- Always name the organization explicitly for a mutation.
-- On the CLI, a mutation prints the organization's name to stderr before it runs (`Acting on organization <id> as <ROLE>`), so a wrong `--org` shows up as the wrong restaurant. Read that line.
-- **Nothing asks twice.** The CLI has no confirmation prompt, and an MCP client may or may not ask the user to approve a call depending on its settings. A mutation runs the moment it is called, and nothing undoes it.
-
-That last point matters most for the tools that reach the real world rather than just the database:
-
-- `sendText` texts a guest or creator immediately, one person per call, with no scheduling and no undo.
-- Approving or denying a creator visit (`updateCreatorVisit`) or deciding a submission (`updateCreatorSubmission` with a `decision`) texts that person. `updateCreatorVisit` can preview its texts with `dryRun: true` or skip them with `sideEffects: false`; `updateCreatorSubmission` can skip its approval text with `decision.skipApprovalText`.
-- Paying a creator's bonus (`createInfluencerPayout`, on the CLI) charges the organization's card. Over the MCP server that tool is not available, so the client pays bonuses in the dashboard.
-- `awardReward` puts a real reward in a member's wallet pass, and a retried call grants a second one.
-- `inviteUser` sends a real email.
-- Publishing a campaign puts it live, and pricing a recurring promotion creates real Stripe products.
-- Activating a Meta campaign spends real ad budget.
-- Saving automation edits changes what guests receive.
-
-Treat those as irreversible, and get the user's intent straight *before* the call. For a text, show the user the exact message and get their go-ahead first. The one schema-level gate is `publishAds`, which requires `confirm: true` in its input; that is you confirming, not anyone asking.
-
-Prefer reading before writing: `listCampaigns` to find the right `campaignId` and the campaign's row (`queryData` on `attribution.campaign`) before `updateCampaign`, or `listAutomationFlows` before creating a flow.
-
-## Building good input
-
-Input is a JSON object built from the tool's schema. When a tool references another entity by id (a campaign id, location id, flow id), look that id up first with the relevant list or read tool rather than inventing it.
-
-For the domain meaning of fields (how automations chain, what a funnel screen contains, how offers are structured), consult `references/domains.md` when the schema alone isn't enough.
-
-## Workflows
-
-Many tasks are multi-step and have a required ordering the app normally enforces. The most important rule: **automations live inside flows. Always find a flow (`listAutomationFlows`) or create one (`createAutomationFlow`) before adding automations; never create an orphan automation.** The same "resolve the parent and ids first, then act" shape recurs across campaigns, funnels and offers.
-
-**Before acting on any multi-step task, read the workflow file for it.** Each one carries the required call ordering and the domain rules that make the result good rather than merely valid, and neither is in the tool schemas. Read it first; don't reconstruct the sequence from tool descriptions.
+Workflow files carry the call order and the rules that make a result good, and neither is in the schemas. Pick the matching row and read that one file. Read another only when the task reaches that step: a file stays in context for the rest of the session and is re-read on every turn.
 
 | Doing this | Read |
 |---|---|
 | Creating, cloning or configuring a campaign; promotions | `references/workflows/campaigns.md` |
-| Anything touching automations: creating, editing, simulating, promoting a draft | `references/workflows/automations.md` |
-| Editing funnel screens, applying a funnel template, staging a new screen | `references/workflows/funnels.md` |
-| Writing guest-facing Meta ad copy (`adCopy`) | `references/workflows/ad-copy-guest.md` |
-| Writing creator-recruitment ad copy (`recruitmentAdCopy`) | `references/workflows/ad-copy-creator.md` |
+| Automations: creating, editing, simulating, saving a draft. Automations always live in a flow: find one (`listAutomationFlows`) or create one first | `references/workflows/automations.md` |
+| Funnel screens, funnel templates, staging a new screen | `references/workflows/funnels.md` |
+| Guest-facing Meta ad copy (`adCopy`) | `references/workflows/ad-copy-guest.md` |
+| Creator-recruitment ad copy (`recruitmentAdCopy`) | `references/workflows/ad-copy-creator.md` |
 | Publishing, pausing, budgeting or diagnosing Meta ads | `references/workflows/ads.md` |
-| Changing who a live ad set reaches (location, age, audiences); creating lookalike, website, engagement or customer-list audiences | `references/workflows/meta-targeting-audiences.md` |
-| Making a video ad with Bevyl: prompt, generate, edit, approve | `references/workflows/videos.md` |
-| Creator sourcing: approving applicants, reviewing content, creatives, payouts, reimbursements, texting a creator | `references/workflows/creators.md` |
-| Members-program rewards, granting a reward to one member; reading or saving the wallet pass configuration | `references/workflows/members-program.md` |
-| Working the onboarding taskboard; brand identity; phone, media, invites, billing | `references/workflows/onboarding.md` |
-| Searching guests and members, texting a guest back, querying anything through the data catalog | `references/workflows/guests.md` |
+| Who a live ad set reaches; lookalike, website, engagement or customer-list audiences | `references/workflows/meta-targeting-audiences.md` |
+| A Bevyl video ad: prompt, generate, edit, approve | `references/workflows/videos.md` |
+| Creator sourcing: applicants, content, creatives, payouts, reimbursements, texting a creator | `references/workflows/creators.md` |
+| Members-program rewards, granting one; the wallet pass configuration | `references/workflows/members-program.md` |
+| The onboarding taskboard; brand identity; phone, media, invites, billing | `references/workflows/onboarding.md` |
+| Guests and members, texting a guest back, any data catalog query | `references/workflows/guests.md` |
 
-Every row names one file, and one file is the whole answer for that row. Pick the row that matches what you're doing and read only it. The two ad-copy rows are mutually exclusive: you are writing to guests or to creators, never both in one piece of copy.
+The two ad-copy files are exclusive: copy is for guests or for creators, never both. A new campaign usually spans campaigns, automations and funnels. For a question rather than a change, read the one file the table names and answer from it.
 
-Read more than one file when a task genuinely spans steps. A new campaign usually means `campaigns.md` plus `automations.md` and `funnels.md`. Read each one as you reach that step rather than gathering them up front: a file stays in context for the rest of the session, so one you open speculatively is re-read on every later turn.
-
-When the ask is a question rather than a change (where something lives, what a field means, which link to send), read the single file the table names and answer from it.
-
-Some things have no tool: firing an automation at a live member, pass image generation, ad-copy generation (write it yourself), and publishing creator content as partnership ads. The workflow files say which. Don't fabricate a call for a tool that isn't in the tool list; tell the user that part has to be done in the dashboard.
+Some things have no tool (firing an automation at a live member, pass image generation, ad-copy generation, partnership ads); the workflow files say which. Never fabricate a call: say that part is done in the dashboard.
 
 ## Link to what you touched
 
-Work you do through these tools lands somewhere in the product, and a link is a cheap thing to offer, so offer them freely. After a turn where you created, changed or published something, close with a short markdown list: where to see it, where to edit it, where to preview it. Opening the thing is usually the next step anyway. When someone asks where a thing lives or how to set it up, lead with the link rather than click-by-click directions.
-
-**You don't know these URLs. Read `references/links.md` before you write one.** The dashboard's shape is not the one you'd extrapolate from the guest-facing links elsewhere in this skill, so a URL that looks obviously right is the exact case to check. A wrong link is worse than no link: it looks authoritative and 404s.
-
-That file has the dashboard routes with their panel and tab names, the guest-facing pages on the organization's own subdomain, the preview route that completes the funnel draft loop, and which query params suppress analytics versus merely tagging a visit as a preview.
-
-## Worked example
-
-User: "add a Free Dessert reward members can redeem for 100 points in my Plum Vietnamese org."
-
-1. Find the organization's id with `listOrganizations` (CLI: `feast whoami`), unless you were given it.
-2. Read the `createMembersProgramReward` schema to learn the input shape (`type: "item"` vs `type: "name"`).
-3. Read the existing rewards with `queryData` (`membersProgram.reward`, then their items in `interface.catalogItem`) to avoid duplicating an existing reward or catalog item.
-4. Call `createMembersProgramReward` with `{ "type": "name", "name": "Free Dessert", "pointsCost": 100 }`.
-
-On the CLI, step 4 is:
-
-```bash
-feast call createMembersProgramReward --org <organizationId> --input '{"type":"name","name":"Free Dessert","pointsCost":100}'
-```
-
-The pattern generalizes: identify the organization, learn the tool, resolve any referenced ids, then act.
+After you create, change or publish something, close with links to see, edit or preview it, and lead with a link when asked where something lives. **Read `references/links.md` before writing any URL.** Dashboard routes don't follow the shape you'd guess, and a wrong link looks authoritative and 404s.
 
 ## When something fails
 
-- Not logged in, session expired, `feast` isn't on PATH, or the MCP server asks you to authenticate: `references/setup.md`.
-- "You belong to multiple organizations": pick one and pass it explicitly (see Organizations above).
-- The input doesn't match the schema: re-read the tool's schema (and any named type) and fix the named fields.
-- A tool you expected isn't in the tool list: don't fabricate a call; tell the user that part has to be done in the dashboard.
+- Not logged in, `feast` not on PATH, or MCP asks you to authenticate: `references/setup.md`.
+- "You belong to multiple organizations": pass one explicitly.
+- Input doesn't match the schema: the error names the fields; fix those rather than guessing again.
+- An expected tool isn't listed: don't fabricate it; it's a dashboard task.

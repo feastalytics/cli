@@ -46,7 +46,7 @@ than 1.5s and fails silently offline.
 feast login <username>          # authenticate once; tokens cached in ~/.config/feast-cli
 feast whoami                    # your user + every organization (with names) you can act on
 feast tools                     # one line per tool, grouped by domain (--include-descriptions for full text)
-feast describe <tool>           # a tool's description + input JSON schema
+feast describe <tool> [<tool>]  # each tool's description + input JSON schema, several at once
 feast call <tool> --org <organizationId> --input '<json>'
 feast logout
 ```
