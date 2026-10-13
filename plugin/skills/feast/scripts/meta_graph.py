@@ -6,6 +6,7 @@ META_ACCESS_TOKEN and is sent only in the Authorization header, never in the
 URL, so a vault placeholder works.
 
   check        token owner, ad account terms of service, pixels
+  pixel        create the ad account's pixel (dataset) when it has none
   geo          search Meta's location keys (cities, zips, regions)
   targeting    get / set an ad set's targeting (set reads, merges, writes)
   audience     lookalike, website, engagement, customer-list, status, delete
@@ -126,6 +127,31 @@ def cmd_check(args):
         out["customAudienceTermsAccepted"] = (account.get("tos_accepted") or {}).get("custom_audience_tos") == 1
         out["pixels"] = pixels
     emit(out)
+
+
+
+
+PIXEL_FIELDS = "id,name,last_fired_time"
+
+
+def cmd_pixel_create(args):
+    account = act(args.ad_account)
+    summary = graph("GET", account, {"fields": "id,name"})
+    existing = get_all(f"{account}/adspixels", {"fields": PIXEL_FIELDS, "limit": 50})
+    if existing:
+        names = ", ".join(f"{p.get('name')} ({p.get('id')})" for p in existing)
+        raise GraphError(
+            f"{account} already has a pixel: {names}. Use it. A second dataset splits a funnel's "
+            "events between pixels and cannot be deleted."
+        )
+    if args.dry_run:
+        emit({"dryRun": True, "adAccount": summary, "wouldCreate": {"name": args.name}})
+        return
+    created = graph("POST", f"{account}/adspixels", body={"name": args.name})
+    if not created.get("id"):
+        raise GraphError(f"Meta returned no pixel id for {account}: {json.dumps(created)}")
+    pixel = graph("GET", created["id"], {"fields": PIXEL_FIELDS})
+    emit({"created": pixel, "adAccount": summary})
 
 
 
@@ -477,6 +503,16 @@ def build_parser():
     check = commands.add_parser("check", help="token owner, and with --account: terms, pixels")
     check.add_argument("--account", help="ad account id (act_ optional)")
     check.set_defaults(run=cmd_check)
+
+    pixel = commands.add_parser("pixel", help="the ad account's pixel (dataset)").add_subparsers(dest="action", required=True)
+    pcreate = pixel.add_parser(
+        "create",
+        help="create the account's pixel when it has none (refuses when one exists: a second splits a funnel's events and cannot be deleted)",
+    )
+    pcreate.add_argument("--ad-account", required=True, help="ad account id (act_ optional)")
+    pcreate.add_argument("--name", required=True, help='pixel name, e.g. "Todays Pizza pixel"')
+    pcreate.add_argument("--dry-run", action="store_true", help="show what would be created, write nothing")
+    pcreate.set_defaults(run=cmd_pixel_create)
 
     geo = commands.add_parser("geo", help="search location keys for --cities / --zips / --regions")
     geo.add_argument("query")

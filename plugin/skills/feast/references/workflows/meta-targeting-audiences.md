@@ -11,6 +11,7 @@ Reach for a script only for a step no tool covers. The tools check that the ad a
 | Find the ad account, Page, Instagram account | `ads_get_assets` with `include: ["adAccounts", "pages"]`, then `instagramAccounts` (see `ads.md`) |
 | List existing custom audiences, check one is ready | `ads_get_assets` with `include: ["customAudiences"]` and the `adAccountId`. Skip any with `isReadyForUse: false` |
 | Find the pixel | `ads_get_assets` with `include: ["datasets"]` |
+| Create the pixel when the account has none | script: `pixel create` (the steps are in `ads.md`, "The pixel: find it, or create one") |
 | Find ad sets and their ids | `ads_get_ad_entities` with `level: "adSet"` |
 | Rename, re-budget, pause or turn on | `ads_update_entity` |
 | Targeting on a **new** ad set | `planAds` / `publishAds` (the template's targeting variables, including `customAudienceIds` and `excludedCustomAudienceIds`) |
