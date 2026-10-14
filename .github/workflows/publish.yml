@@ -56,11 +56,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Build ChatGPT plugin archives
-        run: npm run build:chatgpt
-
       - name: Publish to npm
         run: npm publish --provenance --access public
+
+      # After publish: prepublishOnly re-runs tsup, whose clean step empties dist/.
+      - name: Build ChatGPT plugin archives
+        run: npm run build:chatgpt
 
       # Only reached if the publish succeeded — now make it official.
       - name: Push bump commit + tag
