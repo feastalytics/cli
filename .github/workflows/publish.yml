@@ -56,6 +56,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build ChatGPT plugin archives
+        run: npm run build:chatgpt
+
       - name: Publish to npm
         run: npm publish --provenance --access public
 
@@ -66,4 +69,4 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ steps.bump.outputs.version }}" --title "${{ steps.bump.outputs.version }}" --generate-notes
+        run: gh release create "${{ steps.bump.outputs.version }}" --title "${{ steps.bump.outputs.version }}" --generate-notes dist/feastalytics-skill.zip dist/feastalytics-chatgpt.zip
