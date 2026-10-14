@@ -941,6 +941,31 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "deleteMarketingImport",
+      "domain": "data",
+      "summary": "Delete one marketing data import and every day it wrote that no later import has overwritten.",
+      "description": "Delete one marketing data import and every day it wrote that no later import has overwritten. The next nightly impact model run drops the series. Days a later import rewrote stay with that later import.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "impact",
+        "deleteMarketingImport"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "importId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "deleteMedia",
       "domain": "core",
       "summary": "Delete an uploaded media file by its S3 key.",
@@ -2008,6 +2033,96 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "importMarketingData",
+      "domain": "data",
+      "summary": "Import daily marketing numbers (ads spend, email or SMS sends) as impact model factors.",
+      "description": "Import daily marketing numbers (ads spend, email or SMS sends) as impact model factors. One call carries one channel (ADS, EMAIL, SMS) and one metric for it: ADS takes SPEND in dollars, CLICKS, IMPRESSIONS or ATTRIBUTED_REVENUE in dollars; EMAIL takes SENT, DELIVERED, OPENED or CLICKED; SMS takes SENT, DELIVERED or CLICKED. Rows are {date: YYYY-MM-DD, value, eventDate?, label?}; eventDate is the day a send promotes (a tasting, a party) so the model credits that day. Two rows on one date are summed. Re-importing a date overwrites it. Leave locationId out for an org-wide series such as an email list; pass a revenue location id to attach the series to one location. The next nightly impact model run picks the series up; ads spend is measured like a Meta campaign, email and SMS as owned sends.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "impact",
+        "importMarketingData"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "ADS",
+              "EMAIL",
+              "SMS"
+            ]
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "SPEND",
+              "CLICKS",
+              "IMPRESSIONS",
+              "ATTRIBUTED_REVENUE",
+              "SENT",
+              "DELIVERED",
+              "OPENED",
+              "CLICKED"
+            ]
+          },
+          "locationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 127
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1000000000
+                },
+                "eventDate": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 255
+                }
+              },
+              "required": [
+                "date",
+                "value"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 5000
+          }
+        },
+        "required": [
+          "channel",
+          "metric",
+          "rows"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "listAdTemplates",
       "domain": "ads",
       "summary": "List the Meta ad templates you can publish.",
@@ -2256,6 +2371,39 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "campaignId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "listMarketingImports",
+      "domain": "data",
+      "summary": "List the marketing data imports (ads, email, SMS) an organization has made.",
+      "description": "List the marketing data imports (ads, email, SMS) an organization has made. Each row is one upload batch with its channel, label, location, day count and date range. Days a later import overwrote stay counted on the batch that first wrote them.",
+      "type": "query",
+      "path": [
+        "api",
+        "impact",
+        "listMarketingImports"
+      ],
+      "inputJsonSchema": {
+        "anyOf": [
+          {
+            "not": {}
+          },
+          {
+            "type": "object",
+            "properties": {
+              "channel": {
+                "type": "string",
+                "enum": [
+                  "ADS",
+                  "EMAIL",
+                  "SMS"
+                ]
+              }
+            }
+          }
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
