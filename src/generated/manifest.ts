@@ -27,8 +27,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "ads_get_ad_entities",
       "domain": "ads",
-      "summary": "Read the campaigns, ad sets or ads on an ad account; ads include their creative.",
-      "description": "Read the campaigns, ad sets or ads on an ad account; ads include their creative. level is what comes back; a campaignId, adSetId or adId narrows to that object or its children (an id below level is an error). includeChildren nests the tree in one call: each campaign gets adSets and each ad set gets ads, fetched with the same scope, effectiveStatus and limit (the limit applies per level, so narrow with campaignId for a complete tree). Before an addAds publish, copy a live ad's settings as the ads workflow describes.",
+      "summary": "Read the campaigns, ad sets or ads on an ad account; ad sets include targeting, ads their creative.",
+      "description": "Read the campaigns, ad sets or ads on an ad account; ad sets include targeting, ads their creative. An ad set's targeting is Meta's live spec as is: a radius is geo_locations.custom_locations[].radius in its distance_unit, a whole country is geo_locations.countries, plus age_min, age_max, custom_audiences and excluded_custom_audiences. level is what comes back; a campaignId, adSetId or adId narrows to that object or its children (an id below level is an error). includeChildren nests the tree in one call: each campaign gets adSets and each ad set gets ads, fetched with the same scope, effectiveStatus and limit (the limit applies per level, so narrow with campaignId for a complete tree). Before an addAds publish, copy a live ad's settings as the ads workflow describes.",
       "type": "query",
       "path": [
         "api",
@@ -876,7 +876,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
       "summary": "Render the five recruitment ad images for a location from fixed templates.",
-      "description": "Render the five recruitment ad images for a location from fixed templates. They use its own photo, logo and food credit, with no AI image generation. Pass campaignId (or offerId) so they attach to its recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. foodCredit is in dollars (25 means $25): the location's foodCreditAmountCents (queryData creators.creatorBoardConfig, configId = locationId) divided by 100.",
+      "description": "Render the five recruitment ad images for a location from fixed templates. They use its own photo, logo, food credit and creator bonus, with no AI image generation. They attach to the campaign's recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. The food credit and bonus come from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId), so change those first to change the amounts shown.",
       "type": "mutation",
       "path": [
         "api",
@@ -886,18 +886,12 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": {
         "type": "object",
         "properties": {
-          "offerId": {
-            "type": "string"
-          },
           "campaignId": {
-            "type": "string"
+            "type": "string",
+            "description": "The campaign whose recruitment offer the creatives attach to."
           },
           "locationId": {
             "type": "string"
-          },
-          "foodCredit": {
-            "type": "number",
-            "minimum": 1
           },
           "photoUrls": {
             "type": "array",
@@ -911,7 +905,7 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "locationId",
-          "foodCredit"
+          "campaignId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -1069,7 +1063,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "generateVideo",
       "domain": "videos",
       "summary": "Start a Bevyl ad video for a campaign from its b-roll.",
-      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll it every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (exportUrl is the MP4) or failed (pipelineStatusMessage says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. Optional: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl).",
+      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll it every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (exportUrl is the MP4) or failed (pipelineStatusMessage says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. voiceover without voiceoverProfileId uses getVideoPromptOptions' defaultVoiceoverProfileId; pick another from its voices. no-audio without backgroundMusicTrackId makes a silent video, so pick a track from its backgroundMusic unless silence is wanted. Optional: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl).",
       "type": "mutation",
       "path": [
         "api",
@@ -1609,25 +1603,200 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
-      "id": "getCreatorConversation",
-      "domain": "creators",
-      "summary": "One creator's full SMS thread, newest first.",
-      "description": "One creator's full SMS thread, newest first. userId from listCreatorConversations. Read this before summarizing an exchange or drafting a reply, since the queue only has the last message. Empty when the creator has no phone number. Reply with sendText and {type:'creator', userId}.",
+      "id": "getConversation",
+      "domain": "messaging",
+      "summary": "One person's texts and activity as a single timeline, newest first.",
+      "description": "One person's texts and activity as a single timeline, newest first. participant is {type, <type>: {id, eventTypes?}} with the ids sendText takes: {type:'guest', guest:{serialNumber}} from searchUsers, {type:'creator', creator:{userId}} from listCreatorConversations, {type:'unknownSender', unknownSender:{phoneNumber}}. Texts come inline under receivedText.text / sentText.text; every other event is a ref {object, id} to read with queryData (creators.creatorVisitApplication, creators.creatorSubmission, creators.creatorPayout, interface.order, core.guest) or leave as is. eventTypes ['receivedText','sentText'] for the conversation alone; omit it for the whole history. describeSchema ConversationEvent lists every kind. Page with cursor (limit up to 500); direction 'asc' for oldest first; since/until bound the times. unread says whether the newest inbound text still needs a reply. Read-only: reply with sendText and the same participant ids.",
       "type": "query",
       "path": [
         "api",
-        "users",
-        "getInfluencerMessages"
+        "conversations",
+        "get"
       ],
       "inputJsonSchema": {
         "type": "object",
         "properties": {
-          "userId": {
+          "participant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "guest"
+                  },
+                  "guest": {
+                    "type": "object",
+                    "properties": {
+                      "serialNumber": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "eventTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "receivedText",
+                            "sentText",
+                            "optOut",
+                            "textRead",
+                            "autoReplyDraft",
+                            "scan",
+                            "order",
+                            "checkout",
+                            "reservationCreated",
+                            "passCreated",
+                            "passUpdated",
+                            "passRegistered",
+                            "passDeleted",
+                            "rewardAwarded",
+                            "rewardRedeemed",
+                            "rewardVoided",
+                            "rewardExpiration",
+                            "offerExpired",
+                            "fbAttribution",
+                            "influencerAttribution",
+                            "tiktokAttribution",
+                            "googleAttribution",
+                            "miscAttribution",
+                            "referralAttribution",
+                            "customerInference",
+                            "subscriptionStarted",
+                            "subscriptionEnded",
+                            "subscriptionInvoice",
+                            "formSubmission"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "serialNumber"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "guest"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "creator"
+                  },
+                  "creator": {
+                    "type": "object",
+                    "properties": {
+                      "userId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "eventTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "receivedText",
+                            "sentText",
+                            "optOut",
+                            "textRead",
+                            "creatorApplied",
+                            "creatorApplicationDecided",
+                            "creatorVisit",
+                            "creatorVisitOutcome",
+                            "creatorReachOut",
+                            "creatorInviteRedeemed",
+                            "creatorEscalation",
+                            "creatorPendingReply",
+                            "creatorSubmission",
+                            "creatorSubmissionDecided",
+                            "creatorPayout",
+                            "creatorPayoutPaid",
+                            "creatorAvailability"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "userId"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "creator"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "unknownSender"
+                  },
+                  "unknownSender": {
+                    "type": "object",
+                    "properties": {
+                      "phoneNumber": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "eventTypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "receivedText",
+                            "sentText",
+                            "optOut",
+                            "textRead"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "phoneNumber"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "unknownSender"
+                ]
+              }
+            ]
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 100
+          },
+          "cursor": {
             "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "default": "desc"
           }
         },
         "required": [
-          "userId"
+          "participant"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -1729,66 +1898,6 @@ export const CLI_MANIFEST: CliManifest = {
           "scope",
           "fileName",
           "fileType"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "getMemberConversation",
-      "domain": "membersProgram",
-      "summary": "One member's SMS thread and activity, newest first.",
-      "description": "One member's SMS thread and activity, newest first. serialNumber from searchUsers. Pass eventTypes ['sentText','receivedText'] for the conversation; unfiltered it returns the member's whole history, unpaginated. Read-only: reply with sendText.",
-      "type": "query",
-      "path": [
-        "api",
-        "loyalty",
-        "app",
-        "listEventsForUser"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "serialNumber": {
-            "type": "string"
-          },
-          "eventTypes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "receivedText",
-                "sentText",
-                "customerInference",
-                "scan",
-                "passCreated",
-                "passUpdated",
-                "order",
-                "rewardAwarded",
-                "rewardRedeemed",
-                "rewardExpiration",
-                "offerExpired",
-                "fbAttribution",
-                "influencerAttribution",
-                "tiktokAttribution",
-                "googleAttribution",
-                "miscAttribution",
-                "referralAttribution",
-                "passRegistered",
-                "passDeleted",
-                "checkout",
-                "reservationCreated",
-                "optOut",
-                "subscriptionStarted",
-                "subscriptionEnded",
-                "subscriptionInvoice",
-                "formSubmission",
-                "autoReplyDraft"
-              ]
-            }
-          }
-        },
-        "required": [
-          "serialNumber"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -1985,8 +2094,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getVideoPromptOptions",
       "domain": "videos",
-      "summary": "The building blocks for a generateVideo prompt for one campaign.",
-      "description": "The building blocks for a generateVideo prompt for one campaign. defaultPrompt is what Content Studio would send with its default picks: plain text in four sections (Campaign, Concept, Creative direction, CTA), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from, and direction options a suggestedFormat to pass as generateVideo's format. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. Reads Feastalytics only.",
+      "summary": "The building blocks for a generateVideo prompt for one campaign, with the audio choices.",
+      "description": "The building blocks for a generateVideo prompt for one campaign, with the audio choices. defaultPrompt is what Content Studio would send with its default picks: plain text in four sections (Campaign, Concept, Creative direction, CTA), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from, and direction options a suggestedFormat to pass as generateVideo's format. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. voices lists Bevyl's voiceover voices ({ id, name, description, isCustom }; the voiceover format uses defaultVoiceoverProfileId unless generateVideo gets a voiceoverProfileId) and backgroundMusic its tracks ({ id, title, moods, durationSeconds }) for generateVideo's backgroundMusicTrackId. Both lists are empty when Bevyl's catalog is unavailable. Trending sounds are not listed.",
       "type": "query",
       "path": [
         "api",
@@ -2155,7 +2264,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "listCreatorConversations",
       "domain": "creators",
       "summary": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue.",
-      "description": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue. hasUnread rows need a human. Each row has the last message, visitLocationIds and a derived visitStatus. Read a thread with getCreatorConversation (userId); reply with sendText and {type:'creator', userId}.",
+      "description": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue. hasUnread rows need a human. Each row has the last message, visitLocationIds and a derived visitStatus. Read a thread with getConversation and {type:'creator', creator:{userId}}; reply with sendText and {type:'creator', userId}.",
       "type": "query",
       "path": [
         "api",
@@ -8810,6 +8919,33 @@ export const CLI_MANIFEST: CliManifest = {
             "properties": {
               "skipAcknowledged": {
                 "type": "boolean"
+              }
+            }
+          },
+          "aiConnector": {
+            "type": "object",
+            "properties": {
+              "ai": {
+                "type": "string",
+                "maxLength": 60
+              },
+              "pos": {
+                "type": "string",
+                "maxLength": 60
+              },
+              "callFirst": {
+                "type": "boolean"
+              },
+              "website": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "posDeferredAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "bookedCallAt": {
+                "type": "string"
               }
             }
           },
