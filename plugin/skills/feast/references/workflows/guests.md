@@ -1,28 +1,38 @@
 # Guests and members
 
-`searchUsers` returns a page of recent member activity: one event per member, each carrying the member's `serialNumber` plus the event (type, time, related object).
+Every guest tool takes the member's `serialNumber`. Find it with `queryData` on `core.guest`:
 
-- Filter with `query` (free-text name), `eventTypes` (e.g. `sentText`, `receivedText`, `scan`, `order`, `rewardAwarded`, `rewardRedeemed`, `checkout`, the `*Attribution` types), `campaignId`, `progressMinBound`/`progressMaxBound` (visit-count range), `isUnread: true` (members with unanswered inbound texts; it overrides any broader `eventTypes`), `orderBy` (ASC|DESC by event time).
-- Paginate with `limit` (default 100) and `cursor` (pass back the `cursor` from the previous call; an undefined cursor means no more pages).
+- By name: filter `$firstName` or `$lastName` with `{ "string": "jan", "match": "IN" }`, a case-insensitive contains that also matches names that sound alike. `EQ` is an exact match.
+- By phone: filter `$phoneNumber` with `{ "string": "5551234", "match": "ENDS_WITH" }` on the last digits, so the stored format doesn't matter.
+- Ask for `args.fields: ["serialNumber", "firstName", "lastName", "phoneNumber", "optIn"]`. More than one row means ask the user which guest they mean.
+  ```json
+  { "schemaName": "core", "objectTypeName": "guest",
+    "commands": [{ "type": "filter", "filter": { "$firstName": { "string": "jan", "match": "IN" } } }],
+    "args": { "limit": 20, "fields": ["serialNumber", "firstName", "lastName", "phoneNumber", "optIn"] } }
+  ```
 
-`getConversation` with `{ "participant": { "type": "guest", "guest": { "serialNumber": "...", "eventTypes": [...] } } }` loads the member's timeline, newest first: the pair to `searchUsers`. Creators use the same tool with `{ "type": "creator", "creator": { "userId": "..." } }`, the `userId` from `queryData` `creators.creatorVisitApplication`. Texts come inline (`receivedText.text`, `sentText.text`: body, direction, status, who or what sent it); every other event is a `ref` `{ "object", "id" }` you can read with `queryData` (an `order` is `interface.order`, a `passCreated` is `core.guest`, a creator visit is `creators.creatorVisitApplication`) or leave as is. `eventTypes: ["receivedText","sentText"]` is the SMS thread, adding `scan`/`order`/`checkout`/`rewardAwarded`/`rewardRedeemed` interleaves what happened between the messages, and omitting it returns the whole history. Pages of `limit` (default 100, up to 500) with `cursor`; `direction: "asc"` for oldest first; `since`/`until` bound the times. `unread.count > 0` means the newest inbound text has no reply and nobody marked it read. `describeSchema ConversationEvent` lists every kind and its `ref.object`.
+Recent guest activity is `queryData` on `events.userEvent`: filter `$eventType` with `{ "strings": ["receivedText"] }` (or `scan`, `order`, `rewardAwarded`, and the other kinds) and order by `eventTime` `DESC`; each row has `serialNumber`, `eventTime` and `displayText` (the body, for texts). `texting.textMessage` has the texts themselves with `direction`, `body`, `dateCreated` and `serialNumber`.
+
+`getConversation` with `{ "participant": { "type": "guest", "guest": { "serialNumber": "...", "eventTypes": [...] } } }` loads the member's timeline, newest first. Creators use the same tool with `{ "type": "creator", "creator": { "userId": "..." } }`, the `userId` from `queryData` `creators.creatorVisitApplication`. Texts come inline (`receivedText.text`, `sentText.text`: body, direction, status, who or what sent it); every other event is a `ref` `{ "object", "id" }` you can read with `queryData` (an `order` is `interface.order`, a `passCreated` is `core.guest`, a creator visit is `creators.creatorVisitApplication`) or leave as is. `eventTypes: ["receivedText","sentText"]` is the SMS thread, adding `scan`/`order`/`checkout`/`rewardAwarded`/`rewardRedeemed` interleaves what happened between the messages, and omitting it returns the whole history. Pages of `limit` (default 100, up to 500) with `cursor`; `direction: "asc"` for oldest first; `since`/`until` bound the times. `unread.count > 0` means the newest inbound text has no reply and nobody marked it read. `describeSchema ConversationEvent` lists every kind and its `ref.object`.
 
 ## Replying to a guest
 
 `sendText` sends one SMS from the organization's texting number, the reply you would otherwise type into the dashboard chat. It is high priority and sent immediately: **no scheduling, no undo, no bulk form**.
 
-1. Find the guest with `searchUsers` (`isUnread: true` is the "waiting on a reply" queue) and read the thread with `getConversation` (`eventTypes: ["receivedText","sentText"]`) before drafting anything. Never guess a phone number: the participant is always named by id.
+1. Find the guest's `serialNumber` with `queryData` on `core.guest` (above) and read the thread with `getConversation` (`eventTypes: ["receivedText","sentText"]`) before drafting anything. Never guess a phone number: the participant is always named by id.
 2. **Show the user the exact text and get their go-ahead before sending.** Drafting is yours; sending is theirs to approve, every time.
 3. `sendText` with `{ "to": { "type": "guest", "serialNumber": "..." }, "message": "..." }`. Guest messages render `{{firstName}}`-style handlebars (the same ones text automations use) before sending. `mediaUrls` attaches up to 10 images.
 4. **One recipient per call.** To reach several guests, call once per guest, each with its own confirmed text; for a broadcast, use a text blast automation instead.
 
 The recipient is always named by id, never by phone number, and the type must match the thread: a guest who is also a creator exists in both tables, so use `type: "guest"` for a member thread and `type: "creator"` for a creator thread (see `creators.md`). A guest who doesn't belong to the organization is a 404, not a text to a stranger.
 
+No tool lists the guests waiting on a reply yet. To find whom to answer, take recent `receivedText` rows from `events.userEvent`, then check each guest's `getConversation` `unread`.
+
 **Unknown senders.** Someone who texted the organization's number without being a member or a creator is answered with `{ "type": "unknownSender", "phoneNumber": "+1..." }`. It is the only form that takes a raw number, and it is refused unless that number has an inbound message to the organization on file, so it can only answer, never cold-text.
 
 ## Everything else: the data catalog
 
-`searchUsers` answers "recent activity, one event per member." Every other read question about guests (and about orders, menu items, texts, reservations, creator visits, payouts) goes through **`describeData` → `queryData`**:
+Every other read question about guests (and about orders, menu items, texts, reservations, creator visits, payouts) goes through **`describeData` → `queryData`**:
 
 - `describeData` with no arguments returns the index of every queryable object type plus the full query grammar; narrowed by schema or object type it returns full column detail (type, enum values, nullability, description, and the link names `pivot` and `join` take). Pass `includeGrammar: false` once you have the grammar. Never guess column names.
 - `queryData` is read-only and always scoped to the organization; never filter on organizationId yourself.
