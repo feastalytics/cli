@@ -1606,7 +1606,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "getConversation",
       "domain": "messaging",
       "summary": "One person's texts and activity as a single timeline, newest first.",
-      "description": "One person's texts and activity as a single timeline, newest first. participant is {type, <type>: {id, eventTypes?}} with the ids sendText takes: {type:'guest', guest:{serialNumber}} from searchUsers, {type:'creator', creator:{userId}} with userId from queryData creators.creatorVisitApplication, {type:'unknownSender', unknownSender:{phoneNumber}}. Texts come inline under receivedText.text / sentText.text; every other event is a ref {object, id} to read with queryData (creators.creatorVisitApplication, creators.creatorSubmission, creators.creatorPayout, interface.order, core.guest) or leave as is. eventTypes ['receivedText','sentText'] for the conversation alone; omit it for the whole history. describeSchema ConversationEvent lists every kind. Page with cursor (limit up to 500); direction 'asc' for oldest first; since/until bound the times. unread says whether the newest inbound text still needs a reply. Read-only: reply with sendText and the same participant ids.",
+      "description": "One person's texts and activity as a single timeline, newest first. participant is {type, <type>: {id, eventTypes?}} with the ids sendText takes: {type:'guest', guest:{serialNumber}} from searchUsers, {type:'creator', creator:{userId}} from listCreatorConversations, {type:'unknownSender', unknownSender:{phoneNumber}}. Texts come inline under receivedText.text / sentText.text; every other event is a ref {object, id} to read with queryData (creators.creatorVisitApplication, creators.creatorSubmission, creators.creatorPayout, interface.order, core.guest) or leave as is. eventTypes ['receivedText','sentText'] for the conversation alone; omit it for the whole history. describeSchema ConversationEvent lists every kind. Page with cursor (limit up to 500); direction 'asc' for oldest first; since/until bound the times. unread says whether the newest inbound text still needs a reply. Read-only: reply with sendText and the same participant ids.",
       "type": "query",
       "path": [
         "api",
@@ -2259,6 +2259,19 @@ export const CLI_MANIFEST: CliManifest = {
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
+    },
+    {
+      "id": "listCreatorConversations",
+      "domain": "creators",
+      "summary": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue.",
+      "description": "Every creator's SMS thread with its unread state: the 'who is waiting on a reply' queue. hasUnread rows need a human. Each row has the last message, visitLocationIds and a derived visitStatus. Read a thread with getConversation and {type:'creator', creator:{userId}}; reply with sendText and {type:'creator', userId}.",
+      "type": "query",
+      "path": [
+        "api",
+        "users",
+        "listInfluencersWithTexts"
+      ],
+      "inputJsonSchema": null
     },
     {
       "id": "listFunnelDrafts",
@@ -2964,7 +2977,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "sendText",
       "domain": "messaging",
       "summary": "Send one SMS to one person from the organization's number, immediately, with no undo or scheduling.",
-      "description": "Send one SMS to one person from the organization's number, immediately, with no undo or scheduling. Show the user the exact text and get a go-ahead first. `to` is an id, never a phone number: {type:'guest', serialNumber} from searchUsers, or {type:'creator', userId} with userId from queryData creators.creatorVisitApplication. Use the type that matches the thread; a creator with a pass exists as both. {type:'unknownSender', phoneNumber} only answers a number that texted in.",
+      "description": "Send one SMS to one person from the organization's number, immediately, with no undo or scheduling. Show the user the exact text and get a go-ahead first. `to` is an id, never a phone number: {type:'guest', serialNumber} from searchUsers, or {type:'creator', userId} from listCreatorConversations. Use the type that matches the thread; a creator with a pass exists as both. {type:'unknownSender', phoneNumber} only answers a number that texted in.",
       "type": "mutation",
       "path": [
         "api",
