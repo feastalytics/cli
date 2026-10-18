@@ -56,7 +56,7 @@ Workflow files carry the call order and the rules that make a result good, and n
 | A Bevyl video ad: prompt, generate, edit, approve | `references/workflows/videos.md` |
 | Creator sourcing: applicants, content, creatives, payouts, reimbursements, texting a creator | `references/workflows/creators.md` |
 | Members-program rewards, granting one; the wallet pass configuration | `references/workflows/members-program.md` |
-| The onboarding taskboard; brand identity; phone, media, invites, billing | `references/workflows/onboarding.md` |
+| The onboarding taskboard; brand identity (reading a restaurant's website with `inspectWebsite`); phone, media, invites, billing | `references/workflows/onboarding.md` |
 | Guests and members, texting a guest back, any data catalog query | `references/workflows/guests.md` |
 
 The two ad-copy files are exclusive: copy is for guests or for creators, never both. A new campaign usually spans campaigns, automations and funnels. For a question rather than a change, read the one file the table names and answer from it.
