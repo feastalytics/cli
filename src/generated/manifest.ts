@@ -2117,6 +2117,34 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "inspectWebsite",
+      "domain": "core",
+      "summary": "Read a restaurant's name, locations, links, logo and brand colors from its website.",
+      "description": "Read a restaurant's name, locations, links, logo and brand colors from its website. Opens the site in a real browser and returns each location's address, phone, hours and menu links, the social, reservation and ordering links, the logo, and brand colors and fonts (picked from a screenshot, brand.source 'screenshot', or from CSS alone when that fails, brand.source 'css'). Takes about 10 to 20 seconds. Changes nothing for the restaurant; the only thing saved is a screenshot of the home page, returned as screenshotUrl, a public Feast file that can be texted as mediaUrl so the customer can check what was read. Confirm what you found with the customer, then copy the logo with getMediaUploadUrl sourceUrl, match each location with searchGooglePlaces, and save with createBrandIdentity or updateBrandIdentity (brand colors go in theme.palette, fonts in theme.typography.fontFamily). A logo with onDarkBackground true is light-colored and disappears on white.",
+      "type": "query",
+      "path": [
+        "api",
+        "layoutEngine",
+        "config",
+        "inspectWebsite"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2000,
+            "description": "The website address, with or without https://"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "listAdTemplates",
       "domain": "ads",
       "summary": "List the Meta ad templates you can publish.",
@@ -8730,6 +8758,273 @@ export const CLI_MANIFEST: CliManifest = {
       "inputJsonSchema": {
         "type": "object",
         "properties": {
+          "growthIntake": {
+            "type": "object",
+            "properties": {
+              "schemaVersion": {
+                "type": "number",
+                "const": 1
+              },
+              "sourceRevision": {
+                "type": "string",
+                "const": "0a3f55c75a60be768da05fca0313080baccfdfd3"
+              },
+              "funnel": {
+                "type": "string",
+                "enum": [
+                  "feast",
+                  "remy"
+                ]
+              },
+              "stepId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-zA-Z\\d_-]+$"
+              },
+              "answers": {
+                "type": "object",
+                "properties": {
+                  "website": {
+                    "allOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048,
+                        "format": "uri"
+                      }
+                    ]
+                  },
+                  "restaurantType": {
+                    "type": "string",
+                    "enum": [
+                      "qsr",
+                      "fast-casual",
+                      "full-service",
+                      "fine-dining"
+                    ]
+                  },
+                  "goal": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "benefits": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "analytics",
+                        "content",
+                        "ads"
+                      ]
+                    },
+                    "maxItems": 3
+                  },
+                  "growthBarrier": {
+                    "type": "string",
+                    "enum": [
+                      "time",
+                      "content",
+                      "roi",
+                      "results",
+                      "awareness",
+                      "direction",
+                      "scaling"
+                    ]
+                  },
+                  "check": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
+                  },
+                  "profitStatus": {
+                    "type": "string",
+                    "enum": [
+                      "losing",
+                      "break-even",
+                      "profitable",
+                      "unsure"
+                    ]
+                  },
+                  "cacStatus": {
+                    "type": "string",
+                    "enum": [
+                      "known",
+                      "unknown"
+                    ]
+                  },
+                  "cac": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
+                  },
+                  "focusMode": {
+                    "type": "string",
+                    "enum": [
+                      "specific",
+                      "business",
+                      "recommend"
+                    ]
+                  },
+                  "selectedDays": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Mon",
+                        "Tue",
+                        "Wed",
+                        "Thu",
+                        "Fri",
+                        "Sat",
+                        "Sun"
+                      ]
+                    },
+                    "maxItems": 7
+                  },
+                  "session": {
+                    "type": "string",
+                    "enum": [
+                      "Breakfast",
+                      "Lunch",
+                      "Dinner",
+                      "Late night"
+                    ]
+                  },
+                  "offer": {
+                    "type": "string",
+                    "enum": [
+                      "all-offers",
+                      "mostly-offers",
+                      "both",
+                      "mostly-awareness",
+                      "none"
+                    ]
+                  },
+                  "contentReadiness": {
+                    "type": "string",
+                    "enum": [
+                      "plenty",
+                      "some",
+                      "social-only",
+                      "none",
+                      "unsure"
+                    ]
+                  },
+                  "reservations": {
+                    "type": "string",
+                    "enum": [
+                      "opentable",
+                      "other",
+                      "none"
+                    ]
+                  },
+                  "involvement": {
+                    "type": "string",
+                    "enum": [
+                      "lead",
+                      "together",
+                      "approve"
+                    ]
+                  },
+                  "budget": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
+                  },
+                  "originalAdBudget": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
+                  },
+                  "pos": {
+                    "type": "string",
+                    "enum": [
+                      "Toast",
+                      "Square",
+                      "Clover",
+                      "Other",
+                      "Unsure"
+                    ]
+                  },
+                  "creatorCoverage": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4
+                  },
+                  "coverage": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/creatorCoverage"
+                  },
+                  "reason": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "More local awareness",
+                        "A steady stream of content",
+                        "Less coordination"
+                      ]
+                    },
+                    "maxItems": 3
+                  },
+                  "credit": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
+                  },
+                  "approval": {
+                    "type": "string",
+                    "enum": [
+                      "I’ll review them",
+                      "A teammate will review"
+                    ]
+                  },
+                  "menuUrl": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/website/allOf/1"
+                  },
+                  "assetsUrl": {
+                    "$ref": "#/properties/growthIntake/properties/answers/properties/website/allOf/1"
+                  }
+                }
+              },
+              "routing": {
+                "type": "object",
+                "properties": {
+                  "planRoute": {
+                    "type": "string",
+                    "enum": [
+                      "full",
+                      "remy",
+                      "analyzer"
+                    ]
+                  },
+                  "paidBudgetConfirmed": {
+                    "type": "boolean"
+                  },
+                  "requestedBenefits": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/growthIntake/properties/answers/properties/benefits/items"
+                    },
+                    "maxItems": 3
+                  },
+                  "transferredFrom": {
+                    "type": "string",
+                    "enum": [
+                      "feast",
+                      "remy"
+                    ]
+                  },
+                  "paidRecruitmentNeedsConfirmation": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "required": [
+              "schemaVersion",
+              "sourceRevision",
+              "funnel",
+              "stepId",
+              "answers"
+            ]
+          },
           "completionStatus": {
             "type": "object",
             "properties": {
