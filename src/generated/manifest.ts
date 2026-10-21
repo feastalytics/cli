@@ -9279,6 +9279,18 @@ export const CLI_MANIFEST: CliManifest = {
               }
             }
           },
+          "contentLibrary": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
           "dataAudit": {
             "type": "object",
             "properties": {
