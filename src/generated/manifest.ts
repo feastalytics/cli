@@ -281,7 +281,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "approveVideo",
       "domain": "videos",
       "summary": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey.",
-      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one exportUrl plays), so pass it only to approve an earlier run: runs are latestRun.runId and exports[].runId on videos.video in queryData. Fails until that run's export is ready (pipelineStatus ready). Only once the human has watched the video and approved it.",
+      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one exportUrl plays), so pass it only to approve an earlier run: runs are latestRun.runId and exports[].runId on videos.video in queryData. On a Video Editor 2 video a run is a version: runId defaults to the current version, and getVideoEditor lists the others. Fails until that run's export is ready (pipelineStatus ready). Only once the human has watched the video and approved it.",
       "type": "mutation",
       "path": [
         "api",
@@ -346,10 +346,50 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "chooseVideoScript",
+      "domain": "videos",
+      "summary": "Pick one of a Video Editor 2 video's story options and cut its first version.",
+      "description": "Pick one of a Video Editor 2 video's story options and cut its first version. Only while pipelineStatus is choosingScript; scriptId is one of editor.scripts from getVideoEditor. lines optionally replaces the story's spoken lines in order, one per beat, and must have exactly as many entries as the story has beats (keep ElevenLabs v3 audio tags like [excited] if you want them). Claude shortlists shots from the labelled footage, Jev picks and checks them, ElevenLabs voices the lines and the video is rendered: pipelineStatus moves to cutting, then ready (or failed). Returns the new version's id as generation.runId. Spends generation credits, so only with the human's explicit approval of the story.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "chooseScript"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scriptId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 600
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "projectId",
+          "scriptId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "createAutomationFlow",
       "domain": "automations",
       "summary": "Create an automation flow: the container grouping automations by a shared trigger.",
-      "description": "Create an automation flow: the container grouping automations by a shared trigger. Automations always live inside a flow, so find one with listAutomationFlows before creating another.",
+      "description": "Create an automation flow: the container grouping automations by a shared trigger. Automations always live inside a flow, so find one with listAutomationFlows before creating another. For a text blast (one scheduled send to everyone who matches its conditions) create the flow with `triggerType: \"textBlast\"`, then stage its automation with stageAutomationEdits.",
       "type": "mutation",
       "path": [
         "api",
@@ -1062,8 +1102,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "generateVideo",
       "domain": "videos",
-      "summary": "Start a Bevyl ad video for a campaign from its b-roll.",
-      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll it every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (exportUrl is the MP4) or failed (pipelineStatusMessage says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. voiceover without voiceoverProfileId uses getVideoPromptOptions' defaultVoiceoverProfileId; pick another from its voices. no-audio without backgroundMusicTrackId makes a silent video, so pick a track from its backgroundMusic unless silence is wanted. Optional: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl).",
+      "summary": "Start an ad video for a campaign from its b-roll.",
+      "description": "Start an ad video for a campaign from its b-roll. It uses the organization's video editor: Video Editor 2 when it has that on, else Bevyl. Returns { projectId, pipelineStatus } at once. Spends generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not), up to 5000 characters. Optional for both: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line). Video Editor 2: prompt is required and is the brief Claude writes three story options from; it always uses every labelled b-roll clip of the organization and ignores brollKeys; voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). Later edits go through requestVideoEdit with changes (exact timeline edits) or a note. Bevyl: the server uploads the clips, waits for Bevyl to process them, creates the video and exports it; Bevyl reads prompt verbatim. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. voiceover without voiceoverProfileId uses getVideoPromptOptions' defaultVoiceoverProfileId; pick another from its voices. no-audio without backgroundMusicTrackId makes a silent video, so pick a track from its backgroundMusic unless silence is wanted. Also optional: backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl). For either editor, poll every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (on Bevyl exportUrl is the MP4; on Video Editor 2 getVideoEditor returns the MP4 links) or failed (pipelineStatusMessage says why).",
       "type": "mutation",
       "path": [
         "api",
@@ -1135,6 +1175,11 @@ export const CLI_MANIFEST: CliManifest = {
               "minLength": 1
             },
             "maxItems": 100
+          },
+          "voiceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
           }
         },
         "required": [
@@ -2092,6 +2137,31 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getVideoEditor",
+      "domain": "videos",
+      "summary": "Read one video's story options, versions, current timeline, MP4 links and cost.",
+      "description": "Read one video's story options, versions, current timeline, MP4 links and cost. Pass the projectId from generateVideo. On a Video Editor 2 video (engine editor2), editor.scripts are the story options to pick from with chooseVideoScript while pipelineStatus is choosingScript (each {scriptId, angle, why, beats: [{beat, line, footage}]}); editor.versions lists every version with renderStatus (queued, planning, voicing, rendering, ready or failed), what changed and its costMicros; editor.current is the version shown now, with its timeline (lines with lineId, role, text, highlight and shots with shotId and segmentId: the ids requestVideoEdit changes refer to) and timing (when each line, shot and caption plays, in seconds); editor.cost is the total and the split by step, in millionths of a dollar. A version is a run: runId, exports[].runId and approvedRunId are version ids, and exports[].url is a link to the version's MP4 that works for an hour. Bevyl videos return the pipeline, exports and latestRun only, with editor null. Poll it about every 30 seconds while a version is working.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "getProject"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "projectId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "getVideoPromptOptions",
       "domain": "videos",
       "summary": "The building blocks for a generateVideo prompt for one campaign, with the audio choices.",
@@ -2451,6 +2521,53 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "listVideoFootage",
+      "domain": "videos",
+      "summary": "List the labelled b-roll segments a Video Editor 2 shot can use.",
+      "description": "List the labelled b-roll segments a Video Editor 2 shot can use. Each is {segmentId, clipKey, subject, shotType, item, cleanStartSec, cleanEndSec, frameSec, thumb}: segmentId is what insertLine, shot and addShot changes in requestVideoEdit take, item is the menu item it shows ({value, label}, or null), the clean range has no faces or added text, and thumb is a cell of the clip's contact sprite ({spriteUrl, cellIndex, cols, cellWidth, cellHeight, count}, or null). Filter with subject (food, drink, ambience, exterior, staff or signage) and item (a menu item's value or part of its label). limit defaults to 60, at most 300; total is how many matched.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "listEditorFootage"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "default": 60
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "listVideoVoices",
+      "domain": "videos",
+      "summary": "List the ElevenLabs voices a Video Editor 2 video can use.",
+      "description": "List the ElevenLabs voices a Video Editor 2 video can use. Each is {voiceId, name, category, labels, previewUrl}; previewUrl is a short sample to listen to. Pass a voiceId to generateVideo, or to requestVideoEdit as a voice change. configured is false (and voices empty) when the server has no ElevenLabs key.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "listEditorVoices"
+      ],
+      "inputJsonSchema": null
+    },
+    {
       "id": "planAds",
       "domain": "ads",
       "summary": "Resolve an ad template into the exact campaigns, ad sets and ads publishAds would create.",
@@ -2785,8 +2902,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "requestVideoEdit",
       "domain": "videos",
-      "summary": "Ask Bevyl to remake a video with one change.",
-      "description": "Ask Bevyl to remake a video with one change. For example \"make the hook punchier\" or \"use the patio shots first\". Send only the change in note (600 characters at most); Bevyl builds from the video's current state. On-screen text cannot be moved or resized. Starts a new run: the video's pipelineStatus (queryData videos.video) moves back to rendering, then ready with the new export. Spends Bevyl generation credits, so only with the human's explicit approval.",
+      "summary": "Ask for a new version of a video with one change.",
+      "description": "Ask for a new version of a video with one change. Spends generation credits, so only with the human's explicit approval. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new run. On a Bevyl video, send only the change in note (600 characters at most), for example \"make the hook punchier\" or \"use the patio shots first\"; Bevyl builds from the video's current state, on-screen text cannot be moved or resized, and changes is refused. The video's pipelineStatus (queryData videos.video) moves back to rendering, then ready with the new export. On a Video Editor 2 video (engine editor2), send changes, a note, or both, once its first version is ready. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (headline lines and end card text) and voice (voiceId from listVideoVoices, or settings). Segment ids come from listVideoFootage. An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude. Only the touched lines are voiced again and the video is re-rendered; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed.",
       "type": "mutation",
       "path": [
         "api",
@@ -2805,14 +2922,370 @@ export const CLI_MANIFEST: CliManifest = {
             "minLength": 1,
             "maxLength": 600
           },
+          "changes": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "line"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 600
+                        },
+                        "highlight": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 4
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "hook",
+                            "tension",
+                            "turn",
+                            "offer",
+                            "reason",
+                            "proof",
+                            "payoff",
+                            "cta"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "insertLine"
+                    },
+                    "afterLineId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "line": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "$ref": "#/properties/changes/items/anyOf/0/properties/set/properties/role"
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 600
+                        },
+                        "highlight": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 4,
+                          "default": []
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "text"
+                      ]
+                    },
+                    "segmentIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 4
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "afterLineId",
+                    "line"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "removeLine"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "moveLine"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    },
+                    "afterLineId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId",
+                    "afterLineId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "shot"
+                    },
+                    "shotId": {
+                      "type": "string"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "segmentId": {
+                          "type": "string"
+                        },
+                        "srcInSec": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "crop": {
+                          "type": "object",
+                          "properties": {
+                            "cx": {
+                              "type": "number"
+                            },
+                            "cy": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "cx",
+                            "cy"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "shotId",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "addShot"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    },
+                    "segmentId": {
+                      "type": "string"
+                    },
+                    "srcInSec": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId",
+                    "segmentId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "removeShot"
+                    },
+                    "shotId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "shotId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "overlay"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "headline": {
+                          "type": "object",
+                          "properties": {
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 40
+                              },
+                              "minItems": 1,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "lines"
+                          ]
+                        },
+                        "endCard": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string",
+                              "maxLength": 30
+                            },
+                            "subtitle": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          },
+                          "required": [
+                            "title"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "voice"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "voiceId": {
+                          "type": "string"
+                        },
+                        "settings": {
+                          "type": "object",
+                          "properties": {
+                            "stability": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "similarityBoost": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "style": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1
+                            },
+                            "speed": {
+                              "type": "number",
+                              "minimum": 0.7,
+                              "maximum": 1.2
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
+                }
+              ]
+            },
+            "maxItems": 50
+          },
           "requestId": {
             "type": "string",
             "format": "uuid"
           }
         },
         "required": [
+          "projectId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "restoreVideoVersion",
+      "domain": "videos",
+      "summary": "Make an earlier version of a Video Editor 2 video current again as a new version.",
+      "description": "Make an earlier version of a Video Editor 2 video current again as a new version. Pass the projectId and the versionId to bring back (editor.versions from getVideoEditor; it must have finished rendering). The new version copies that version's timeline and is only re-rendered: no new script, shot pick or voice. Returns the new version's id as generation.runId; poll getVideoEditor until its renderStatus is ready.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "restoreVersion"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "versionId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
           "projectId",
-          "note"
+          "versionId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -3742,7 +4215,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "stageAutomationEdits",
       "domain": "automations",
       "summary": "Stage automation changes on a draft; the default way to change automations.",
-      "description": "Stage automation changes on a draft; the default way to change automations. Pass create/update/delete operations, applied in order, for a human to preview before they go live. On the first call, omit draftId and pass `title` (what the reviewer sees) to start a new draft; then pass the returned draftId on every later stageAutomationEdits, getAutomationDraft, simulateAutomationDraft and saveAutomationEdits call. Omitting draftId again starts a separate draft, and drafts cannot be listed, so keep the draftId. `title` is ignored when draftId is passed. A `create` op needs a flowId from listAutomationFlows or createAutomationFlow. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up, check it with simulateAutomationDraft and share `previewUrls` for sign-off. An `update` replaces each field it sends, so send the full current `actions` array.",
+      "description": "Stage automation changes on a draft; the default way to change automations. Pass create/update/delete operations, applied in order, for a human to preview before they go live. On the first call, omit draftId and pass `title` (what the reviewer sees) to start a new draft; then pass the returned draftId on every later stageAutomationEdits, getAutomationDraft, simulateAutomationDraft and saveAutomationEdits call. Omitting draftId again starts a separate draft, and drafts cannot be listed, so keep the draftId. `title` is ignored when draftId is passed. A `create` op needs a flowId from listAutomationFlows or createAutomationFlow. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up, check it with simulateAutomationDraft and share `previewUrls` for sign-off. An `update` replaces each field it sends, so send the full current `actions` array. A text blast is an automation with `isTextBlast: true` and empty `triggers` in a flow whose `triggerType` is `textBlast`: `conditions` choose who gets it, `time` must be `absoluteDelay` with a `utcDay` date, and every text it sends must include STOP in all caps (e.g. \"Text STOP to opt out\"), or the edits are refused.",
       "type": "mutation",
       "path": [
         "api",
@@ -8362,7 +8835,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateCreatorSubmission",
       "domain": "creators",
       "summary": "Decide on a creator's content submission or record its meal reimbursement as paid.",
-      "description": "Decide on a creator's content submission or record its meal reimbursement as paid. Pass `decision`, `reimbursementPaid`, or both. Send at least one. submissionId and receiptTotalCents from queryData creators.creatorSubmission.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
+      "description": "Decide on a creator's content submission or record its meal reimbursement as paid. Pass `decision`, `reimbursementPaid`, or both. Send at least one. submissionId and receiptTotalCents from queryData creators.creatorSubmission.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text, approvalMessage replaces the default approval text with your own, sent as written); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
       "type": "mutation",
       "path": [
         "api",
@@ -8396,6 +8869,10 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "skipApprovalText": {
                 "type": "boolean"
+              },
+              "approvalMessage": {
+                "type": "string",
+                "minLength": 1
               },
               "feedbackMessage": {
                 "type": "string"
@@ -9280,6 +9757,18 @@ export const CLI_MANIFEST: CliManifest = {
             }
           },
           "contentLibrary": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "welcomeDocument": {
             "type": "object",
             "properties": {
               "isComplete": {
