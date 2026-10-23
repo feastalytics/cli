@@ -47,7 +47,7 @@ Workflow files carry the call order and the rules that make a result good, and n
 | Doing this | Read |
 |---|---|
 | Creating, cloning or configuring a campaign; promotions | `references/workflows/campaigns.md` |
-| Automations: creating, editing, simulating, saving a draft. Automations always live in a flow: find one (`listAutomationFlows`) or create one first | `references/workflows/automations.md` |
+| Automations: creating, editing, simulating, saving a draft, and text blasts (scheduled sends to every member who matches). Automations always live in a flow: find one (`listAutomationFlows`) or create one first | `references/workflows/automations.md` |
 | Funnel screens, funnel templates, staging a new screen | `references/workflows/funnels.md` |
 | Guest-facing Meta ad copy (`adCopy`) | `references/workflows/ad-copy-guest.md` |
 | Creator-recruitment ad copy (`recruitmentAdCopy`) | `references/workflows/ad-copy-creator.md` |
