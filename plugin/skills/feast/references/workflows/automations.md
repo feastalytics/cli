@@ -48,6 +48,24 @@ To abandon a draft, just stop using it: nothing is live until `saveAutomationEdi
 - **Campaign flows: prefer `viewCampaign` over `signUp`.** A guest viewing the campaign page is the natural entry point: it captures new sign-ups *and* returning guests. Use `signUp` only for members-program welcome flows or a fire-once-at-registration moment.
 - **`offerExpiration` is rarely a *flow* trigger.** Use it on an individual automation inside an expiration nurture chain, not as a standalone flow's trigger type.
 
+### Text blasts (one scheduled send to everyone who matches)
+
+A text blast is **not a trigger type**, and there is no `textBlast` entry in `AutomationTrigger`. It is an ordinary automation, built and saved through the same draft loop, with no trigger. Text blasts can be built with these tools: never tell the user they have to finish one in the dashboard.
+
+1. **The flow:** `createAutomationFlow` with `"triggerType": "textBlast"` (or reuse a `textBlast` flow from `listAutomationFlows { "scope": "membersProgram" }`).
+2. **The automation:** `isTextBlast: true` and `"triggers": []`. The first trigger-less automation created in a `textBlast` flow gets `isTextBlast` set for it, but set it yourself anyway.
+3. **The audience is `conditions`.** Who gets it is every member who passes them at send time. "Hasn't visited in 3 weeks" is a `not` around a visit within 21 days:
+   ```json
+   { "type": "not", "condition": { "type": "event", "event": { "event": { "type": "visit" }, "occur": { "match": "LTE", "duration": 1814400000 } } } }
+   ```
+   Empty `conditions` means every member.
+4. **The send time must be `absoluteDelay` with a `utcDay`** (`"YYYY-MM-DD"`, plus `utcHour`/`utcMinute`), inside a prime window in the org's timezone. A blast with only a time or a `utcDayOfWeek` never sends. A blast runs once per member; it does not repeat. For a recurring win-back, stage a new blast for each date, or use a per-guest trigger instead.
+5. **Every text must include STOP in all caps**, e.g. end it with `Text STOP to opt out`. The server refuses to stage or save a text blast whose texts lack it. When you update a blast's `actions`, keep the STOP line the existing text already has.
+6. **The org needs the `isTextBlastEnabled` feature flag** (`getOrganization`); without it the save is refused.
+7. To grant a reward with the blast, add an `awardReward` action next to the text, with an `expirationDate` if the offer should expire.
+
+Members excluded from blasts (the customer panel's blast exclusion) are skipped automatically. Simulate, share `previewUrls`, and save as with any other change; the save is what schedules the send.
+
 ### Conditions: the nested event/occur shape
 
 Event conditions nest the event and its timing. The `occur` object uses `match` (GTE/LTE/EQ) and `duration` (milliseconds):
@@ -116,6 +134,7 @@ When an automation's trigger is `receiveAutomation`, ask the user whether it sho
 5. **Correct reservation links**: `https://{subdomain}.feastalytics.com/i/{shorthand}/reservation` using the *current* campaign's shorthand (from `listCampaigns`) and a valid subdomain. Never reuse another campaign's link.
 6. **Personalize** with the `firstName` variable; **vary** tone/wording across automations; **re-share** useful info (wallet link, hours, maps, reservation) in reminders; keep **empty lines** between blocks for readability.
 7. **Align offer expirations with open hours**: never expire an offer while the restaurant is closed.
+8. **Text blasts include STOP**: every text a text blast sends needs opt-out language with STOP in all caps (`Text STOP to opt out`).
 
 **Text variables.** A text action fills these in per guest when it sends. Write each one as its name wrapped in double curly braces (two opening braces, the name, two closing braces), exactly as spelled: `firstName`, `lastName`, `memberNumber`, `serialNumber`, `progress`, `passLink` (the guest's wallet link), `referralLink` (the campaign referral link), `googleMapsLink`, `membersProgramLink`, `visitCount`, `offer`. Any other name is sent to the guest as literal text.
 
