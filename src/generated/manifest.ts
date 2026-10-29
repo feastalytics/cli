@@ -355,8 +355,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "approveVideo",
       "domain": "videos",
-      "summary": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey.",
-      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one exportUrl plays), so pass it only to approve an earlier run: runs are latestRun.runId and exports[].runId on videos.video in queryData. On a Video Editor 2 video a run is a version: runId defaults to the current version, and getVideoEditor lists the others. Fails until that run's export is ready (pipelineStatus ready). Only once the human has watched the video and approved it.",
+      "summary": "Approve a Video Editor 2 video and save its MP4 to the creative library, returning the libraryKey.",
+      "description": "Approve a Video Editor 2 video and save its MP4 to the creative library, returning the libraryKey. Pass the projectId; runId is the version to approve and defaults to the current version (editor.currentVersionId), so pass it only to approve another one from getVideoEditor's editor.versions. Fails until that version's renderStatus is ready. Only once the human has watched the video and approved it.",
       "type": "mutation",
       "path": [
         "api",
@@ -1202,8 +1202,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "generateVideo",
       "domain": "videos",
-      "summary": "Start an ad video for a campaign, or an organic post, from the organization's b-roll.",
-      "description": "Start an ad video for a campaign, or an organic post, from the organization's b-roll. campaignId is the campaign the ad is for; send campaignId null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click (Video Editor 2 only; build its prompt from getVideoPromptOptions with campaignId null). It uses the organization's video editor: Video Editor 2 when it has that on, else Bevyl. Returns { projectId, pipelineStatus } at once. Spends generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not), up to 5000 characters. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The video only uses that brand's footage and footage shared with every brand. Optional for both: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line). Video Editor 2: prompt is required and is the brief Claude writes three story options from; it uses every labelled b-roll clip of the video's brand (plus footage shared with every brand) and ignores brollKeys; voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour) or poppins (a heavy rounded sans in capitals with a black outline and highlighted words); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Later edits go through requestVideoEdit with changes (exact timeline edits) or a note. Bevyl: the server uploads the clips, waits for Bevyl to process them, creates the video and exports it; Bevyl reads prompt verbatim. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. voiceover without voiceoverProfileId uses getVideoPromptOptions' defaultVoiceoverProfileId; pick another from its voices. no-audio without backgroundMusicTrackId makes a silent video, so pick a track from its backgroundMusic unless silence is wanted. Also optional: backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl). For either editor, poll every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (on Bevyl exportUrl is the MP4; on Video Editor 2 getVideoEditor returns the MP4 links) or failed (pipelineStatusMessage says why).",
+      "summary": "Start a Video Editor 2 video: a campaign ad or an organic post.",
+      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour) or poppins (a heavy rounded sans in capitals with a black outline and highlighted words); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with reviseVideoScripts if the human wants changes, and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
       "type": "mutation",
       "path": [
         "api",
@@ -1242,51 +1242,8 @@ export const CLI_MANIFEST: CliManifest = {
           "prompt": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 5000
-          },
-          "format": {
-            "type": "string",
-            "enum": [
-              "talking-head",
-              "voiceover",
-              "trending-sounds",
-              "no-audio"
-            ],
-            "default": "talking-head"
-          },
-          "voiceoverProfileId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "trendId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "backgroundMusicTrackId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "durationSeconds": {
-            "type": "integer",
-            "minimum": 10,
-            "maximum": 80,
-            "multipleOf": 5
-          },
-          "brollKeys": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
-            "maxItems": 100
-          },
-          "bevylVideoIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
-            "maxItems": 100
+            "maxLength": 5000,
+            "description": "The idea for this video, up to 5000 characters."
           },
           "voiceId": {
             "type": "string",
@@ -1375,7 +1332,8 @@ export const CLI_MANIFEST: CliManifest = {
           }
         },
         "required": [
-          "campaignId"
+          "campaignId",
+          "prompt"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2336,8 +2294,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "getVideoEditor",
       "domain": "videos",
-      "summary": "Read one video's story options, versions, current timeline, MP4 links and cost.",
-      "description": "Read one video's story options, versions, current timeline, MP4 links and cost. Pass the projectId from generateVideo. On a Video Editor 2 video (engine editor2), editor.scripts are the story options to pick from with chooseVideoScript while pipelineStatus is choosingScript (each {scriptId, angle, why, beats: [{beat, line, footage}], status, parentScriptId, feedback}; only status proposed can be chosen, and a superseded one was rewritten by reviseVideoScripts into the script whose parentScriptId points at it); editor.versions lists every version with renderStatus (queued, planning, voicing, rendering, ready or failed), what changed and its costMicros; editor.current is the version shown now, with its timeline (lines with lineId, role, text, highlight and shots with shotId and segmentId: the ids requestVideoEdit changes refer to) and timing (when each line, shot and caption plays, in seconds); editor.cost is the total and the split by step, in millionths of a dollar. A version is a run: runId, exports[].runId and approvedRunId are version ids, and exports[].url is a link to the version's MP4 that works for an hour. Bevyl videos return the pipeline, exports and latestRun only, with editor null. Poll it about every 30 seconds while a version is working.",
+      "summary": "Read one Video Editor 2 video's story options, versions, current timeline, MP4 links and cost.",
+      "description": "Read one Video Editor 2 video's story options, versions, current timeline, MP4 links and cost. Pass the projectId from generateVideo. editor.scripts are the story options to pick from with chooseVideoScript while pipelineStatus is choosingScript (each {scriptId, angle, why, beats: [{beat, line, footage}], status, parentScriptId, feedback}; only status proposed can be chosen, and a superseded one was rewritten by reviseVideoScripts into the script whose parentScriptId points at it); editor.versions lists every version with renderStatus (queued, planning, voicing, rendering, ready or failed), what changed and its costMicros; editor.current is the version shown now, with its timeline (lines with lineId, role, text, highlight and shots with shotId and segmentId, overlays with overlayId, voice, music and pronunciations: the ids and values requestVideoEdit changes refer to) and timing (when each line, shot and caption plays, in seconds); editor.cost is the total and the split by step, in millionths of a dollar. A version is a run: runId, exports[].runId and approvedRunId are version ids, and exports[].url is a link to the version's MP4 that works for an hour. Poll it about every 30 seconds while a version is working. Videos made with the old Bevyl editor (engine bevyl in videos.video) come back with editor null; the video tools don't edit them.",
       "type": "query",
       "path": [
         "api",
@@ -2354,38 +2312,6 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "projectId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "getVideoPromptOptions",
-      "domain": "videos",
-      "summary": "The building blocks for a generateVideo prompt, with the audio choices.",
-      "description": "The building blocks for a generateVideo prompt, with the audio choices. Pass a campaignId for a campaign's ad, or campaignId null for an organic post. An organic post has no Campaign or CTA section, and its concept options are the organic reel formats that work for restaurants. defaultPrompt is what Content Studio would send with its default picks: plain text in sections (Campaign, Concept, CTA, plus Creative direction on Bevyl), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from and voiceover (true when a narrator reads the format, false when nobody narrates: the people on camera talk or there is only music; pass it as generateVideo's voiceover), and direction options a suggestedFormat to pass as generateVideo's format. Organizations on Video Editor 2 (and every organic post) get no Creative direction: direction is empty and defaultPrompt has no such section, so don't add one. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. voices lists Bevyl's voiceover voices ({ id, name, description, isCustom }; the voiceover format uses defaultVoiceoverProfileId unless generateVideo gets a voiceoverProfileId) and backgroundMusic its tracks ({ id, title, moods, durationSeconds }) for generateVideo's backgroundMusicTrackId. Both lists are empty when Bevyl's catalog is unavailable. Trending sounds are not listed.",
-      "type": "query",
-      "path": [
-        "api",
-        "bevyl",
-        "getVideoPromptOptions"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "campaignId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "campaignId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2879,7 +2805,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "listMedia",
       "domain": "core",
       "summary": "Uploaded media files, across one or more scopes.",
-      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. organizationFilePublic is the organization's own files (logos, uploaded photos, campaign images), creativeLibraryBroll its video footage, creativeLibrary its finished ad creatives, and creativeLibraryStatics the still frames derived from labelled b-roll (one per scene, read-only). syncedBroll and unsyncedBroll list the video b-roll generateVideo can use, from both the creative library and creator content submissions: syncedBroll is on the org's Bevyl workspace (processed, or still processing), unsyncedBroll is not yet (generateVideo uploads it before creating the video). A clip Bevyl failed to process is in neither, and a b-roll clip that is the same file as an earlier upload is left out of every scope. Pass a file's key in generateVideo's brollKeys. Files come newest first, limit at a time; total is the count across every page, and when nextCursor is not null pass it as cursor for the next page.",
+      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. organizationFilePublic is the organization's own files (logos, uploaded photos, campaign images), creativeLibraryBroll its video footage, creativeLibrary its finished ad creatives, and creativeLibraryStatics the still frames derived from labelled b-roll (one per scene, read-only). syncedBroll and unsyncedBroll are for the old Bevyl editor; don't use them. generateVideo needs no clip list: it uses every labelled clip, which queryData videos.footage lists scene by scene. A b-roll clip that is the same file as an earlier upload is left out of every scope. Files come newest first, limit at a time; total is the count across every page, and when nextCursor is not null pass it as cursor for the next page.",
       "type": "query",
       "path": [
         "api",
@@ -3277,8 +3203,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "requestVideoEdit",
       "domain": "videos",
-      "summary": "Ask for a new version of a video with one change.",
-      "description": "Ask for a new version of a video with one change. Spends generation credits, so only with the human's explicit approval. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new run. On a Bevyl video, send only the change in note (600 characters at most), for example \"make the hook punchier\" or \"use the patio shots first\"; Bevyl builds from the video's current state, on-screen text cannot be moved or resized, and changes is refused. The video's pipelineStatus (queryData videos.video) moves back to rendering, then ready with the new export. On a Video Editor 2 video (engine editor2), send changes, a note, or both, once its first version is ready. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change, or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins or dm-sans and set.highlightColor #RRGGBB, for every overlay; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. To recut a Video Editor 2 video from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again.",
+      "summary": "Ask for a new version of a Video Editor 2 video, once its first version is ready.",
+      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change, or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins or dm-sans and set.highlightColor #RRGGBB, for every overlay; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again.",
       "type": "mutation",
       "path": [
         "api",
@@ -3858,10 +3784,6 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "recut": {
             "type": "boolean"
-          },
-          "requestId": {
-            "type": "string",
-            "format": "uuid"
           }
         },
         "required": [
