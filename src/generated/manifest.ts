@@ -863,6 +863,380 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "createFormat",
+      "domain": "content",
+      "summary": "Write a post format of your own, with a recipe like the catalog's.",
+      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style (a short tag such as food_porn, preparation or pov; the catalog's styles group it in the picker) and difficulty (easy, medium or hard) describe it; sourceUrl is the Instagram or TikTok post it is based on, when there is one. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "brandLibrary",
+        "createFormat"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1024
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "easy",
+                  "medium",
+                  "hard"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recipe": {
+            "type": "object",
+            "properties": {
+              "visual": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "reel"
+                      },
+                      "reel": {
+                        "type": "object",
+                        "properties": {
+                          "length": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "hook": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 2000
+                          },
+                          "beats": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                },
+                                "seconds": {
+                                  "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                },
+                                "direction": {
+                                  "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                                },
+                                "line": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 500
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "seconds",
+                                "direction"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 20
+                          },
+                          "onScreenText": {
+                            "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          },
+                          "textPlan": {
+                            "type": "object",
+                            "properties": {
+                              "layout": {
+                                "type": "string",
+                                "enum": [
+                                  "sequence",
+                                  "held",
+                                  "opener",
+                                  "labels",
+                                  "none"
+                                ]
+                              },
+                              "held": {
+                                "type": "object",
+                                "properties": {
+                                  "position": {
+                                    "type": "string",
+                                    "enum": [
+                                      "top",
+                                      "middle",
+                                      "lower"
+                                    ]
+                                  },
+                                  "size": {
+                                    "type": "string",
+                                    "enum": [
+                                      "large",
+                                      "small"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "position",
+                                  "size"
+                                ]
+                              },
+                              "beatText": {
+                                "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/textPlan/properties/held"
+                              }
+                            },
+                            "required": [
+                              "layout"
+                            ]
+                          },
+                          "audio": {
+                            "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          },
+                          "voice": {
+                            "type": "string",
+                            "enum": [
+                              "voiceover",
+                              "raw",
+                              "none"
+                            ]
+                          },
+                          "music": {
+                            "type": "object",
+                            "properties": {
+                              "genres": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                },
+                                "minItems": 1,
+                                "maxItems": 4
+                              },
+                              "tempo": {
+                                "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                              },
+                              "arc": {
+                                "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              }
+                            },
+                            "required": [
+                              "genres",
+                              "tempo",
+                              "arc"
+                            ]
+                          },
+                          "onCamera": {
+                            "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          }
+                        },
+                        "required": [
+                          "length",
+                          "hook",
+                          "beats",
+                          "onScreenText",
+                          "audio",
+                          "voice",
+                          "onCamera"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "reel"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "static"
+                      },
+                      "static": {
+                        "type": "object",
+                        "properties": {
+                          "layout": {
+                            "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          },
+                          "slides": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                },
+                                "direction": {
+                                  "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "direction"
+                              ]
+                            },
+                            "minItems": 1,
+                            "maxItems": 20
+                          },
+                          "textOnImage": {
+                            "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          },
+                          "photoStyle": {
+                            "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          }
+                        },
+                        "required": [
+                          "layout",
+                          "slides",
+                          "textOnImage",
+                          "photoStyle"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "static"
+                    ]
+                  }
+                ]
+              },
+              "caption": {
+                "type": "object",
+                "properties": {
+                  "opening": {
+                    "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                  },
+                  "body": {
+                    "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                  },
+                  "close": {
+                    "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                  },
+                  "example": {
+                    "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                  }
+                },
+                "required": [
+                  "opening",
+                  "body",
+                  "close",
+                  "example"
+                ]
+              },
+              "shots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "subject": {
+                      "type": "string",
+                      "enum": [
+                        "food",
+                        "drink",
+                        "ambience",
+                        "exterior",
+                        "preparation",
+                        "staff",
+                        "signage",
+                        "misc"
+                      ]
+                    },
+                    "what": {
+                      "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                    }
+                  },
+                  "required": [
+                    "subject",
+                    "what"
+                  ]
+                },
+                "maxItems": 20
+              },
+              "needs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                },
+                "maxItems": 20
+              },
+              "mistakes": {
+                "$ref": "#/properties/recipe/properties/needs"
+              }
+            },
+            "required": [
+              "visual",
+              "caption",
+              "shots",
+              "needs",
+              "mistakes"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "reel",
+              "static"
+            ]
+          },
+          "shareWithOrganization": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "name",
+          "recipe",
+          "kind"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "createFunnelDraft",
       "domain": "funnel",
       "summary": "Create a funnel draft to stage and preview edits before saving them.",
@@ -9708,6 +10082,388 @@ export const CLI_MANIFEST: CliManifest = {
         },
         "required": [
           "eventId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "updateFormat",
+      "domain": "content",
+      "summary": "Change, share or retire a format you wrote with createFormat.",
+      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving). Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "brandLibrary",
+        "updateFormat"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "formatId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "patch": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 1024
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "difficulty": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "easy",
+                      "medium",
+                      "hard"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sourceUrl": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 512
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recipe": {
+                "type": "object",
+                "properties": {
+                  "visual": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "reel"
+                          },
+                          "reel": {
+                            "type": "object",
+                            "properties": {
+                              "length": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "hook": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 2000
+                              },
+                              "beats": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "label": {
+                                      "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                    },
+                                    "seconds": {
+                                      "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                    },
+                                    "direction": {
+                                      "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                                    },
+                                    "line": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 500
+                                    }
+                                  },
+                                  "required": [
+                                    "label",
+                                    "seconds",
+                                    "direction"
+                                  ]
+                                },
+                                "minItems": 1,
+                                "maxItems": 20
+                              },
+                              "onScreenText": {
+                                "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              },
+                              "textPlan": {
+                                "type": "object",
+                                "properties": {
+                                  "layout": {
+                                    "type": "string",
+                                    "enum": [
+                                      "sequence",
+                                      "held",
+                                      "opener",
+                                      "labels",
+                                      "none"
+                                    ]
+                                  },
+                                  "held": {
+                                    "type": "object",
+                                    "properties": {
+                                      "position": {
+                                        "type": "string",
+                                        "enum": [
+                                          "top",
+                                          "middle",
+                                          "lower"
+                                        ]
+                                      },
+                                      "size": {
+                                        "type": "string",
+                                        "enum": [
+                                          "large",
+                                          "small"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "position",
+                                      "size"
+                                    ]
+                                  },
+                                  "beatText": {
+                                    "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/textPlan/properties/held"
+                                  }
+                                },
+                                "required": [
+                                  "layout"
+                                ]
+                              },
+                              "audio": {
+                                "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              },
+                              "voice": {
+                                "type": "string",
+                                "enum": [
+                                  "voiceover",
+                                  "raw",
+                                  "none"
+                                ]
+                              },
+                              "music": {
+                                "type": "object",
+                                "properties": {
+                                  "genres": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 4
+                                  },
+                                  "tempo": {
+                                    "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                  },
+                                  "arc": {
+                                    "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                                  }
+                                },
+                                "required": [
+                                  "genres",
+                                  "tempo",
+                                  "arc"
+                                ]
+                              },
+                              "onCamera": {
+                                "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              }
+                            },
+                            "required": [
+                              "length",
+                              "hook",
+                              "beats",
+                              "onScreenText",
+                              "audio",
+                              "voice",
+                              "onCamera"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "reel"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "static"
+                          },
+                          "static": {
+                            "type": "object",
+                            "properties": {
+                              "layout": {
+                                "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              },
+                              "slides": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "label": {
+                                      "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/length"
+                                    },
+                                    "direction": {
+                                      "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                                    }
+                                  },
+                                  "required": [
+                                    "label",
+                                    "direction"
+                                  ]
+                                },
+                                "minItems": 1,
+                                "maxItems": 20
+                              },
+                              "textOnImage": {
+                                "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              },
+                              "photoStyle": {
+                                "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              }
+                            },
+                            "required": [
+                              "layout",
+                              "slides",
+                              "textOnImage",
+                              "photoStyle"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "static"
+                        ]
+                      }
+                    ]
+                  },
+                  "caption": {
+                    "type": "object",
+                    "properties": {
+                      "opening": {
+                        "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                      },
+                      "body": {
+                        "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                      },
+                      "close": {
+                        "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                      },
+                      "example": {
+                        "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                      }
+                    },
+                    "required": [
+                      "opening",
+                      "body",
+                      "close",
+                      "example"
+                    ]
+                  },
+                  "shots": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "enum": [
+                            "food",
+                            "drink",
+                            "ambience",
+                            "exterior",
+                            "preparation",
+                            "staff",
+                            "signage",
+                            "misc"
+                          ]
+                        },
+                        "what": {
+                          "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "what"
+                      ]
+                    },
+                    "maxItems": 20
+                  },
+                  "needs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1000
+                    },
+                    "maxItems": 20
+                  },
+                  "mistakes": {
+                    "$ref": "#/properties/patch/properties/recipe/properties/needs"
+                  }
+                },
+                "required": [
+                  "visual",
+                  "caption",
+                  "shots",
+                  "needs",
+                  "mistakes"
+                ]
+              },
+              "shareWithOrganization": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "published",
+                  "retired"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "formatId",
+          "patch"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
