@@ -25,6 +25,81 @@ export const CLI_MANIFEST: CliManifest = {
   ],
   "tools": [
     {
+      "id": "addContentIdeas",
+      "domain": "content",
+      "summary": "Put post ideas on the Content Calendar's ideas list, up to 100 at once.",
+      "description": "Put post ideas on the Content Calendar's ideas list, up to 100 at once. accountId is a content.instagramAccount from queryData. Each idea has a kind (reel, static or trial_reel), a short title, optional brief notes on what to make, and an optional formatId (a formats.format from queryData) it follows. Ideas sit on the ideas list with no media or date and never plan; updateContentPost moves one to draft or ready later. Good for a start-of-month brainstorm: read formats.format and the restaurant's menu, footage and past posts first, then send the whole batch in one call.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "contentCalendar",
+        "addIdeas"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ideas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "reel",
+                    "static",
+                    "trial_reel"
+                  ],
+                  "default": "reel"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "brief": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "formatId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "title"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "accountId",
+          "ideas"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "ads_get_ad_entities",
       "domain": "ads",
       "summary": "Read the campaigns, ad sets or ads on an ad account; ad sets include targeting, ads their creative.",
@@ -281,7 +356,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "approveVideo",
       "domain": "videos",
       "summary": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey.",
-      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one exportUrl plays), so pass it only to approve an earlier run: runs are latestRun.runId and exports[].runId on videos.video in queryData. Fails until that run's export is ready (pipelineStatus ready). Only once the human has watched the video and approved it.",
+      "description": "Approve a video and save its MP4 to the campaign's creative library, returning the libraryKey. Pass the projectId; runId is optional and defaults to the latest run that has an export (the one exportUrl plays), so pass it only to approve an earlier run: runs are latestRun.runId and exports[].runId on videos.video in queryData. On a Video Editor 2 video a run is a version: runId defaults to the current version, and getVideoEditor lists the others. Fails until that run's export is ready (pipelineStatus ready). Only once the human has watched the video and approved it.",
       "type": "mutation",
       "path": [
         "api",
@@ -346,10 +421,50 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "chooseVideoScript",
+      "domain": "videos",
+      "summary": "Pick one of a Video Editor 2 video's story options and cut its first version.",
+      "description": "Pick one of a Video Editor 2 video's story options and cut its first version. Only while pipelineStatus is choosingScript; scriptId is one of editor.scripts from getVideoEditor. lines optionally replaces the story's spoken lines in order, one per beat, and must have exactly as many entries as the story has beats (keep ElevenLabs v3 audio tags like [excited] if you want them). Claude shortlists shots from the labelled footage, Jev picks and checks them, ElevenLabs voices the lines and the video is rendered: pipelineStatus moves to cutting, then ready (or failed). Returns the new version's id as generation.runId. Spends generation credits, so only with the human's explicit approval of the story.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "chooseScript"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scriptId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 600
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "projectId",
+          "scriptId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "createAutomationFlow",
       "domain": "automations",
       "summary": "Create an automation flow: the container grouping automations by a shared trigger.",
-      "description": "Create an automation flow: the container grouping automations by a shared trigger. Automations always live inside a flow, so find one with listAutomationFlows before creating another.",
+      "description": "Create an automation flow: the container grouping automations by a shared trigger. Automations always live inside a flow, so find one with listAutomationFlows before creating another. For a text blast (one scheduled send to everyone who matches its conditions) create the flow with `triggerType: \"textBlast\"`, then stage its automation with stageAutomationEdits.",
       "type": "mutation",
       "path": [
         "api",
@@ -875,8 +990,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "summary": "Render the five recruitment ad images for a location from fixed templates.",
-      "description": "Render the five recruitment ad images for a location from fixed templates. They use its own photo, logo, food credit and creator bonus, with no AI image generation. They attach to the campaign's recruitment offer. Only missing types are generated; force deletes and regenerates the whole set. The food credit and bonus come from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId), so change those first to change the amounts shown.",
+      "summary": "Render a location's five recruitment ad images and queue the AI composite pass on each.",
+      "description": "Render a location's five recruitment ad images and queue the AI composite pass on each. The template renders use its own photo, logo, food credit and creator bonus and attach to the campaign's recruitment offer; the composite pass (compositeModel, openai by default, null to skip) then runs in the background and lands on each creative as compositeOpenaiUrl with compositeStatus pending, ok or failed and compositeError when it fails. Poll listCreatives for it; a creative with no photo is rendered but not composited (compositeSkipped says so). Only missing types are generated. force: true re-renders the types that have no composite yet and keeps the ones that do; force: \"all\" deletes and regenerates every type. The food credit and bonus come from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId), so change those first to change the amounts shown.",
       "type": "mutation",
       "path": [
         "api",
@@ -900,7 +1015,32 @@ export const CLI_MANIFEST: CliManifest = {
             }
           },
           "force": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "const": "all"
+              }
+            ],
+            "description": "true re-renders only the types with no composite version yet; \"all\" deletes every type and regenerates."
+          },
+          "compositeModel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "openai",
+                  "nb2",
+                  "nbPro"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Which model composites each new creative in the background. Defaults to openai; null skips the composite pass."
           }
         },
         "required": [
@@ -1062,8 +1202,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "generateVideo",
       "domain": "videos",
-      "summary": "Start a Bevyl ad video for a campaign from its b-roll.",
-      "description": "Start a Bevyl ad video for a campaign from its b-roll. Returns { projectId, pipelineStatus } at once; the server uploads the clips, waits for Bevyl to process them, creates the video and exports it. Poll it every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (exportUrl is the MP4) or failed (pipelineStatusMessage says why). Spends Bevyl generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not): Bevyl reads it verbatim, up to 5000 characters. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. voiceover without voiceoverProfileId uses getVideoPromptOptions' defaultVoiceoverProfileId; pick another from its voices. no-audio without backgroundMusicTrackId makes a silent video, so pick a track from its backgroundMusic unless silence is wanted. Optional: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line), voiceoverProfileId, backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl).",
+      "summary": "Start an ad video for a campaign, or an organic post, from the organization's b-roll.",
+      "description": "Start an ad video for a campaign, or an organic post, from the organization's b-roll. campaignId is the campaign the ad is for; send campaignId null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click (Video Editor 2 only; build its prompt from getVideoPromptOptions with campaignId null). It uses the organization's video editor: Video Editor 2 when it has that on, else Bevyl. Returns { projectId, pipelineStatus } at once. Spends generation credits, so only with the human's explicit approval. Build prompt from getVideoPromptOptions (its defaultPrompt, edited or not), up to 5000 characters. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The video only uses that brand's footage and footage shared with every brand. Optional for both: angleId (from videos.video) to add a version to an existing angle (otherwise angleTitle names a new one, defaulting to the concept's first line). Video Editor 2: prompt is required and is the brief Claude writes three story options from; it uses every labelled b-roll clip of the video's brand (plus footage shared with every brand) and ignores brollKeys; voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour) or poppins (a heavy rounded sans in capitals with a black outline and highlighted words); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Later edits go through requestVideoEdit with changes (exact timeline edits) or a note. Bevyl: the server uploads the clips, waits for Bevyl to process them, creates the video and exports it; Bevyl reads prompt verbatim. Set format yourself (talking-head, voiceover, trending-sounds which needs trendId, or no-audio); the chosen direction's suggestedFormat is a good default. voiceover without voiceoverProfileId uses getVideoPromptOptions' defaultVoiceoverProfileId; pick another from its voices. no-audio without backgroundMusicTrackId makes a silent video, so pick a track from its backgroundMusic unless silence is wanted. Also optional: backgroundMusicTrackId, durationSeconds 10 to 80 in steps of 5, and brollKeys (S3 keys from listMedia scopes syncedBroll or unsyncedBroll, which cover the creative library and creator submissions; omit to use every clip already synced to Bevyl). For either editor, poll every 30 seconds or so with queryData on videos.video filtered on projectId until pipelineStatus is ready (on Bevyl exportUrl is the MP4; on Video Editor 2 getVideoEditor returns the MP4 links) or failed (pipelineStatusMessage says why).",
       "type": "mutation",
       "path": [
         "api",
@@ -1074,8 +1214,20 @@ export const CLI_MANIFEST: CliManifest = {
         "type": "object",
         "properties": {
           "campaignId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "referrer": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 255
           },
           "angleId": {
             "type": "string",
@@ -1135,6 +1287,91 @@ export const CLI_MANIFEST: CliManifest = {
               "minLength": 1
             },
             "maxItems": 100
+          },
+          "voiceId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "voiceover": {
+            "type": "boolean"
+          },
+          "music": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "auto"
+                  },
+                  "auto": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "auto"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "prompt"
+                  },
+                  "prompt": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 600
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "prompt"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "none"
+                  },
+                  "none": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "none"
+                ]
+              }
+            ]
+          },
+          "font": {
+            "type": "string",
+            "enum": [
+              "poppins",
+              "dm-sans"
+            ]
+          },
+          "headline": {
+            "type": "boolean"
+          },
+          "endCard": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1861,7 +2098,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "getMediaUploadUrl",
       "domain": "core",
       "summary": "Put a media file into a scope.",
-      "description": "Put a media file into a scope. Either pass sourceUrl (a Feast media URL from any of this organization's scopes, such as a chat attachment, or any public https image, video or audio URL, such as an iMessage attachment) and the server copies it in (copied: true, nothing to PUT), or omit sourceUrl and PUT the file bytes to the returned presignedUrl. Then reference the returned url/key.",
+      "description": "Put a media file into a scope. organizationFilePublic holds the organization's own files (photos of dishes, the room and the team, logos); creativeLibraryBroll holds video footage; creativeLibrary holds finished ad creatives. Either pass sourceUrl (a Feast media URL from any of this organization's scopes, such as a chat attachment, or any public https image, video or audio URL, such as an iMessage attachment) and the server copies it in (copied: true, nothing to PUT), or omit sourceUrl and PUT the file bytes to the returned presignedUrl. Then reference the returned url/key. A video copied into creativeLibraryBroll from sourceUrl is labelled for Video Editor 2 (labelQueued true) and shows in queryData videos.footage a few minutes later. For creativeLibraryBroll, referrer names the brand (one of the organization's sites) the footage belongs to, so only that brand's videos use it; omit it to share the footage with every brand.",
       "type": "mutation",
       "path": [
         "api",
@@ -1892,6 +2129,11 @@ export const CLI_MANIFEST: CliManifest = {
           "sourceUrl": {
             "type": "string",
             "format": "uri"
+          },
+          "referrer": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
           }
         },
         "required": [
@@ -2092,10 +2334,35 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "getVideoEditor",
+      "domain": "videos",
+      "summary": "Read one video's story options, versions, current timeline, MP4 links and cost.",
+      "description": "Read one video's story options, versions, current timeline, MP4 links and cost. Pass the projectId from generateVideo. On a Video Editor 2 video (engine editor2), editor.scripts are the story options to pick from with chooseVideoScript while pipelineStatus is choosingScript (each {scriptId, angle, why, beats: [{beat, line, footage}], status, parentScriptId, feedback}; only status proposed can be chosen, and a superseded one was rewritten by reviseVideoScripts into the script whose parentScriptId points at it); editor.versions lists every version with renderStatus (queued, planning, voicing, rendering, ready or failed), what changed and its costMicros; editor.current is the version shown now, with its timeline (lines with lineId, role, text, highlight and shots with shotId and segmentId: the ids requestVideoEdit changes refer to) and timing (when each line, shot and caption plays, in seconds); editor.cost is the total and the split by step, in millionths of a dollar. A version is a run: runId, exports[].runId and approvedRunId are version ids, and exports[].url is a link to the version's MP4 that works for an hour. Bevyl videos return the pipeline, exports and latestRun only, with editor null. Poll it about every 30 seconds while a version is working.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "getProject"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "projectId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "getVideoPromptOptions",
       "domain": "videos",
-      "summary": "The building blocks for a generateVideo prompt for one campaign, with the audio choices.",
-      "description": "The building blocks for a generateVideo prompt for one campaign, with the audio choices. defaultPrompt is what Content Studio would send with its default picks: plain text in four sections (Campaign, Concept, Creative direction, CTA), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from, and direction options a suggestedFormat to pass as generateVideo's format. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. voices lists Bevyl's voiceover voices ({ id, name, description, isCustom }; the voiceover format uses defaultVoiceoverProfileId unless generateVideo gets a voiceoverProfileId) and backgroundMusic its tracks ({ id, title, moods, durationSeconds }) for generateVideo's backgroundMusicTrackId. Both lists are empty when Bevyl's catalog is unavailable. Trending sounds are not listed.",
+      "summary": "The building blocks for a generateVideo prompt, with the audio choices.",
+      "description": "The building blocks for a generateVideo prompt, with the audio choices. Pass a campaignId for a campaign's ad, or campaignId null for an organic post. An organic post has no Campaign or CTA section, and its concept options are the organic reel formats that work for restaurants. defaultPrompt is what Content Studio would send with its default picks: plain text in sections (Campaign, Concept, CTA, plus Creative direction on Bevyl), each a heading line followed by its text. campaign, concept, direction and cta list the alternatives for each section ({ id, label, text }); concept options also carry the reference video they were distilled from and voiceover (true when a narrator reads the format, false when nobody narrates: the people on camera talk or there is only music; pass it as generateVideo's voiceover), and direction options a suggestedFormat to pass as generateVideo's format. Organizations on Video Editor 2 (and every organic post) get no Creative direction: direction is empty and defaultPrompt has no such section, so don't add one. Send defaultPrompt as is, or swap a section's text for another option's, or rewrite it entirely: generateVideo sends the prompt to Bevyl verbatim. voices lists Bevyl's voiceover voices ({ id, name, description, isCustom }; the voiceover format uses defaultVoiceoverProfileId unless generateVideo gets a voiceoverProfileId) and backgroundMusic its tracks ({ id, title, moods, durationSeconds }) for generateVideo's backgroundMusicTrackId. Both lists are empty when Bevyl's catalog is unavailable. Trending sounds are not listed.",
       "type": "query",
       "path": [
         "api",
@@ -2106,12 +2373,223 @@ export const CLI_MANIFEST: CliManifest = {
         "type": "object",
         "properties": {
           "campaignId": {
-            "type": "string",
-            "minLength": 1
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "campaignId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "importMembers",
+      "domain": "membersProgram",
+      "summary": "Add members from a list and set their custom property values.",
+      "description": "Add members from a list and set their custom property values. Send rows inline (one object per person, keyed by column name, at most 5,000). Each row is matched to a member by phone, then by name when matchByName is on; with createMissingMembers a row that matches nobody becomes a new member with the row's name, phone, email and source. Call with apply false first (the default): nothing is written and the result shows matched, to-create, emails to fill, ambiguous and unmatched rows with reasons, per-property counts, bad cells by row, and the properties that would be created. Show that to the user, then call again with apply true and the same input. mappings set properties: each names an existing propertyId or {name, type} to create (reused when a property with that name and type exists), from a column or a static value; values are coerced to the property's type. optIn marks created members as agreeing to texts, so leave it false unless the user confirms each person consented; an opted-out member gets no automated texts. Re-running the same rows is safe: members are matched, not duplicated, and values are updated in place. Created members get the importedCustomer automation event, not signUp, so an automation on that trigger can text them their pass link.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "forms",
+        "propertyImport",
+        "importMembers"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "minItems": 1,
+            "maxItems": 5000,
+            "description": "One object per person, keyed by column name, at most 5000"
+          },
+          "apply": {
+            "type": "boolean",
+            "default": false,
+            "description": "false previews and writes nothing; true runs the import. Preview first."
+          },
+          "phoneColumn": {
+            "type": "string",
+            "description": "The column holding each person's phone"
+          },
+          "nameColumns": {
+            "type": "object",
+            "properties": {
+              "first": {
+                "type": "string"
+              },
+              "last": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "first",
+              "last"
+            ],
+            "description": "Required with createMissingMembers or matchByName"
+          },
+          "matchByName": {
+            "type": "boolean",
+            "default": false,
+            "description": "Match on first and last name when the phone matches nobody"
+          },
+          "emailColumn": {
+            "type": "string"
+          },
+          "createMissingMembers": {
+            "type": "boolean",
+            "default": false,
+            "description": "Create a member for every row that matches nobody"
+          },
+          "optIn": {
+            "type": "boolean",
+            "default": false,
+            "description": "Mark created members as agreeing to texts. Only with the user's confirmation that each person consented."
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "column"
+                  },
+                  "column": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "column"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "static"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "value"
+                ]
+              }
+            ],
+            "description": "Where created members came from, a column or one value for all"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "additive",
+              "replace"
+            ],
+            "default": "additive",
+            "description": "additive touches only people in rows; replace also clears the mapped properties on members not in rows"
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "const": "column"
+                    },
+                    "property": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "The propertyId of an existing custom property"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "boolean",
+                                "dayOfYear",
+                                "date",
+                                "number",
+                                "string"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "type"
+                          ],
+                          "description": "A property to create by name, or reuse when one with this name and type exists"
+                        }
+                      ]
+                    },
+                    "column": {
+                      "type": "string",
+                      "description": "The column of each row holding the value"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "property",
+                    "column"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "const": "static"
+                    },
+                    "property": {
+                      "$ref": "#/properties/mappings/items/anyOf/0/properties/property"
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "One value written to every imported person"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "property",
+                    "value"
+                  ]
+                }
+              ]
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "rows",
+          "phoneColumn"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2263,8 +2741,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "listCreatives",
       "domain": "creators",
-      "summary": "Generated recruitment creatives, optionally for one offer.",
-      "description": "Generated recruitment creatives, optionally for one offer. Pass a creative's imageKey to planAds as a libraryAsset; imageUrl is the base render, not the ad asset. staleCreativeIds (only with offerId) lists creatives made from an older version of their offer.",
+      "summary": "Generated recruitment creatives with the state of each one's AI composite pass.",
+      "description": "Generated recruitment creatives with the state of each one's AI composite pass. Optionally for one offer. compositeStatus.openai (or nb2, nbPro) is pending, ok or failed; compositeOpenaiUrl is the finished image and compositeError says why the last pass failed (a provider outage or billing block shows up here). Pass a creative's imageKey to planAds as a libraryAsset; imageUrl is the base render, not the ad asset. staleCreativeIds (only with offerId) lists creatives made from an older version of their offer.",
       "type": "query",
       "path": [
         "api",
@@ -2401,7 +2879,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "listMedia",
       "domain": "core",
       "summary": "Uploaded media files, across one or more scopes.",
-      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. syncedBroll and unsyncedBroll list the video b-roll generateVideo can use, from both the creative library and creator content submissions: syncedBroll is on the org's Bevyl workspace (processed, or still processing), unsyncedBroll is not yet (generateVideo uploads it before creating the video). A clip Bevyl failed to process is in neither. Pass a file's key in generateVideo's brollKeys. Files come newest first, limit at a time; total is the count across every page, and when nextCursor is not null pass it as cursor for the next page.",
+      "description": "Uploaded media files, across one or more scopes. Each file is tagged with its scope and a canDelete flag. organizationFilePublic is the organization's own files (logos, uploaded photos, campaign images), creativeLibraryBroll its video footage, creativeLibrary its finished ad creatives, and creativeLibraryStatics the still frames derived from labelled b-roll (one per scene, read-only). syncedBroll and unsyncedBroll list the video b-roll generateVideo can use, from both the creative library and creator content submissions: syncedBroll is on the org's Bevyl workspace (processed, or still processing), unsyncedBroll is not yet (generateVideo uploads it before creating the video). A clip Bevyl failed to process is in neither, and a b-roll clip that is the same file as an earlier upload is left out of every scope. Pass a file's key in generateVideo's brollKeys. Files come newest first, limit at a time; total is the count across every page, and when nextCursor is not null pass it as cursor for the next page.",
       "type": "query",
       "path": [
         "api",
@@ -2424,7 +2902,8 @@ export const CLI_MANIFEST: CliManifest = {
                 "creativeLibraryBroll",
                 "creativeLibraryVoiceover",
                 "syncedBroll",
-                "unsyncedBroll"
+                "unsyncedBroll",
+                "creativeLibraryStatics"
               ]
             },
             "minItems": 1
@@ -2449,6 +2928,19 @@ export const CLI_MANIFEST: CliManifest = {
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
+    },
+    {
+      "id": "listVideoVoices",
+      "domain": "videos",
+      "summary": "List the ElevenLabs voices a Video Editor 2 video can use.",
+      "description": "List the ElevenLabs voices a Video Editor 2 video can use. Each is {voiceId, name, category, labels, previewUrl}; previewUrl is a short sample to listen to. Pass a voiceId to generateVideo, or to requestVideoEdit as a voice change. configured is false (and voices empty) when the server has no ElevenLabs key.",
+      "type": "query",
+      "path": [
+        "api",
+        "bevyl",
+        "listEditorVoices"
+      ],
+      "inputJsonSchema": null
     },
     {
       "id": "planAds",
@@ -2785,8 +3277,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "requestVideoEdit",
       "domain": "videos",
-      "summary": "Ask Bevyl to remake a video with one change.",
-      "description": "Ask Bevyl to remake a video with one change. For example \"make the hook punchier\" or \"use the patio shots first\". Send only the change in note (600 characters at most); Bevyl builds from the video's current state. On-screen text cannot be moved or resized. Starts a new run: the video's pipelineStatus (queryData videos.video) moves back to rendering, then ready with the new export. Spends Bevyl generation credits, so only with the human's explicit approval.",
+      "summary": "Ask for a new version of a video with one change.",
+      "description": "Ask for a new version of a video with one change. Spends generation credits, so only with the human's explicit approval. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new run. On a Bevyl video, send only the change in note (600 characters at most), for example \"make the hook punchier\" or \"use the patio shots first\"; Bevyl builds from the video's current state, on-screen text cannot be moved or resized, and changes is refused. The video's pipelineStatus (queryData videos.video) moves back to rendering, then ready with the new export. On a Video Editor 2 video (engine editor2), send changes, a note, or both, once its first version is ready. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change, or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins or dm-sans and set.highlightColor #RRGGBB, for every overlay; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. To recut a Video Editor 2 video from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again.",
       "type": "mutation",
       "path": [
         "api",
@@ -2805,14 +3297,640 @@ export const CLI_MANIFEST: CliManifest = {
             "minLength": 1,
             "maxLength": 600
           },
+          "changes": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "line"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 600
+                        },
+                        "highlight": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 4
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "hook",
+                            "tension",
+                            "turn",
+                            "offer",
+                            "reason",
+                            "proof",
+                            "payoff",
+                            "cta"
+                          ]
+                        },
+                        "holdSec": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "minimum": 0.4,
+                              "maximum": 10
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "insertLine"
+                    },
+                    "afterLineId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "line": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "$ref": "#/properties/changes/items/anyOf/0/properties/set/properties/role"
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 600
+                        },
+                        "highlight": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "maxItems": 4,
+                          "default": []
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "text"
+                      ]
+                    },
+                    "segmentIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "maxItems": 4
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "afterLineId",
+                    "line"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "removeLine"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "moveLine"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    },
+                    "afterLineId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId",
+                    "afterLineId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "shot"
+                    },
+                    "shotId": {
+                      "type": "string"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "segmentId": {
+                          "type": "string"
+                        },
+                        "srcInSec": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "crop": {
+                          "type": "object",
+                          "properties": {
+                            "cx": {
+                              "type": "number"
+                            },
+                            "cy": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "cx",
+                            "cy"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "shotId",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "addShot"
+                    },
+                    "lineId": {
+                      "type": "string"
+                    },
+                    "segmentId": {
+                      "type": "string"
+                    },
+                    "srcInSec": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "lineId",
+                    "segmentId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "removeShot"
+                    },
+                    "shotId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "shotId"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "overlay"
+                    },
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "set",
+                        "remove"
+                      ]
+                    },
+                    "overlayId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "overlay": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "lineText"
+                            },
+                            "lineId": {
+                              "type": "string"
+                            },
+                            "position": {
+                              "type": "string",
+                              "enum": [
+                                "top",
+                                "middle",
+                                "lower"
+                              ]
+                            },
+                            "size": {
+                              "type": "string",
+                              "enum": [
+                                "large",
+                                "small"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "lineId",
+                            "position",
+                            "size"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "const": "text"
+                            },
+                            "rows": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 40
+                              },
+                              "minItems": 1,
+                              "maxItems": 2
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "maxSec": {
+                              "type": "number",
+                              "minimum": 0.5,
+                              "maximum": 10
+                            },
+                            "position": {
+                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/position"
+                            },
+                            "size": {
+                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/size"
+                            },
+                            "backdrop": {
+                              "type": "string",
+                              "const": "dim"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "rows",
+                            "from",
+                            "to",
+                            "position",
+                            "size"
+                          ]
+                        }
+                      ]
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "rows": {
+                          "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/1/properties/rows"
+                        },
+                        "from": {
+                          "type": "string"
+                        },
+                        "to": {
+                          "type": "string"
+                        },
+                        "maxSec": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "minimum": 0.5,
+                              "maximum": 10
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "position": {
+                          "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/position"
+                        },
+                        "size": {
+                          "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/size"
+                        },
+                        "backdrop": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": "dim"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "wordsPerChunk": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 4
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "op"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "textStyle"
+                    },
+                    "set": {
+                      "type": "object",
+                      "properties": {
+                        "font": {
+                          "type": "string",
+                          "enum": [
+                            "poppins",
+                            "dm-sans"
+                          ]
+                        },
+                        "highlightColor": {
+                          "type": "string",
+                          "pattern": "^#[0-9a-fA-F]{6}$"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "voice"
+                    },
+                    "set": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "voiceId": {
+                              "type": "string"
+                            },
+                            "settings": {
+                              "type": "object",
+                              "properties": {
+                                "stability": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "similarityBoost": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "style": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "speed": {
+                                  "type": "number",
+                                  "minimum": 0.7,
+                                  "maximum": 1.2
+                                }
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "pronunciation"
+                    },
+                    "written": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "spoken": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "written",
+                    "spoken"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "music"
+                    },
+                    "set": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "prompt": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 600
+                            },
+                            "newTake": {
+                              "type": "boolean"
+                            },
+                            "gainDb": {
+                              "type": "number",
+                              "minimum": -40,
+                              "maximum": 0
+                            }
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
+                }
+              ]
+            },
+            "maxItems": 50
+          },
+          "scopeLineIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 20
+          },
+          "recut": {
+            "type": "boolean"
+          },
           "requestId": {
             "type": "string",
             "format": "uuid"
           }
         },
         "required": [
+          "projectId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "restoreVideoVersion",
+      "domain": "videos",
+      "summary": "Make an earlier version of a Video Editor 2 video current again as a new version.",
+      "description": "Make an earlier version of a Video Editor 2 video current again as a new version. Pass the projectId and the versionId to bring back (editor.versions from getVideoEditor; it must have finished rendering). The new version copies that version's timeline and is only re-rendered: no new script, shot pick or voice. Returns the new version's id as generation.runId; poll getVideoEditor until its renderStatus is ready.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "restoreVersion"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "versionId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
           "projectId",
-          "note"
+          "versionId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "reviseVideoScripts",
+      "domain": "videos",
+      "summary": "Rewrite a Video Editor 2 video's story options from the team's feedback before one is chosen.",
+      "description": "Rewrite a Video Editor 2 video's story options from the team's feedback before one is chosen. Only while pipelineStatus is choosingScript. With scriptId (one of editor.scripts from getVideoEditor whose status is proposed), that story is revised: the new version replaces it in the options with parentScriptId set to it, and the old one becomes superseded. Without scriptId, all current options are rewritten as three new ones that act on the feedback. The writer uses the brief, the restaurant's notes and its reviews, so feedback can ask for a different hook, length or emphasis but not for facts the restaurant hasn't given. pipelineStatus moves to scripting, then back to choosingScript (with pipelineStatusMessage set if the rewrite failed, leaving the options as they were). Costs about $0.10.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "bevyl",
+        "reviseScripts"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scriptId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "feedback": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "projectId",
+          "feedback"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -3258,6 +4376,75 @@ export const CLI_MANIFEST: CliManifest = {
           "locationId",
           "campaignId",
           "blocks"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "setBoardRecipients",
+      "domain": "creators",
+      "summary": "Replace who gets texted about a location's creator program, besides the approver.",
+      "description": "Replace who gets texted about a location's creator program, besides the approver. Creator texts go to the program's approverUserId (every kind, always) plus the members listed here with the matching flag on. An owner who is not the approver gets nothing unless they are listed with notifyUpcomingVisits, so when Feast is the approver add the owner and the managers here. Send the full intended list for the location: a row sent with the same flags is kept, changed flags are updated, members left out are removed, and an empty list removes everyone but the approver. Every userId must be a member of the organization with a role other than scanner; a person with no Feast account cannot be a recipient. The response is the full list after the write. queryData creators.creatorBoardConfig does not include recipients, so when unsure of the current list, send everyone who should be on it rather than a partial update.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "dfy",
+        "setBoardRecipients"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "locationId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The location's id from queryData interface.location."
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The member's user id (the Cognito sub), as approverUserId uses."
+                },
+                "notifyApplications": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Morning digest with the applications waiting for review."
+                },
+                "notifyUpcomingVisits": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "A text when a creator books, plus the morning-of list of visits."
+                },
+                "notifyEscalations": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "A text when the creator agent hands a conversation to a human."
+                },
+                "notifyContentReview": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "A text when a creator submits content for review."
+                },
+                "notifyUnrepliedEscalations": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Reminders about escalations nobody has replied to."
+                }
+              },
+              "required": [
+                "userId"
+              ]
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "locationId",
+          "recipients"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -3742,7 +4929,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "stageAutomationEdits",
       "domain": "automations",
       "summary": "Stage automation changes on a draft; the default way to change automations.",
-      "description": "Stage automation changes on a draft; the default way to change automations. Pass create/update/delete operations, applied in order, for a human to preview before they go live. On the first call, omit draftId and pass `title` (what the reviewer sees) to start a new draft; then pass the returned draftId on every later stageAutomationEdits, getAutomationDraft, simulateAutomationDraft and saveAutomationEdits call. Omitting draftId again starts a separate draft, and drafts cannot be listed, so keep the draftId. `title` is ignored when draftId is passed. A `create` op needs a flowId from listAutomationFlows or createAutomationFlow. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up, check it with simulateAutomationDraft and share `previewUrls` for sign-off. An `update` replaces each field it sends, so send the full current `actions` array.",
+      "description": "Stage automation changes on a draft; the default way to change automations. Pass create/update/delete operations, applied in order, for a human to preview before they go live. On the first call, omit draftId and pass `title` (what the reviewer sees) to start a new draft; then pass the returned draftId on every later stageAutomationEdits, getAutomationDraft, simulateAutomationDraft and saveAutomationEdits call. Omitting draftId again starts a separate draft, and drafts cannot be listed, so keep the draftId. `title` is ignored when draftId is passed. A `create` op needs a flowId from listAutomationFlows or createAutomationFlow. Live automations are untouched until saveAutomationEdits. Call it repeatedly to build a change up, check it with simulateAutomationDraft and share `previewUrls` for sign-off. An `update` replaces each field it sends, so send the full current `actions` array. A text blast is an automation with `isTextBlast: true` and empty `triggers` in a flow whose `triggerType` is `textBlast`: `conditions` choose who gets it, `time` must be `absoluteDelay` with a `utcDay` date, and every text it sends must include STOP in all caps (e.g. \"Text STOP to opt out\"), or the edits are refused.",
       "type": "mutation",
       "path": [
         "api",
@@ -8106,6 +9293,112 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "updateContentPost",
+      "domain": "content",
+      "summary": "Change a Content Calendar post, or push an idea into the queue.",
+      "description": "Change a Content Calendar post, or push an idea into the queue. postId is a content.post from queryData; patch holds only the fields to change. stage moves it: idea (ideas list), draft (being made, off the calendar) or ready (queued, and dated by the planner). A post leaving the ideas list joins the end of its kind's queue. Moving to ready needs mediaUrls that fit the kind (one public video URL for a reel or trial reel, one image for a static, two to ten for a carousel), so set mediaUrls and caption in the same patch when queueing an idea. scheduledAt pins the post to that future UTC instant (scheduledBy becomes manual and it leaves the queue); scheduledAt null unpins it and the planner dates it again. A publishing or published post cannot be edited. Returns the post with its scheduledAt.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "contentCalendar",
+        "updatePost"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "patch": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "reel",
+                  "static",
+                  "trial_reel"
+                ]
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "caption": {
+                "type": "string",
+                "maxLength": 2200,
+                "default": ""
+              },
+              "mediaUrls": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10,
+                "default": []
+              },
+              "scheduledAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "idea",
+                  "draft",
+                  "ready"
+                ],
+                "default": "ready"
+              },
+              "brief": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "formatId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "postId",
+          "patch"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "updateCreativeStrategy",
       "domain": "creators",
       "summary": "Save a creator brief: the revision step after createCreativeStrategy.",
@@ -8362,7 +9655,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateCreatorSubmission",
       "domain": "creators",
       "summary": "Decide on a creator's content submission or record its meal reimbursement as paid.",
-      "description": "Decide on a creator's content submission or record its meal reimbursement as paid. Pass `decision`, `reimbursementPaid`, or both. Send at least one. submissionId and receiptTotalCents from queryData creators.creatorSubmission.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
+      "description": "Decide on a creator's content submission or record its meal reimbursement as paid. Pass `decision`, `reimbursementPaid`, or both. Send at least one. submissionId and receiptTotalCents from queryData creators.creatorSubmission.\n\ndecision: approving and revision_requested text the creator (skipApprovalText silences only the approval text, approvalMessage replaces the default approval text with your own, sent as written); revision_requested sends your feedbackMessage, so write it for the creator. Always pass approvalType when approving: omitted means 'ad' (may run in paid ads, sets the bonus pending, rejected when the bonus is $0); 'organic' earns no bonus. Re-approving an approved submission is rejected unless it upgrades organic to ad.\n\nreimbursementPaid: records that the client already paid the creator back for the meal on a reimbursing board. Moves no money: send it only after the client says the payment went out. The submission must be approved (before or by this call's decision), have a receipt, and not already be marked paid. Needs the DFY feature on the organization.\n\nBoth in one call: the decision is applied first and the reimbursement checks run against the decided submission, so approve plus reimbursementPaid works in one call. Every check for both parts runs before anything is saved; if either part is refused, nothing is saved and no text is sent. The two changes are saved together, then the creator is texted.",
       "type": "mutation",
       "path": [
         "api",
@@ -8396,6 +9689,10 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "skipApprovalText": {
                 "type": "boolean"
+              },
+              "approvalMessage": {
+                "type": "string",
+                "minLength": 1
               },
               "feedbackMessage": {
                 "type": "string"
@@ -9280,6 +10577,18 @@ export const CLI_MANIFEST: CliManifest = {
             }
           },
           "contentLibrary": {
+            "type": "object",
+            "properties": {
+              "isComplete": {
+                "type": "boolean"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "welcomeDocument": {
             "type": "object",
             "properties": {
               "isComplete": {
