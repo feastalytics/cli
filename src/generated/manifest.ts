@@ -28,7 +28,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "addContentIdeas",
       "domain": "content",
       "summary": "Put post ideas on the Content Calendar's ideas list, up to 100 at once.",
-      "description": "Put post ideas on the Content Calendar's ideas list, up to 100 at once. accountId is a content.instagramAccount from queryData. Each idea has a kind (reel, static or trial_reel), a short title, optional brief notes on what to make, and an optional formatId (a formats.format from queryData) it follows. Ideas sit on the ideas list with no media or date and never plan; updateContentPost moves one to draft or ready later. Good for a start-of-month brainstorm: read formats.format and the restaurant's menu, footage and past posts first, then send the whole batch in one call.",
+      "description": "Put post ideas on the Content Calendar's ideas list, up to 100 at once. accountId is a content.instagramAccount from queryData. Each idea has a kind (reel, static or trial_reel), a short title, optional brief notes on what to make, and an optional formatId (a formats.format from queryData) it follows. Ideas sit on the ideas list with no media or date and never plan. A reel or trial reel idea goes to Content Studio on its own five minutes after it is added or last edited (productionStartAt), which starts a Video Editor 2 project and spends generation credits, so only add ideas the restaurant wants made; updateContentPost moves one to draft or ready later. Good for a start-of-month brainstorm: read formats.format and the restaurant's menu, footage and past posts first, then send the whole batch in one call.",
       "type": "mutation",
       "path": [
         "api",
@@ -1577,7 +1577,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "generateVideo",
       "domain": "videos",
       "summary": "Start a Video Editor 2 video: a campaign ad or an organic post.",
-      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour) or poppins (a heavy rounded sans in capitals with a black outline and highlighted words); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with reviseVideoScripts if the human wants changes, and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
+      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) or playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with reviseVideoScripts if the human wants changes, and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
       "type": "mutation",
       "path": [
         "api",
@@ -1695,7 +1695,8 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "string",
             "enum": [
               "poppins",
-              "dm-sans"
+              "dm-sans",
+              "playfair"
             ]
           },
           "headline": {
@@ -3578,7 +3579,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "requestVideoEdit",
       "domain": "videos",
       "summary": "Ask for a new version of a Video Editor 2 video, once its first version is ready.",
-      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change, or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins or dm-sans and set.highlightColor #RRGGBB, for every overlay; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again.",
+      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change (reveal typewriter types a text or lineText overlay in word by word, null shows it whole), or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins, dm-sans or playfair, set.highlightColor #RRGGBB, and set.reveal typewriter or null for every text and lineText overlay at once; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again.",
       "type": "mutation",
       "path": [
         "api",
@@ -3881,6 +3882,12 @@ export const CLI_MANIFEST: CliManifest = {
                                 "large",
                                 "small"
                               ]
+                            },
+                            "reveal": {
+                              "type": "string",
+                              "enum": [
+                                "typewriter"
+                              ]
                             }
                           },
                           "required": [
@@ -3926,6 +3933,9 @@ export const CLI_MANIFEST: CliManifest = {
                             "backdrop": {
                               "type": "string",
                               "const": "dim"
+                            },
+                            "reveal": {
+                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/reveal"
                             }
                           },
                           "required": [
@@ -3984,6 +3994,16 @@ export const CLI_MANIFEST: CliManifest = {
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 4
+                        },
+                        "reveal": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/reveal"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       }
                     }
@@ -4007,12 +4027,23 @@ export const CLI_MANIFEST: CliManifest = {
                           "type": "string",
                           "enum": [
                             "poppins",
-                            "dm-sans"
+                            "dm-sans",
+                            "playfair"
                           ]
                         },
                         "highlightColor": {
                           "type": "string",
                           "pattern": "^#[0-9a-fA-F]{6}$"
+                        },
+                        "reveal": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/reveal"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       }
                     }
@@ -9589,10 +9620,52 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "updateContentAccount",
+      "domain": "content",
+      "summary": "Change how a Content Calendar Instagram account posts.",
+      "description": "Change how a Content Calendar Instagram account posts. accountId is a content.instagramAccount from queryData. autoApprove turns approval on or off per kind (reel, static, trial_reel; only the kinds given change): with it on, a post of that kind is approved as soon as its content is complete, including when a Content Studio video finishes, so it gets the next open slot and goes out at that time with no one reviewing it. paused true stops publishing for the account (posts stay planned and visible, nothing goes out, Post now still works); paused false resumes it. Returns the account.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "contentCalendar",
+        "updateAccount"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "autoApprove": {
+            "type": "object",
+            "properties": {
+              "reel": {
+                "type": "boolean"
+              },
+              "static": {
+                "type": "boolean"
+              },
+              "trial_reel": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "required": [
+          "accountId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "updateContentPost",
       "domain": "content",
       "summary": "Change a Content Calendar post, or push an idea into the queue.",
-      "description": "Change a Content Calendar post, or push an idea into the queue. postId is a content.post from queryData; patch holds only the fields to change. stage moves it: idea (ideas list), draft (being made, off the calendar) or ready (approved to post: queued and dated by the planner). Moving to ready, or saving a post that is ready, approves it as you: approvedAt, approvedBy and, for a post made in Content Studio (projectId set), approvedVersionId, the version that will be posted. A Content Studio post needs a finished version and no mediaUrls; any other post needs mediaUrls that fit the kind (one video for a reel or trial reel, one image for a static, two to ten for a carousel), files in this organization's library or Content Studio, public or private. Without stage, a draft whose content is complete moves to ready on its own when the account auto-approves its kind (approvedBy auto). A post leaving the ideas list joins the end of its kind's queue. scheduledAt pins it to that future UTC instant (scheduledBy manual); scheduledAt null unpins it. A publishing or published post cannot be edited. Returns the post.",
+      "description": "Change a Content Calendar post, or push an idea into the queue. postId is a content.post from queryData; patch holds only the fields to change. stage moves it: idea (ideas list), draft (being made, off the calendar) or ready (approved to post: queued and dated by the planner). A post that has left the ideas list cannot go back to idea (archive it and add a new idea instead), and its kind can then only switch between reel and trial_reel. Moving to ready, or saving a post that is ready, approves it as you: approvedAt, approvedBy and, for a post made in Content Studio (projectId set), approvedVersionId, the version that will be posted. A Content Studio post needs a finished version and no mediaUrls; any other post needs mediaUrls that fit the kind (one video for a reel or trial reel, one image for a static, two to ten for a carousel), files in this organization's library or Content Studio, public or private. Without stage, a draft whose content is complete moves to ready on its own when the account auto-approves its kind (approvedBy auto). A post leaving the ideas list joins the end of its kind's queue. scheduledAt pins it to that future UTC instant (scheduledBy manual); scheduledAt null unpins it. Editing a reel or trial reel idea or draft with no project and no media pushes its automatic send to Content Studio back to five minutes from now. Once a post has a Content Studio project its formatId and brief are fixed. A publishing, published or archived post cannot be edited. Returns the post.",
       "type": "mutation",
       "path": [
         "api",
@@ -10017,7 +10090,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateCreatorVisit",
       "domain": "creators",
       "summary": "Approve, deny, reschedule, move or record the outcome of one creator visit.",
-      "description": "Approve, deny, reschedule, move or record the outcome of one creator visit. Rescheduling can also clear its time. Approving or denying texts the creator immediately, and approving spends the location's monthly creator allowance; setting or clearing startTime and status 'cancelled' also text them. Confirm with the user and preview with dryRun: true first. sideEffects: false writes silently. eventId from queryData creators.creatorVisitApplication (the approval queue is approvalStatus 'pending_approval').",
+      "description": "Approve, deny, reschedule, move or record the outcome of one creator visit. Rescheduling can also clear its time. Approving or denying texts the creator immediately, and approving spends the location's monthly creator allowance; setting or clearing startTime and status 'cancelled' also text them. Confirm with the user and preview with dryRun: true first. sideEffects: false writes silently. contentFollowUpPaused: true stops the content texts for this visit (submit link after the visit, reminders, exclusion warning and removal for missing content) and never texts the creator itself; false turns them back on. eventId from queryData creators.creatorVisitApplication (the approval queue is approvalStatus 'pending_approval').",
       "type": "mutation",
       "path": [
         "api",
@@ -10070,6 +10143,9 @@ export const CLI_MANIFEST: CliManifest = {
                 "type": "null"
               }
             ]
+          },
+          "contentFollowUpPaused": {
+            "type": "boolean"
           },
           "sideEffects": {
             "type": "boolean",
