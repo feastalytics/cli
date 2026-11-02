@@ -35,6 +35,10 @@ A campaign's videos, newest first:
 - Videos made before the server pipeline have no `pipelineStatus`; read `latestRun` and `exports` for those.
 - `describeData` with `{ "schemaName": "videos" }` lists every column.
 
+## Where a video is running
+
+An approved video goes into ads through `planAds` / `publishAds` with the `addAds` template, its `libraryKey` as a `{ "kind": "libraryAsset", "key": "..." }` creative. Every ad that publish creates gets a row in `ads.adLaunch` tying it back to the project and version, so `queryData` on `ads.adLaunch` filtered on `projectId` lists every ad set the video runs in, and the `facebookAdSpendPoint` link gives each one's daily spend and delivery. A new version of the same project is a different video: it is not running until it is approved and launched.
+
 ## Reference scripts
 
 For a campaign whose brief is not an awareness brief, the `concept` options from `getVideoPromptOptions` are the reference ad scripts Content Studio offers as Concept presets, each distilled from an ad that performed: `label` (its title), `text` (the exact concept Content Studio sends to Bevyl), `description` (what the video shows) and `videoUrl` (a public MP4 preview). The list is the same for every organization. Copy the structure and pacing, not the words. Use one to explain a concept option or to write a concept of your own for `prompt`. An awareness campaign's concepts come from its creative brief instead and carry no video.
