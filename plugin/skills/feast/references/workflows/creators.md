@@ -142,9 +142,9 @@ On a board with `reimbursementEnabled`, the creator pays for the meal and upload
 
 ### Everything else: queryData
 
-The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorInstagramProfile` (follower count, private and verified flags, profile picture), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. It also exposes three **nosql** objects: `creativeStrategy` (creator briefs), `creatorAvailability` (booking windows) and `creatorSubmission` (content submissions). `describeData` marks them `"type": "nosql"`. They take only `filter` commands, and only on columns with `isFilterable: true`; `join`, `pivot` and `aggregate` are rejected, and they have no links, so reach a related object with a second `queryData` call on its id. `order`, `fields`, `limit` and `cursor` work as usual.
+The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. It also exposes three **nosql** objects: `creativeStrategy` (creator briefs), `creatorAvailability` (booking windows) and `creatorSubmission` (content submissions). `describeData` marks them `"type": "nosql"`. They take only `filter` commands, and only on columns with `isFilterable: true`; `join`, `pivot` and `aggregate` are rejected, and they have no links, so reach a related object with a second `queryData` call on its id. `order`, `fields`, `limit` and `cursor` work as usual. Instagram stats (follower count, private and verified flags, profile picture) live in the `social` schema as `instagramAccount`, reached from `creator` by the `instagramAccount` link.
 
-`creator` and `creatorInstagramProfile` only return creators who applied to this organization. To go from an application to its creator, follow the `influencer` link, then the creator's `instagramProfile` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
+`creator` only returns creators who applied to this organization, and `social.instagramAccount` only their accounts and the organization's own. To go from an application to its creator, follow the `influencer` link, then the creator's `instagramAccount` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
 
 Pending applications with names and handles (the approval queue):
 
@@ -158,7 +158,7 @@ Pending applications with names and handles (the approval queue):
   "args": { "limit": 1000, "order": { "field": "createdAt", "direction": "DESC" } } }
 ```
 
-Their Instagram stats: the same filter, then pivot to the creator and join the profile. Match the rows to the applications on `influencerId = userId`.
+Their Instagram stats: the same filter, then pivot to the creator and join the account. Match the rows to the applications on `influencerId = userId`.
 
 ```json
 { "schemaName": "creators", "objectTypeName": "creatorVisitApplication",
@@ -167,7 +167,7 @@ Their Instagram stats: the same filter, then pivot to the creator and join the p
       { "$approvalStatus": { "string": "pending_approval", "match": "EQ" } },
       { "type": "or", "filters": [ { "$status": { "match": "NULL" } }, { "$status": { "string": "cancelled", "match": "NEQ" } } ] } ] } },
     { "type": "pivot", "name": "influencer" },
-    { "type": "join", "name": "instagramProfile", "fields": ["followerCount", "isPrivate", "isVerified", "profilePicUrl", "fetchedAt"] } ],
+    { "type": "join", "name": "instagramAccount", "fields": ["followerCount", "isPrivate", "isVerified", "profilePicUrl", "scrapedAt"] } ],
   "args": { "limit": 1000 } }
 ```
 
