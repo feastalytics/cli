@@ -9,7 +9,7 @@ Ships with an [agent skill](#agent-skill) so Claude Code, Codex, and other agent
 Feastalytics ships as a plugin (the `feast` skill plus the hosted MCP server at `https://mcp.feast-api.com/mcp`), as a standalone skill, and as this CLI. The MCP server signs you in with OAuth the first time you connect; there is no client id or API key to enter.
 
 - **Claude Code**: `/plugin marketplace add feastalytics/cli`, then `/plugin install feastalytics@feast`.
-- **claude.ai and Claude Desktop**: add a custom connector with the URL `https://mcp.feast-api.com/mcp`. A directory listing is to follow.
+- **claude.ai and Claude Desktop**: add a custom connector with the URL `https://mcp.feast-api.com/mcp`. A directory listing is to follow. For the skill, upload `feast-skill.zip` from the [latest release](https://github.com/feastalytics/cli/releases/latest/download/feast-skill.zip) under **Customize > Skills**. `npm run build:claude-skill` builds it; the zip holds the `feast/` folder at its root, the shape claude.ai asks for.
 - **ChatGPT**: `npm run build:chatgpt` writes two archives to `dist/`, and each release attaches both. `feastalytics-skill.zip` holds the `feast` skill alone and installs on ChatGPT web and mobile next to a custom MCP server plugin pointed at `https://mcp.feast-api.com/mcp`. `feastalytics-chatgpt.zip` adds `plugin/mcp.json`; ChatGPT treats a plugin that carries `mcp.json` as local, so that one installs in the desktop app only.
 - **Skill only** (Claude Code, Codex, Cursor and other agents): `npx skills add feastalytics/cli`.
 
