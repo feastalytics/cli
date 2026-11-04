@@ -98,7 +98,7 @@ The ads that bring applicants in are tool-drivable end to end:
 
 ### The decision loop
 
-1. The approval queue is `creators.creatorVisitApplication` with `approvalStatus` `pending_approval`, across every location: run the *Pending applications* query under *Everything else* below for names and handles, and the *Instagram stats* query beside it for **follower counts**, which are usually the deciding factor. Each application carries the brief assigned to the visit as `strategyId`, null when no brief is assigned. Read the briefs' titles and campaigns in one call:
+1. The approval queue is `creators.creatorVisitApplication` with `approvalStatus` `pending_approval`, across every location: run the *Pending applications* query under *Everything else* below for names and handles, the *Instagram stats* query beside it for **follower counts**, which are usually the deciding factor, and the *engagement* queries after it for engagement rate and recent reel views. Each application carries the brief assigned to the visit as `strategyId`, null when no brief is assigned. Read the briefs' titles and campaigns in one call:
 
    ```json
    { "schemaName": "creators", "objectTypeName": "creativeStrategy",
@@ -172,5 +172,43 @@ Their Instagram stats: the same filter, then pivot to the creator and join the a
 ```
 
 A creator with null `dest_followerCount` has no Instagram handle, or the scrape found no account. Drop the `approvalStatus` filter to see the stats of every applicant, approved or denied.
+
+Their engagement, from their posts. `interface.socialPost` holds every post by a creator who applied, with its latest likes, comments and views. Aggregate it per `username`, using the `dest_username` values from the query above:
+
+```json
+{ "schemaName": "interface", "objectTypeName": "socialPost",
+  "commands": [
+    { "type": "filter", "filter": { "type": "and", "filters": [
+      { "$platform": { "string": "instagram", "match": "EQ" } },
+      { "$username": { "strings": ["<username>", "<username>"] } } ] } },
+    { "type": "aggregate", "aggregate": {
+      "aggregate": { "$likeCount": "AVG", "$commentsCount": "AVG", "$mediaId": "COUNT" },
+      "groupBy": { "$username": "EXACT" } } } ],
+  "args": { "limit": 1000 } }
+```
+
+Reel views over the last 30 days: the same filter plus reels posted since 30 days ago, summed.
+
+```json
+{ "schemaName": "interface", "objectTypeName": "socialPost",
+  "commands": [
+    { "type": "filter", "filter": { "type": "and", "filters": [
+      { "$platform": { "string": "instagram", "match": "EQ" } },
+      { "$username": { "strings": ["<username>", "<username>"] } },
+      { "$mediaProductType": { "string": "REELS", "match": "EQ" } },
+      { "$postedAt": { "datetime": "<ISO-8601, 30 days ago>", "match": "GTE" } } ] } },
+    { "type": "aggregate", "aggregate": {
+      "aggregate": { "$viewCount": "SUM", "$mediaId": "COUNT" },
+      "groupBy": { "$username": "EXACT" } } } ],
+  "args": { "limit": 1000 } }
+```
+
+How to read them:
+
+- **Engagement rate** = (average `likeCount` + average `commentsCount`) ÷ `followerCount` × 100. It is the number the dashboard's approvals page shows, give or take: the page averages likes and comments together over posts with visible likes. Among creators Feast has read, the middle half sits between about 1% and 8%, with a median near 3%.
+- **Hidden likes.** A null average `likeCount` means the creator hides likes, not that nobody likes their posts. Report average comments instead and say engagement can't be calculated. Never treat a null count as 0.
+- **Views are reels only.** Instagram reports views for reels, not photos or carousels. A creator missing from the views result posted no reels in the window, or Instagram withheld their views; say their reach is unmeasured, not zero. Instagram's discovery API also misses reels that were never shared to the profile grid, so check the profile before saying a creator posts no reels.
+- **No posts at all** (missing from the first result) means Feast could not read the account: it is personal or private, or the handle is wrong. The follower count from the stats query may still be there.
+- `mediaId` in the results is the post count. The first query covers every post Feast has stored for the creator, which can reach back further than their latest few.
 
 > **Not exposed:** marking a creator conversation read, assigning a brief to a visit, the dashboard's launch-program button itself (its bookkeeping rides the recruitment publish effect, see above), and publishing a creator's submitted content as a partnership ad.
