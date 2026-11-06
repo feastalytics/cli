@@ -20,6 +20,11 @@ export function toolSummary(tool: CliTool): string {
   return (match?.[0] ?? firstLine).trim();
 }
 
+export function toolDetails(tool: CliTool): string | null {
+  const details = (tool as { details?: string | null }).details;
+  return details != null && details.length > 0 ? details : null;
+}
+
 export function toolInputJsonSchema(tool: CliTool): object {
   return tool.inputJsonSchema ?? { type: "object", properties: {} };
 }

@@ -1,19 +1,28 @@
-# Video ads (Bevyl)
+# Videos (Video Editor 2)
 
 ## Making a video
 
-One video is one `projectId`, from Generate to the finished MP4. The loop:
+One video is one `projectId`, from the first idea to the approved MP4. Every step that spends money (generate, pick a story, edit) needs the human's explicit go-ahead.
 
-1. **`getVideoPromptOptions({ campaignId })`**. `defaultPrompt` is what Content Studio would send: four plain-text sections (Campaign, Concept, Creative direction, CTA), each a heading line then its text. `campaign`, `concept`, `direction` and `cta` list the alternatives for each section (`{ id, label, text }`). Concepts carry the reference video they came from (`videoUrl`, `description`), and directions a `suggestedFormat`. Show the human the prompt you plan to send. Swap a section for another option's text or rewrite it as they ask.
-2. **`generateVideo`** with `campaignId`, `prompt` (sent to Bevyl verbatim, 5,000 characters at most) and `format` (`voiceover`, `talking-head`, `trending-sounds` with a `trendId`, or `no-audio`; the chosen direction's `suggestedFormat` is the default). Pass `angleId` (from the campaign's videos, below) to add a version to an existing angle; otherwise a new angle is named from the Concept's first line, or from `angleTitle`. Footage is every clip already synced to Bevyl unless you pass `brollKeys`: the `key` of each file from `listMedia` with scope `syncedBroll` (on Bevyl already, ready or still processing) or `unsyncedBroll` (not on Bevyl yet; it is uploaded first, so the video takes longer to start). Both scopes cover the creative library and creators' submitted b-roll. A clip Bevyl failed to process is in neither, so don't go looking for it. **This spends Bevyl credits: only with the human's explicit go-ahead.**
-3. **Poll the video** about every 30 seconds with `queryData` on `videos.video` filtered on the `projectId` `generateVideo` returned (it has no `wait` option). `pipelineStatus` moves uploading, processing, creating, rendering, exporting, then `ready` (`exportUrl` is the MP4) or `failed` (`pipelineStatusMessage` says why). A first video takes several minutes.
-4. Send the human `exportUrl` to watch. For one change, **`requestVideoEdit`** with only that change in `note` (credits again; `pipelineStatus` goes back to `rendering`, then `ready` with the new export). When they approve it, **`approveVideo({ projectId })`** saves the MP4 to the campaign's creative library and returns its `libraryKey`. It approves the run of the newest export unless you pass `runId`; see below for where run ids come from.
+1. **`generateVideo`** with `campaignId` (or `null` for an organic post, with `referrer` naming the brand when the organization has more than one site) and `prompt`: the idea for this video (the hook, the story, what to show, the tone). Claude already reads the campaign's brief, the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. Optional: `voiceId` from `listVideoVoices`, `voiceover: false` for on-screen text only, `music`, `font`, `headline`, `endCard`, and `angleId` (or `angleTitle`) to group it with other versions of the same idea. The footage is every labelled clip of the video's brand: `queryData` on `videos.footage` lists it scene by scene, and new footage goes in with `getMediaUploadUrl` (scope `creativeLibraryBroll`, `sourceUrl`), labelled a few minutes later.
+2. **Poll** about every 30 seconds with `queryData` on `videos.video` filtered on `projectId` until `pipelineStatus` is `choosingScript`, `ready` or `failed` (`pipelineStatusMessage` says why).
+3. **Pick a story.** `getVideoEditor` returns `editor.scripts`, the story options. Show them to the human. `chooseVideoScript` with `scriptId` (and optionally `lines`, one per beat) picks one and cuts version 1. `chooseVideoScript` with `feedback` rewrites the options instead (or only the one `scriptId` names), about $0.10. A video with `voiceover: false` skips this step.
+4. **Watch.** When `pipelineStatus` is `ready`, `getVideoEditor`'s `exports[].url` is the version's MP4 (the link works for an hour). Send it to the human.
+5. **Edit** with `requestVideoEdit`:
+   - `note` for anything said in words ("punchier hook"); Claude turns it into changes. `scopeLineIds` keeps a note to the lines named.
+   - `changes` for exact edits to the timeline from `getVideoEditor` (lines, shots, overlays, text style, voice, pronunciation, music). Segment ids come from `videos.footage`.
+   - `recut: true` on its own for new shots and a new voice take from the same story.
+   - `restore: "<versionId>"` on its own to bring back an earlier version.
+   - `asNewVideo` to make the result a new video instead of a new version: a variation for testing another hook or opening shot. With no `note` or `changes` it is an exact copy and costs nothing. `asNewVideo.post` also puts it on a Content Calendar account as a draft trial reel.
+6. **Approve** with `approveVideo({ projectId })` once the human has watched and approved it. It saves the current version's MP4 to the creative library and returns its `libraryKey`; pass `runId` to approve another version from `editor.versions`.
+
+`describeTools` (MCP) or `feast describe` (CLI) gives each tool's full rules: every input, what it costs and what comes next.
 
 ## Reading videos
 
 `queryData` on `videos.video`, one row per video. Videos are only there for organizations with acquisition enabled.
 
-One video, and the poll in step 3:
+One video, and the poll in step 2:
 
 ```json
 { "schemaName": "videos", "objectTypeName": "video",
@@ -25,20 +34,16 @@ A campaign's videos, newest first:
 ```json
 { "schemaName": "videos", "objectTypeName": "video",
   "commands": [{ "type": "filter", "filter": { "$campaignId": { "string": "<campaignId>", "match": "EQ" } } }],
-  "args": { "fields": ["projectId", "angleId", "angleTitle", "title", "createdAt", "pipelineStatus", "exportUrl", "latestRun", "approvedRunId", "edits"],
+  "args": { "fields": ["projectId", "angleId", "angleTitle", "createdAt", "pipelineStatus", "latestRun", "editor", "approvedRunId", "variationOf"],
             "order": { "field": "createdAt", "direction": "DESC" } } }
 ```
 
 - Videos are grouped into angles by `angleId`. Old videos have no `angleId`; `angleTitle` names their angle.
-- `latestRun` is the newest Bevyl run (`runId`, `status` working, completed, failed or no_clips, `completedAt`). Its `runId` is the one `approveVideo` takes. Every export also carries its run (`exports[].runId`, with `url` the MP4 of that run), so pass `runId` to `approveVideo` only to approve an earlier run than the newest export. `approvedRunId` is the run already approved.
-- `edits` lists the changes asked for with `requestVideoEdit`, each with the run it started.
-- Videos made before the server pipeline have no `pipelineStatus`; read `latestRun` and `exports` for those.
+- A run is a version: `latestRun.runId`, `editor.currentVersionId` and `approvedRunId` are version ids.
+- `variationOf` is set on a video made with `asNewVideo`: the video and version it was copied from.
+- Videos with `engine` bevyl were made with the old editor. `getVideoEditor` returns `editor: null` for them and the video tools don't edit them.
 - `describeData` with `{ "schemaName": "videos" }` lists every column.
 
 ## Where a video is running
 
 An approved video goes into ads through `planAds` / `publishAds` with the `addAds` template, its `libraryKey` as a `{ "kind": "libraryAsset", "key": "..." }` creative. Every ad that publish creates gets a row in `ads.adLaunch` tying it back to the project and version, so `queryData` on `ads.adLaunch` filtered on `projectId` lists every ad set the video runs in, and the `facebookAdSpendPoint` link gives each one's daily spend and delivery. A new version of the same project is a different video: it is not running until it is approved and launched.
-
-## Reference scripts
-
-For a campaign whose brief is not an awareness brief, the `concept` options from `getVideoPromptOptions` are the reference ad scripts Content Studio offers as Concept presets, each distilled from an ad that performed: `label` (its title), `text` (the exact concept Content Studio sends to Bevyl), `description` (what the video shows) and `videoUrl` (a public MP4 preview). The list is the same for every organization. Copy the structure and pacing, not the words. Use one to explain a concept option or to write a concept of your own for `prompt`. An awareness campaign's concepts come from its creative brief instead and carry no video.

@@ -23,6 +23,7 @@ import {
   buildToolRegistry,
   type CliTool,
   findTool,
+  toolDetails,
   toolInputJsonSchema,
   toolSummary,
 } from "./registry";
@@ -268,6 +269,7 @@ function describeTool(tool: CliTool): string {
     `Procedure: ${tool.path.join(".")}`,
     "",
     tool.description,
+    ...(toolDetails(tool) == null ? [] : ["", "Details:", toolDetails(tool) as string]),
     "",
     "Input schema:",
     JSON.stringify(toolInputJsonSchema(tool), null, 2),
