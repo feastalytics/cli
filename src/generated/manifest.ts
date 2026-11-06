@@ -353,6 +353,47 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "approveStatic",
+      "domain": "content",
+      "summary": "Approve a still image or carousel so its slides go to the creative library as JPEGs.",
+      "description": "Approve a still image or carousel so its slides go to the creative library as JPEGs. Pass the pieceId from generateStatic, and optionally a versionId (the newest finished version by default). A piece is refused until its first version is finished. A version whose layout or vision checks found errors is refused with the errors listed; send them to requestStaticEdit as a note, or pass allowErrors to approve anyway. Returns the library keys in slide order.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "statics",
+        "approve"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "pieceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "versionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "allowErrors": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "pieceId"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "approveVideo",
       "domain": "videos",
       "summary": "Approve a Video Editor 2 video and save its MP4 to the creative library, returning the libraryKey.",
@@ -423,8 +464,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "chooseVideoScript",
       "domain": "videos",
-      "summary": "Pick one of a Video Editor 2 video's story options and cut its first version.",
-      "description": "Pick one of a Video Editor 2 video's story options and cut its first version. Only while pipelineStatus is choosingScript; scriptId is one of editor.scripts from getVideoEditor. lines optionally replaces the story's spoken lines in order, one per beat, and must have exactly as many entries as the story has beats (keep ElevenLabs v3 audio tags like [excited] if you want them). Claude shortlists shots from the labelled footage, Jev picks and checks them, ElevenLabs voices the lines and the video is rendered: pipelineStatus moves to cutting, then ready (or failed). Returns the new version's id as generation.runId. Spends generation credits, so only with the human's explicit approval of the story.",
+      "summary": "Pick one of a Video Editor 2 video's story options, or rewrite them from feedback.",
+      "description": "Pick one of a Video Editor 2 video's story options, or rewrite them from feedback. Only while pipelineStatus is choosingScript. scriptId alone (optionally with lines, one per beat) picks that story and cuts version 1, spending generation credits, so only with the human's approval. feedback rewrites the options, or only the one scriptId names (about $0.10).",
       "type": "mutation",
       "path": [
         "api",
@@ -451,11 +492,15 @@ export const CLI_MANIFEST: CliManifest = {
             },
             "minItems": 1,
             "maxItems": 20
+          },
+          "feedback": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
           }
         },
         "required": [
-          "projectId",
-          "scriptId"
+          "projectId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -866,7 +911,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "createFormat",
       "domain": "content",
       "summary": "Write a post format of your own, with a recipe like the catalog's.",
-      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style (a short tag such as food_porn, preparation or pov; the catalog's styles group it in the picker) and difficulty (easy, medium or hard) describe it; sourceUrl is the Instagram or TikTok post it is based on, when there is one. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
+      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style and difficulty (easy, medium or hard) describe it; style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. sourceUrl is the Instagram or TikTok post it is based on, when there is one. extractionId is the fx_ id of your own ready formats.formatExtraction row when you are saving its draft (from extractFormatFromUrl): pass it so the pasted post's saved video or slides show as the format's example; the post must be the same kind as the format. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
       "type": "mutation",
       "path": [
         "api",
@@ -896,8 +941,17 @@ export const CLI_MANIFEST: CliManifest = {
             "anyOf": [
               {
                 "type": "string",
-                "minLength": 1,
-                "maxLength": 32
+                "enum": [
+                  "food",
+                  "made",
+                  "team",
+                  "place",
+                  "guests",
+                  "news",
+                  "community",
+                  "fun",
+                  "story"
+                ]
               },
               {
                 "type": "null"
@@ -1226,6 +1280,18 @@ export const CLI_MANIFEST: CliManifest = {
           "shareWithOrganization": {
             "type": "boolean",
             "default": false
+          },
+          "extractionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1364,8 +1430,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "summary": "Render a location's five recruitment ad images and queue the AI composite pass on each.",
-      "description": "Render a location's five recruitment ad images and queue the AI composite pass on each. The template renders use its own photo, logo, food credit and creator bonus and attach to the campaign's recruitment offer; the composite pass (compositeModel, openai by default, null to skip) then runs in the background and lands on each creative as compositeOpenaiUrl with compositeStatus pending, ok or failed and compositeError when it fails. Poll listCreatives for it; a creative with no photo is rendered but not composited (compositeSkipped says so). Only missing types are generated. force: true re-renders the types that have no composite yet and keeps the ones that do; force: \"all\" deletes and regenerates every type. The food credit and bonus come from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId), so change those first to change the amounts shown.",
+      "summary": "Make a location's recruitment ad images for the campaign's recruitment ad.",
+      "description": "Make a location's recruitment ad images for the campaign's recruitment ad. The food credit and bonus come from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId), so change those first to change the amounts shown. Organizations with Video Editor 2 get a statics studio set: one set piece whose version holds one image per layout of a creator recruitment format (formatId static_local_creators, Local creators, by default, or static_creator_invitation, Creator invitation), made from the restaurant's own labelled photos, logo and city, with only the hooks written by Claude. It refuses before creating anything when none of the brand's labelled photos (a dish box, no people, no added text or other logos, not thumbnail size) fits any layout of the format, so upload food photos first (getMediaUploadUrl, scope organizationFilePublic) and wait for them to be labelled. The location's board points at the project, the call returns projectId, pieceIds and versionId, a repeat call with the same settings returns the same version, and force adds a new version to the same project. Approve the set with approveStatic once it is ready; nothing is composited. Other organizations get five rendered templates attached to the campaign's recruitment offer, plus the AI composite pass on each (compositeModel, openai by default, null to skip), which lands on each creative as compositeOpenaiUrl with compositeStatus pending, ok or failed and compositeError when it fails; poll listCreatives for it. A creative with no photo is rendered but not composited (compositeSkipped says so). Only missing types are generated. force: true re-renders the types that have no composite yet and keeps the ones that do; force: \"all\" deletes and regenerates every type.",
       "type": "mutation",
       "path": [
         "api",
@@ -1415,672 +1481,19 @@ export const CLI_MANIFEST: CliManifest = {
               }
             ],
             "description": "Which model composites each new creative in the background. Defaults to openai; null skips the composite pass."
+          },
+          "formatId": {
+            "type": "string",
+            "enum": [
+              "static_local_creators",
+              "static_creator_invitation"
+            ],
+            "description": "Video Editor 2 organizations only: the creator recruitment format the set follows. static_local_creators (Local creators) by default, or static_creator_invitation (Creator invitation)."
           }
         },
         "required": [
           "locationId",
           "campaignId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "createVideoVariation",
-      "domain": "videos",
-      "summary": "Make a new video from a finished version of another, with an optional small edit.",
-      "description": "Make a new video from a finished version of another, with an optional small edit. Use it to test a different hook, headline or opening shot (a trial reel, say) without paying for a new video. It is a Video Editor 2 video that has its own projectId (and can be its own Instagram post), keeps the source's story, voice, footage and text style, and records variationOf. Pass projectId (the video to vary) and optionally versionId (defaults to its current version). With no note and no changes it is an exact copy: no script, voice or render is paid for. changes and note work as in requestVideoEdit, against the source version: changes are exact edits (a changed line re-voices the take, about $0.04, anything else only re-renders, under a cent), and a note is planned into changes by Claude (up to about $0.10). A fresh video costs $0.30 to $0.45. campaignId null makes it an organic post; leaving it out keeps the source's campaign. angleTitle names it; leaving it out keeps the source's angle. post {accountId (a content.instagramAccount), kind (trial_reel by default, or reel), title?} also puts the variation on that account's Content Calendar as a draft post whose video is the variation (organic, under the account's brand; campaignId is then ignored). The post is approved like any Content Studio post once its video is ready. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs }, post }; poll getVideoEditor on the new projectId until pipelineStatus is ready.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "bevyl",
-        "createVariation"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "projectId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "versionId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "campaignId": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "angleTitle": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "note": {
-            "type": "string",
-            "maxLength": 1000
-          },
-          "changes": {
-            "type": "array",
-            "items": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "line"
-                    },
-                    "lineId": {
-                      "type": "string"
-                    },
-                    "set": {
-                      "type": "object",
-                      "properties": {
-                        "text": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 600
-                        },
-                        "highlight": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "maxItems": 4
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "hook",
-                            "tension",
-                            "turn",
-                            "offer",
-                            "reason",
-                            "proof",
-                            "payoff",
-                            "cta"
-                          ]
-                        },
-                        "holdSec": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                              "minimum": 0.4,
-                              "maximum": 10
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "lineId",
-                    "set"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "insertLine"
-                    },
-                    "afterLineId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "line": {
-                      "type": "object",
-                      "properties": {
-                        "role": {
-                          "$ref": "#/properties/changes/items/anyOf/0/properties/set/properties/role"
-                        },
-                        "text": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 600
-                        },
-                        "highlight": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "maxItems": 4,
-                          "default": []
-                        }
-                      },
-                      "required": [
-                        "role",
-                        "text"
-                      ]
-                    },
-                    "segmentIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "maxItems": 4
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "afterLineId",
-                    "line"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "removeLine"
-                    },
-                    "lineId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "lineId"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "moveLine"
-                    },
-                    "lineId": {
-                      "type": "string"
-                    },
-                    "afterLineId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "lineId",
-                    "afterLineId"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "shot"
-                    },
-                    "shotId": {
-                      "type": "string"
-                    },
-                    "set": {
-                      "type": "object",
-                      "properties": {
-                        "segmentId": {
-                          "type": "string"
-                        },
-                        "srcInSec": {
-                          "type": "number",
-                          "minimum": 0
-                        },
-                        "crop": {
-                          "type": "object",
-                          "properties": {
-                            "cx": {
-                              "type": "number"
-                            },
-                            "cy": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "cx",
-                            "cy"
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "shotId",
-                    "set"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "addShot"
-                    },
-                    "lineId": {
-                      "type": "string"
-                    },
-                    "segmentId": {
-                      "type": "string"
-                    },
-                    "srcInSec": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "lineId",
-                    "segmentId"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "removeShot"
-                    },
-                    "shotId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "shotId"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "overlay"
-                    },
-                    "op": {
-                      "type": "string",
-                      "enum": [
-                        "add",
-                        "set",
-                        "remove"
-                      ]
-                    },
-                    "overlayId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "overlay": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "kind": {
-                              "type": "string",
-                              "const": "lineText"
-                            },
-                            "lineId": {
-                              "type": "string"
-                            },
-                            "position": {
-                              "type": "string",
-                              "enum": [
-                                "top",
-                                "middle",
-                                "lower"
-                              ]
-                            },
-                            "size": {
-                              "type": "string",
-                              "enum": [
-                                "large",
-                                "small"
-                              ]
-                            },
-                            "reveal": {
-                              "type": "string",
-                              "enum": [
-                                "typewriter"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "kind",
-                            "lineId",
-                            "position",
-                            "size"
-                          ]
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "kind": {
-                              "type": "string",
-                              "const": "text"
-                            },
-                            "rows": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "maxLength": 40
-                              },
-                              "minItems": 1,
-                              "maxItems": 2
-                            },
-                            "from": {
-                              "type": "string"
-                            },
-                            "to": {
-                              "type": "string"
-                            },
-                            "maxSec": {
-                              "type": "number",
-                              "minimum": 0.5,
-                              "maximum": 10
-                            },
-                            "position": {
-                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/position"
-                            },
-                            "size": {
-                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/size"
-                            },
-                            "backdrop": {
-                              "type": "string",
-                              "const": "dim"
-                            },
-                            "reveal": {
-                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/reveal"
-                            }
-                          },
-                          "required": [
-                            "kind",
-                            "rows",
-                            "from",
-                            "to",
-                            "position",
-                            "size"
-                          ]
-                        }
-                      ]
-                    },
-                    "set": {
-                      "type": "object",
-                      "properties": {
-                        "rows": {
-                          "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/1/properties/rows"
-                        },
-                        "from": {
-                          "type": "string"
-                        },
-                        "to": {
-                          "type": "string"
-                        },
-                        "maxSec": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                              "minimum": 0.5,
-                              "maximum": 10
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "position": {
-                          "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/position"
-                        },
-                        "size": {
-                          "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/size"
-                        },
-                        "backdrop": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "const": "dim"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "wordsPerChunk": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 4
-                        },
-                        "reveal": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/reveal"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "op"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "textStyle"
-                    },
-                    "set": {
-                      "type": "object",
-                      "properties": {
-                        "font": {
-                          "type": "string",
-                          "enum": [
-                            "poppins",
-                            "dm-sans",
-                            "playfair"
-                          ]
-                        },
-                        "highlightColor": {
-                          "type": "string",
-                          "pattern": "^#[0-9a-fA-F]{6}$"
-                        },
-                        "reveal": {
-                          "anyOf": [
-                            {
-                              "$ref": "#/properties/changes/items/anyOf/7/properties/overlay/anyOf/0/properties/reveal"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "set"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "voice"
-                    },
-                    "set": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "voiceId": {
-                              "type": "string"
-                            },
-                            "settings": {
-                              "type": "object",
-                              "properties": {
-                                "stability": {
-                                  "type": "number",
-                                  "minimum": 0,
-                                  "maximum": 1
-                                },
-                                "similarityBoost": {
-                                  "type": "number",
-                                  "minimum": 0,
-                                  "maximum": 1
-                                },
-                                "style": {
-                                  "type": "number",
-                                  "minimum": 0,
-                                  "maximum": 1
-                                },
-                                "speed": {
-                                  "type": "number",
-                                  "minimum": 0.7,
-                                  "maximum": 1.2
-                                }
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "set"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "pronunciation"
-                    },
-                    "written": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 100
-                    },
-                    "spoken": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 200
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "written",
-                    "spoken"
-                  ]
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "music"
-                    },
-                    "set": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "prompt": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 600
-                            },
-                            "newTake": {
-                              "type": "boolean"
-                            },
-                            "gainDb": {
-                              "type": "number",
-                              "minimum": -40,
-                              "maximum": 0
-                            }
-                          }
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "kind",
-                    "set"
-                  ]
-                }
-              ]
-            },
-            "maxItems": 50
-          },
-          "scopeLineIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            },
-            "maxItems": 20
-          },
-          "post": {
-            "type": "object",
-            "properties": {
-              "accountId": {
-                "type": "string",
-                "minLength": 1
-              },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "trial_reel",
-                  "reel"
-                ],
-                "default": "trial_reel"
-              },
-              "title": {
-                "type": "string",
-                "maxLength": 255
-              }
-            },
-            "required": [
-              "accountId"
-            ]
-          }
-        },
-        "required": [
-          "projectId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -2235,10 +1648,179 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "extractFormatFromUrl",
+      "domain": "content",
+      "summary": "Make a draft format from an Instagram reel, post or carousel link.",
+      "description": "Make a draft format from an Instagram reel, post or carousel link. It reads the post, breaks it down shot by shot, checks it against the format catalog and writes a draft recipe. url is an instagram.com reel, p or tv link. Returns extractionId and reused (true when you already read the same post in the last 30 days, which costs nothing). It takes one to two minutes: read the result from queryData formats.formatExtraction filtered on extractionId until status is ready or failed. When ready, draft.match.formatId is the catalog format the post already is (null when it is new) and draft.match.candidates the three closest with a confidence; prefer the catalog format over a duplicate when the first candidate is high. To keep a format of your own, pass draft.format's kind, name, description, recipe and difficulty, its category as style and the url as sourceUrl to createFormat. A person can start 20 a day.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "brandLibrary",
+        "extractFormatFromUrl"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "generateStatic",
+      "domain": "content",
+      "summary": "Make still images or a carousel from the restaurant's own labelled photos.",
+      "description": "Make still images or a carousel from the restaurant's own labelled photos. Claude picks the photos, the layout and the words from the note, renders every slide and checks it by eye. kind is single or carousel (a carousel is one story told over its slides); variations makes 1 to 5 alternative pieces that differ in photo and angle. campaignId makes it for a campaign: its creative brief and offer are read, and its prices are allowed. amounts adds other dollar amounts the images may show; with no campaign and no amounts, no price, deal or free item is written. formatId follows a static format from the library. angleId adds it to an existing Content Studio angle next to that angle's videos; otherwise angleTitle names a new one. referrer is the brand for an organic post when the organization has more than one site. Returns the projectId and pieceIds; each piece takes a minute or two, then approveStatic puts it in the creative library.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "statics",
+        "generate"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "organic",
+              "ad"
+            ],
+            "default": "organic"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "single",
+              "carousel"
+            ],
+            "default": "single"
+          },
+          "size": {
+            "type": "string",
+            "enum": [
+              "feed",
+              "square",
+              "story",
+              "print"
+            ],
+            "default": "feed"
+          },
+          "variations": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "default": 1
+          },
+          "amounts": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100000
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "campaignId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "referrer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "angleId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "angleTitle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "formatId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "generateVideo",
       "domain": "videos",
       "summary": "Start a Video Editor 2 video: a campaign ad or an organic post.",
-      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) or playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with reviseVideoScripts if the human wants changes, and pick one with chooseVideoScript, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
+      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) or playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with chooseVideoScript feedback if the human wants changes, and pick one with chooseVideoScript scriptId, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
       "type": "mutation",
       "path": [
         "api",
@@ -3092,7 +2674,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "getMediaUploadUrl",
       "domain": "core",
       "summary": "Put a media file into a scope.",
-      "description": "Put a media file into a scope. organizationFilePublic holds the organization's own files (photos of dishes, the room and the team, logos); creativeLibraryBroll holds video footage; creativeLibrary holds finished ad creatives. Either pass sourceUrl (a Feast media URL from any of this organization's scopes, such as a chat attachment, or any public https image, video or audio URL, such as an iMessage attachment) and the server copies it in (copied: true, nothing to PUT), or omit sourceUrl and PUT the file bytes to the returned presignedUrl. Then reference the returned url/key. A video copied into creativeLibraryBroll from sourceUrl is labelled for Video Editor 2 (labelQueued true) and shows in queryData videos.footage a few minutes later. For creativeLibraryBroll, referrer names the brand (one of the organization's sites) the footage belongs to, so only that brand's videos use it; omit it to share the footage with every brand.",
+      "description": "Put a media file into a scope. organizationFilePublic holds the organization's own files (photos of dishes, the room and the team, logos); creativeLibraryBroll holds video footage; creativeLibrary holds finished ad creatives. Either pass sourceUrl (a Feast media URL from any of this organization's scopes, such as a chat attachment, or any public https image, video or audio URL, such as an iMessage attachment) and the server copies it in (copied: true, nothing to PUT), or omit sourceUrl and PUT the file bytes to the returned presignedUrl. Then reference the returned url/key. A video copied into creativeLibraryBroll from sourceUrl is labelled for Video Editor 2 (labelQueued true) and shows in queryData videos.footage a few minutes later. For creativeLibraryBroll and organizationFilePublic, referrer names the brand (one of the organization's sites) the footage or photo belongs to, so only that brand's videos and images use it; omit it to share the file with every brand.",
       "type": "mutation",
       "path": [
         "api",
@@ -3331,7 +2913,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "getVideoEditor",
       "domain": "videos",
       "summary": "Read one Video Editor 2 video's story options, versions, current timeline, MP4 links and cost.",
-      "description": "Read one Video Editor 2 video's story options, versions, current timeline, MP4 links and cost. Pass the projectId from generateVideo. editor.scripts are the story options to pick from with chooseVideoScript while pipelineStatus is choosingScript (each {scriptId, angle, why, beats: [{beat, line, footage}], status, parentScriptId, feedback}; only status proposed can be chosen, and a superseded one was rewritten by reviseVideoScripts into the script whose parentScriptId points at it); editor.versions lists every version with renderStatus (queued, planning, voicing, rendering, ready or failed), what changed and its costMicros; editor.current is the version shown now, with its timeline (lines with lineId, role, text, highlight and shots with shotId and segmentId, overlays with overlayId, voice, music and pronunciations: the ids and values requestVideoEdit changes refer to) and timing (when each line, shot and caption plays, in seconds); editor.cost is the total and the split by step, in millionths of a dollar. variationOf {projectId, versionId} is the video and version a createVideoVariation copy started from, null otherwise. A version is a run: runId, exports[].runId and approvedRunId are version ids, and exports[].url is a link to the version's MP4 that works for an hour. Poll it about every 30 seconds while a version is working. Videos made with the old Bevyl editor (engine bevyl in videos.video) come back with editor null; the video tools don't edit them.",
+      "description": "Read one Video Editor 2 video's story options, versions, current timeline, MP4 links and cost. Pass the projectId from generateVideo. editor.scripts are the story options to pick from with chooseVideoScript while pipelineStatus is choosingScript (each {scriptId, angle, why, beats: [{beat, line, footage}], status, parentScriptId, feedback}; only status proposed can be chosen, and a superseded one was rewritten by chooseVideoScript feedback into the script whose parentScriptId points at it); editor.versions lists every version with renderStatus (queued, planning, voicing, rendering, ready or failed), what changed and its costMicros; editor.current is the version shown now, with its timeline (lines with lineId, role, text, highlight and shots with shotId and segmentId, overlays with overlayId, voice, music and pronunciations: the ids and values requestVideoEdit changes refer to) and timing (when each line, shot and caption plays, in seconds); editor.cost is the total and the split by step, in millionths of a dollar. variationOf {projectId, versionId} is the video and version a requestVideoEdit asNewVideo copy started from, null otherwise. A version is a run: runId, exports[].runId and approvedRunId are version ids, and exports[].url is a link to the version's MP4 that works for an hour. Poll it about every 30 seconds while a version is working. Videos made with the old Bevyl editor (engine bevyl in videos.video) come back with editor null; the video tools don't edit them.",
       "type": "query",
       "path": [
         "api",
@@ -3356,7 +2938,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "importMembers",
       "domain": "membersProgram",
       "summary": "Add members from a list and set their custom property values.",
-      "description": "Add members from a list and set their custom property values. Send rows inline (one object per person, keyed by column name, at most 5,000). Each row is matched to a member by phone, then by name when matchByName is on; with createMissingMembers a row that matches nobody becomes a new member with the row's name, phone, email and source. Call with apply false first (the default): nothing is written and the result shows matched, to-create, emails to fill, ambiguous and unmatched rows with reasons, per-property counts, bad cells by row, and the properties that would be created. Show that to the user, then call again with apply true and the same input. mappings set properties: each names an existing propertyId or {name, type} to create (reused when a property with that name and type exists), from a column or a static value; values are coerced to the property's type. optIn marks created members as agreeing to texts, so leave it false unless the user confirms each person consented; an opted-out member gets no automated texts. Re-running the same rows is safe: members are matched, not duplicated, and values are updated in place. Created members get the importedCustomer automation event, not signUp, so an automation on that trigger can text them their pass link.",
+      "description": "Add members from a list and set their custom property values. Send rows inline (one object per person, keyed by column name, at most 5,000). Each row is matched to a member by phone, then by name when matchByName is on; with createMissingMembers a row that matches nobody becomes a new member with the row's name, phone, email and source. Call with apply false first (the default): nothing is written and the result shows matched, to-create, emails to fill, ambiguous and unmatched rows with reasons, per-property counts, bad cells by row, and the properties that would be created. Show that to the user, then call again with apply true and the same input. mappings set properties: each names an existing propertyId or {name, type} to create (reused when a property with that name and type exists), from a column or a static value; values are coerced to the property's type. optIn marks created members as agreeing to texts, so leave it false unless the user confirms each person consented. With optIn false a created member's opt-in is left empty (never asked): they get no texts until they agree. Re-running the same rows is safe: members are matched, not duplicated, and values are updated in place. Created members get the importedCustomer automation event, not signUp, so an automation on that trigger can text them their pass link.",
       "type": "mutation",
       "path": [
         "api",
@@ -3420,7 +3002,7 @@ export const CLI_MANIFEST: CliManifest = {
           "optIn": {
             "type": "boolean",
             "default": false,
-            "description": "Mark created members as agreeing to texts. Only with the user's confirmation that each person consented."
+            "description": "Mark created members as agreeing to texts. Only with the user's confirmation that each person consented. Off leaves their opt-in empty (never asked) instead of opted out."
           },
           "source": {
             "anyOf": [
@@ -3973,7 +3555,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "publishAds",
       "domain": "ads",
       "summary": "Publish a planAds plan to Meta, everything paused.",
-      "description": "Publish a planAds plan to Meta, everything paused. ads_update_entity on the campaign with status ACTIVE and cascade true starts spending, only with the human's explicit approval. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome, or pass wait: true to hold the call up to 20 seconds and get the job back (still check its status; a long publish returns unfinished). Only with the human's explicit approval.",
+      "description": "Publish a planAds plan to Meta, everything paused. ads_update_entity on the campaign with status ACTIVE and cascade true starts spending, only with the human's explicit approval. Pass planAds' variables, overrides and planHash back unchanged; a stale plan is refused, so re-plan and show the human the change. recruitment requires the linkRecruitmentOffer effect (texts the program's approver); for a location whose recruitment images come from the statics studio, publish the approved set's images (approveStatic's creative library keys) with creativeIds empty and staticVersionId set to the approved version, which records it on the location's board; directOffer requires linkFeastCampaign. Queues a job: poll getJob and read each effect's outcome, or pass wait: true to hold the call up to 20 seconds and get the job back (still check its status; a long publish returns unfinished). Only with the human's explicit approval.",
       "type": "mutation",
       "path": [
         "api",
@@ -4051,6 +3633,15 @@ export const CLI_MANIFEST: CliManifest = {
                         "type": "string",
                         "minLength": 1
                       }
+                    },
+                    "staticVersionId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "locationId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The location whose creator program gets this ad: its board is linked, its studio version recorded and its approver texted. Defaults to the offer's own location. Set it when the offer is shared with another location."
                     }
                   },
                   "required": [
@@ -4237,10 +3828,49 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "requestStaticEdit",
+      "domain": "content",
+      "summary": "Make a new version of a still image or carousel from a note.",
+      "description": "Make a new version of a still image or carousel from a note. The note (\"make the headline shorter\", \"use a photo with more of the noodles\") is turned into changes by Claude, then the piece is rendered and checked again. Pass the pieceId from generateStatic. Approve the new version with approveStatic once it is ready.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "statics",
+        "requestEdit"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "pieceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What to change, in plain words."
+          }
+        },
+        "required": [
+          "pieceId",
+          "note"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "requestVideoEdit",
       "domain": "videos",
       "summary": "Ask for a new version of a Video Editor 2 video, once its first version is ready.",
-      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change (reveal typewriter types a text or lineText overlay in word by word, null shows it whole), or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins, dm-sans or playfair, set.highlightColor #RRGGBB, and set.reveal typewriter or null for every text and lineText overlay at once; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again.",
+      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change (reveal typewriter types a text or lineText overlay in word by word, null shows it whole), or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins, dm-sans or playfair, set.highlightColor #RRGGBB, and set.reveal typewriter or null for every text and lineText overlay at once; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again. restore (a versionId from editor.versions that finished rendering) makes that version current again as a new version, only re-rendered; send it on its own. asNewVideo makes the result a new video instead of a new version: {versionId (the version to start from, defaults to the current one), campaignId (null for an organic post, omitted keeps the source's), angleTitle}. With asNewVideo and no note or changes it is an exact copy that costs nothing. It returns the new video's projectId; poll getVideoEditor on it. To put a variation on the Content Calendar, use the calendar's tools instead.",
       "type": "mutation",
       "path": [
         "api",
@@ -4850,75 +4480,38 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "recut": {
             "type": "boolean"
+          },
+          "restore": {
+            "type": "string",
+            "minLength": 1
+          },
+          "asNewVideo": {
+            "type": "object",
+            "properties": {
+              "versionId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "campaignId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "angleTitle": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
           }
         },
         "required": [
           "projectId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "restoreVideoVersion",
-      "domain": "videos",
-      "summary": "Make an earlier version of a Video Editor 2 video current again as a new version.",
-      "description": "Make an earlier version of a Video Editor 2 video current again as a new version. Pass the projectId and the versionId to bring back (editor.versions from getVideoEditor; it must have finished rendering). The new version copies that version's timeline and is only re-rendered: no new script, shot pick or voice. Returns the new version's id as generation.runId; poll getVideoEditor until its renderStatus is ready.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "bevyl",
-        "restoreVersion"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "projectId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "versionId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "projectId",
-          "versionId"
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "reviseVideoScripts",
-      "domain": "videos",
-      "summary": "Rewrite a Video Editor 2 video's story options from the team's feedback before one is chosen.",
-      "description": "Rewrite a Video Editor 2 video's story options from the team's feedback before one is chosen. Only while pipelineStatus is choosingScript. With scriptId (one of editor.scripts from getVideoEditor whose status is proposed), that story is revised: the new version replaces it in the options with parentScriptId set to it, and the old one becomes superseded. Without scriptId, all current options are rewritten as three new ones that act on the feedback. The writer uses the brief, the restaurant's notes and its reviews, so feedback can ask for a different hook, length or emphasis but not for facts the restaurant hasn't given. pipelineStatus moves to scripting, then back to choosingScript (with pipelineStatusMessage set if the rewrite failed, leaving the options as they were). Costs about $0.10.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "bevyl",
-        "reviseScripts"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "projectId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "scriptId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "feedback": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 1000
-          }
-        },
-        "required": [
-          "projectId",
-          "feedback"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -9806,7 +9399,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateCampaign",
       "domain": "campaigns",
       "summary": "Update one campaign's settings, offers, image or published state.",
-      "description": "Update one campaign's settings, offers, image or published state. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read the campaign first with queryData attribution.campaign filtered on id. A promotion sent with the promoId of a stored one keeps its Stripe product and price ids when it omits them. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices.",
+      "description": "Update one campaign's settings, offers, image or published state. Pass campaignId and only the top-level fields you change; each one replaces the stored value whole (promotions is the full list), so read the campaign first with queryData attribution.campaign filtered on id. A promotion sent with the promoId of a stored one keeps its Stripe product and price ids when it omits them. It is also how you publish (isPublished, only on the user's go-ahead) and set the offer image. A price on a recurring promotion creates live Stripe products and prices. enabledFeatures only controls what the dashboard shows; AUTOMATIONS cannot be dropped while the campaign's funnel has a sign up form, Stripe checkout or cart, because those funnels always run their automations.",
       "type": "mutation",
       "path": [
         "api",
@@ -10995,7 +10588,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateFormat",
       "domain": "content",
       "summary": "Change, share or retire a format you wrote with createFormat.",
-      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving). Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
+      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving). style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
       "type": "mutation",
       "path": [
         "api",
@@ -11033,8 +10626,17 @@ export const CLI_MANIFEST: CliManifest = {
                 "anyOf": [
                   {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 32
+                    "enum": [
+                      "food",
+                      "made",
+                      "team",
+                      "place",
+                      "guests",
+                      "news",
+                      "community",
+                      "fun",
+                      "story"
+                    ]
                   },
                   {
                     "type": "null"
