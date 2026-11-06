@@ -108,7 +108,7 @@ The images are a statics studio set: one image per layout of a creator recruitme
 
 Never publish older recruitment images or raw photos in place of the set. There is no tool listing older recruitment images; they predate the studio.
 
-**Finding a location's set later**, with no ids at hand: `queryData` `creators.creatorBoardConfig` filtered on `configId` = the location, pivot `staticProject`, pivot `staticPiece`. The `set` piece's `pieceId` is what `requestStaticEdit` and `approveStatic` take, `currentVersionId` is the newest finished version, `approvedVersionId` the approved one, and its `projectId` is what `getStatic` takes. `videos.staticVersion` filtered on `pieceId` lists the versions with `renderStatus` and `checks`. The board's `recruitmentStaticVersionId` is the version whose images are on the live ad.
+**Finding a location's set later**, with no ids at hand: `queryData` `creators.creatorBoardConfig` filtered on `configId` = the location, pivot `staticProject`, pivot `staticPiece`. The `set` piece's `pieceId` is what `requestStaticEdit` and `approveStatic` take, `currentVersionId` is the newest finished version, `approvedVersionId` the approved one, and its `projectId` is what `getStatic` takes. `content.staticVersion` filtered on `pieceId` lists the versions with `renderStatus` and `checks`. The board's `recruitmentStaticVersionId` is the version whose images are on the live ad.
 
 ### The decision loop
 
