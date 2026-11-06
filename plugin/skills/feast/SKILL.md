@@ -17,7 +17,7 @@ The same tools, names and inputs, over either transport. Use whichever this sess
 | You have it when | `listCampaigns` and `listOrganizations` are in your tool list | `feast tools` runs |
 | Every tool | Your tool list | `feast tools`: one line per tool by domain. Read it whole once; don't grep it or rerun it |
 | Input schemas | Each tool's entry; `describeSchema` with `{ "names": ["X"] }` for a named type | `feast describe <tool> [<tool> ...]`, several in one call, named types inlined |
-| A tool's full rules | `describeTools` with `{ "names": ["tool"] }`: the short description plus `details` | `feast describe` prints them under Details |
+| A tool's full description | `describeTools` with `{ "names": ["tool"] }`; the tool list shows only the first sentence | `feast describe`; `feast tools` shows only the first sentence |
 | Your organizations | `listOrganizations` | `feast whoami` |
 | Call a tool | Pass `organizationId` and the input | `feast call <tool> --org <id> --input '<json>'` (or `--input-file <path>`) |
 | Keep only some fields | Not available | `--fields files.key,nextCursor,total` on `feast call`: dotted paths, arrays mapped. Use it instead of piping the result into python to pick fields |
@@ -28,7 +28,7 @@ On the CLI, results are JSON on stdout and the `Acting on organization ...` line
 
 ## Before each call
 
-- **Read the schema and full rules of a tool before its first use**, and describe every tool a step needs in one call. Tool descriptions are short; the rules (what each input means, what it costs, what to call next) are in its details. Schemas don't change during a session, so don't describe a tool twice. Never guess names, fields or ids: look ids up with the matching list or read tool.
+- **Read the schema and full rules of a tool before its first use**, and describe every tool a step needs in one call. The tool list shows only each tool's first sentence; the rest of the description (what each input means, what it costs, what to call next) comes with the schema. Schemas don't change during a session, so don't describe a tool twice. Never guess names, fields or ids: look ids up with the matching list or read tool.
 - **Ask only what the schema can take.** Before a clarifying question, check the tool has a field for the answer.
 - **Name the organization.** Resolve a named org to its id. With one org it is used automatically; with several, an unscoped call is refused with the list, so confirm which one. Acting on the wrong restaurant is worse than asking.
 - **Read before you write**: the campaign row before `updateCampaign`, the flows before creating one. `references/domains.md` explains fields the schema doesn't.

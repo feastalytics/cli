@@ -18,7 +18,7 @@ One video is one `projectId`, from the first idea to the approved MP4. Every ste
    For a trial reel on the Content Calendar, don't use `asNewVideo`: send `addContentIdeas` an idea with `kind: "trial_reel"`, a `title`, the change as `brief`, and `variationOf: { projectId }`. It makes the variation and adds it as a draft post in one call; with no `brief`, Claude picks one small change itself.
 6. **Approve** with `approveVideo({ projectId })` once the human has watched and approved it. It saves the current version's MP4 to the creative library and returns its `libraryKey`; pass `runId` to approve another version from `editor.versions`.
 
-`describeTools` (MCP) or `feast describe` (CLI) gives each tool's full rules: every input, what it costs and what comes next.
+`describeTools` (MCP) or `feast describe` (CLI) gives each tool's full description: every input, what it costs and what comes next.
 
 ## Reading videos
 
