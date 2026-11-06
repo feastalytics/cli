@@ -1430,8 +1430,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "createRecruitmentCreatives",
       "domain": "creators",
-      "summary": "Make a location's recruitment ad images for the campaign's recruitment ad.",
-      "description": "Make a location's recruitment ad images for the campaign's recruitment ad. The food credit and bonus come from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId), so change those first to change the amounts shown. Organizations with Video Editor 2 get a statics studio set: one set piece whose version holds one image per layout of a creator recruitment format (formatId static_local_creators, Local creators, by default, or static_creator_invitation, Creator invitation), made from the restaurant's own labelled photos, logo and city, with only the hooks written by Claude. It refuses before creating anything when none of the brand's labelled photos (a dish box, no people, no added text or other logos, not thumbnail size) fits any layout of the format, so upload food photos first (getMediaUploadUrl, scope organizationFilePublic) and wait for them to be labelled. The location's board points at the project, the call returns projectId, pieceIds and versionId, a repeat call with the same settings returns the same version, and force adds a new version to the same project. Approve the set with approveStatic once it is ready; nothing is composited. Other organizations get five rendered templates attached to the campaign's recruitment offer, plus the AI composite pass on each (compositeModel, openai by default, null to skip), which lands on each creative as compositeOpenaiUrl with compositeStatus pending, ok or failed and compositeError when it fails; poll listCreatives for it. A creative with no photo is rendered but not composited (compositeSkipped says so). Only missing types are generated. force: true re-renders the types that have no composite yet and keeps the ones that do; force: \"all\" deletes and regenerates every type.",
+      "summary": "Make a location's recruitment ad images as a statics studio set.",
+      "description": "Make a location's recruitment ad images as a statics studio set. The set has one image per layout of a creator recruitment format (formatId static_local_creators, Local creators, by default, or static_creator_invitation, Creator invitation), with the brand's name, logo and city, the food credit and bonus from the location's creator program settings (queryData creators.creatorBoardConfig, configId = locationId, so change those first to change the amounts shown) and hooks written by Claude. photoUrls picks the photos; without it the set uses the brand's labelled food photos, and the call refuses before creating anything when none fits. The call returns projectId, pieceIds, versionId and the campaign's recruitment offerId, and renders in the background for about a minute. Then call approveStatic with the pieceId: it refuses until the version is finished, and returns the images' creative library keys in order. Those keys are the recruitment ad's images: show them to the user as drafts, and publish them with publishAds (recruitment template, linkRecruitmentOffer effect with that offerId, creativeIds empty and staticVersionId set to the approved version). For changes, call again (a repeat call with the same settings returns the same version; force adds a new one) or send requestStaticEdit a note, then approve the new version. Never publish older recruitment images or raw photos in place of the set.",
       "type": "mutation",
       "path": [
         "api",
@@ -1452,7 +1452,8 @@ export const CLI_MANIFEST: CliManifest = {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "Photos for the images, as file URLs. For Video Editor 2 organizations the set uses only these photos: each must be uploaded with getMediaUploadUrl scope organizationFilePublic, and a photo still being read refuses the call with PRECONDITION_FAILED, so call again in about a minute. Leave out to use the brand's labelled photos."
           },
           "force": {
             "anyOf": [
@@ -1464,23 +1465,7 @@ export const CLI_MANIFEST: CliManifest = {
                 "const": "all"
               }
             ],
-            "description": "true re-renders only the types with no composite version yet; \"all\" deletes every type and regenerates."
-          },
-          "compositeModel": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "openai",
-                  "nb2",
-                  "nbPro"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Which model composites each new creative in the background. Defaults to openai; null skips the composite pass."
+            "description": "true or \"all\" adds a new version of the set even when nothing changed."
           },
           "formatId": {
             "type": "string",
@@ -3281,34 +3266,6 @@ export const CLI_MANIFEST: CliManifest = {
         "listSummaries"
       ],
       "inputJsonSchema": null
-    },
-    {
-      "id": "listCreatives",
-      "domain": "creators",
-      "summary": "Generated recruitment creatives with the state of each one's AI composite pass.",
-      "description": "Generated recruitment creatives with the state of each one's AI composite pass. Optionally for one offer. compositeStatus.openai (or nb2, nbPro) is pending, ok or failed; compositeOpenaiUrl is the finished image and compositeError says why the last pass failed (a provider outage or billing block shows up here). Pass a creative's imageKey to planAds as a libraryAsset; imageUrl is the base render, not the ad asset. staleCreativeIds (only with offerId) lists creatives made from an older version of their offer.",
-      "type": "query",
-      "path": [
-        "api",
-        "dfy",
-        "listCreatives"
-      ],
-      "inputJsonSchema": {
-        "anyOf": [
-          {
-            "not": {}
-          },
-          {
-            "type": "object",
-            "properties": {
-              "offerId": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
     },
     {
       "id": "listCreatorConversations",
