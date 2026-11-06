@@ -13,7 +13,9 @@ One video is one `projectId`, from the first idea to the approved MP4. Every ste
    - `changes` for exact edits to the timeline from `getVideoEditor` (lines, shots, overlays, text style, voice, pronunciation, music). Segment ids come from `videos.footage`.
    - `recut: true` on its own for new shots and a new voice take from the same story.
    - `restore: "<versionId>"` on its own to bring back an earlier version.
-   - `asNewVideo` to make the result a new video instead of a new version: a variation for testing another hook or opening shot. With no `note` or `changes` it is an exact copy and costs nothing. `asNewVideo.post` also puts it on a Content Calendar account as a draft trial reel.
+   - `asNewVideo` to make the result a new video instead of a new version: a variation for testing another hook or opening shot. With no `note` or `changes` it is an exact copy and costs nothing.
+
+   For a trial reel on the Content Calendar, don't use `asNewVideo`: send `addContentIdeas` an idea with `kind: "trial_reel"`, a `title`, the change as `brief`, and `variationOf: { projectId }`. It makes the variation and adds it as a draft post in one call; with no `brief`, Claude picks one small change itself.
 6. **Approve** with `approveVideo({ projectId })` once the human has watched and approved it. It saves the current version's MP4 to the creative library and returns its `libraryKey`; pass `runId` to approve another version from `editor.versions`.
 
 `describeTools` (MCP) or `feast describe` (CLI) gives each tool's full rules: every input, what it costs and what comes next.
