@@ -5,13 +5,26 @@
 `getTaskboard` is the single "what needs fixing or finishing" surface: one `entries` list discriminated by `kind`. `task` entries are the org's onboarding tasks; `issue` entries are live-computed misconfigurations (placeholder content, inactive automations, a missing "Text STOP" opt-out, unawarded rewards, wallet pass and pixel problems), each with a `severity`, a human `message` and a `fixHint`. Funnel checks cover only screens reachable from the funnel's start screen, so an orphaned screen raises no issue. Scope with `{"scope":{"type":"onboarding"}}` for tasks only, `{"type":"task","task":{"taskId":"..."}}` for one task, or leave the default `all`.
 
 - **Start from `completionInstructions`, not guesswork.** Every task entry says exactly what completes it and whether it needs a human in a browser. Trust it over inferring from the task name.
-- **Split the work accordingly.** Campaigns, automations, funnel fixes, rewards, brand identity, image uploads and the onboarding form are all completable through the tools, so do them. Tasks that need OAuth (Facebook, POS), physical device setup, or in-restaurant staff training cannot be: hand the user that task's **`completionUrl`**, a page where they complete exactly that task. Paste the URL directly in your reply so the user can open it.
-- **Never claim a task complete or try to mark one.** Statuses are derived from live data by a recompute (triggered by every taskboard read, ~30s lag). Do the underlying work, then re-read the taskboard to confirm the checkmark flipped.
+- **Split the work accordingly.** Campaigns, automations, funnel fixes, rewards, brand identity and image uploads are all completable through the tools, so do them. Tasks that need OAuth (Facebook, POS), physical device setup, or in-restaurant staff training cannot be: hand the user that task's **`completionUrl`**, a page where they complete exactly that task. Paste the URL directly in your reply so the user can open it.
+- **Never claim a task complete without the work behind it.** Statuses are derived from live data by a recompute (triggered by every taskboard read, ~30s lag). Do the underlying work, then re-read the taskboard to confirm the checkmark flipped. The one exception is below: steps only the owner can confirm.
 - Working through onboarding = repeat: `getTaskboard` (scope `onboarding`) → do the tool-doable incomplete required tasks → hand over completionUrls for the rest → re-read to verify.
 
-## The onboarding form
+## Steps only the owner can confirm
 
-Some tasks read self-reported answers rather than observed data: launch date, funnel direction, per-step `isComplete` markers. `getOnboardingForm` reads them (`null` when the org has no form yet); `updateOnboardingForm` writes them (and creates the form when there is none). Top-level keys you omit are left alone. **Nested step objects are replaced, not merged**: read first and send back the whole step you're editing. Setting `pos.details.type` to `"other"` provisions a manual-entry POS location as a side effect.
+Some steps happen in the restaurant and nothing records them: staff training, the visit QR code and signage going up, how staff will scan, a POS the owner doesn't have or will connect on a call. Ask the owner; once they confirm, call `completeOnboardingTask` with that step. Never complete one the owner hasn't confirmed to you.
+
+| Step | `task` |
+|---|---|
+| Staff reviewed the scanner instructions / practiced | `{"type":"reviewScannerInstructions","reviewScannerInstructions":{}}` / `{"type":"practiceUsingScanner","practiceUsingScanner":{}}` |
+| Visit QR code is up | `{"type":"visitQrCode","visitQrCode":{}}` |
+| Signup signage is up | `{"type":"directSignup","directSignup":{}}` |
+| Team invited, or no one else needs access | `{"type":"inviteUsers","inviteUsers":{}}` |
+| Keep the $5 minimum spend | `{"type":"keepDefaultMinimumSpend","keepDefaultMinimumSpend":{}}` (an amount: `updateOrganization` `minimumSpendValue`) |
+| No Conversions API token | `{"type":"skipMetaCapi","skipMetaCapi":{}}` |
+| Staff use their own phones / ship devices | `{"type":"devices","devices":{"type":"ownPhones","ownPhones":{}}}` / `{"type":"devices","devices":{"type":"ship","ship":{"addresses":[{"name":"...","address":"...","city":"...","state":"...","zip":"...","country":"US","quantity":2}]}}}` |
+| No POS, orders entered by hand / connect later on a call | `{"type":"pos","pos":{"type":"manualEntry","manualEntry":{}}}` / `{"type":"pos","pos":{"type":"connectLater","connectLater":{"pos":"toast"}}}` |
+
+Each task's `completionInstructions` gives the exact call too. It returns the task ids it completed; re-read the taskboard about 30 seconds later to see them done. Manual entry also creates the manual-entry POS location orders are recorded against.
 
 Two POS setup tasks complete off `updateOrganization` instead: `staffInstructions.scan` completes *Members Program Visits POS setup*, and `.prepaid` is additionally required for *Campaign POS setup* when the promotion allows pre-pay. `staffInstructions` is replaced wholesale, so send every key you want to keep.
 
