@@ -41,9 +41,9 @@ Restaurants recruit local content creators to visit and post. One config per loc
 
 A template-driven publish pipeline: `listAdTemplates` → `planAds` → `publishAds` → `getJob` → `ads_update_entity` (campaign `status`, `cascade: true`), plus `ads_*` tools for reading and steering what's already on the ad account. See `workflows/ads.md`.
 
-## Video ads (Content Studio)
+## Videos (Content Studio)
 
-Bevyl edits a campaign's b-roll into ad videos, grouped into angles. One `projectId` per video: `getVideoPromptOptions` → `generateVideo` → poll `queryData` on `videos.video` by `projectId` → `requestVideoEdit` or `approveVideo`. A campaign's videos are the same object filtered on `campaignId`. See `workflows/videos.md`.
+Video Editor 2 cuts the restaurant's labelled b-roll into ad videos and organic posts, grouped into angles. One `projectId` per video: `generateVideo` → poll `queryData` on `videos.video` by `projectId` → `chooseVideoScript` → `requestVideoEdit` → `approveVideo`. A campaign's videos are the same object filtered on `campaignId`. See `workflows/videos.md`.
 
 ## The data catalog
 
