@@ -34,7 +34,7 @@ For the *words* in the ads, read the copywriting file for your audience first: `
 
 Bookkeeping that must happen once the ads exist travels *inside* the publish as `effects`, and the worker runs it as part of the job, because a follow-up call you're supposed to remember is a follow-up call that gets missed, silently. Both effects below are required for their template: `publishAds` refuses the publish when one is missing rather than skipping it.
 
-- **A recruitment publish must declare `linkRecruitmentOffer`** with its `offerId` and `creativeIds`. The effect stamps the creatives as published, stamps the offer, links the location's creator board that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live.
+- **A recruitment publish must declare `linkRecruitmentOffer`** with its `offerId`, `creativeIds: []` and the approved set's `staticVersionId` (see `creators.md`). The effect records the set on the location's creator program, stamps the offer, links the location's creator board that the monthly sourcing cap and the dashboard's spend both read, and texts the program's approver that sourcing is live.
 - **A `directOffer` publish must declare `linkFeastCampaign`** with the `campaignId` it runs for. The effect records the published Meta campaign onto that Feast campaign, which is what puts its spend on the campaign's ads panel and KPIs.
 
 An effect that reports `error` in the job is a case for the dashboard, not for patching around. Surface it to the user.
@@ -42,7 +42,7 @@ An effect that reports `error` in the job is a case for the dashboard, not for p
 ### Which template
 
 - **`directOffer`**: guest-facing offer ads for a campaign. Requires the `linkFeastCampaign` effect. Copy rules: `ad-copy-guest.md`.
-- **`recruitment`**: creator-recruitment ads. An always-on trickle with an enforced budget floor and ceiling. Requires the `linkRecruitmentOffer` effect. Creatives come from `createRecruitmentCreatives` → `listCreatives` (pass each creative's `imageKey` as a `libraryAsset` reference); copy rules: `ad-copy-creator.md`; program context: `creators.md`.
+- **`recruitment`**: creator-recruitment ads. An always-on trickle with an enforced budget floor and ceiling. Requires the `linkRecruitmentOffer` effect. Creatives come from `createRecruitmentCreatives` → `approveStatic` (pass each returned creative library key as a `libraryAsset` reference); copy rules: `ad-copy-creator.md`; program context: `creators.md`.
 - **`addAds`**: add fresh creatives to an ad set that is already running. Copy the settings the new ads must match from an existing ad; Meta will happily publish a mismatched ad (pointing somewhere different from its siblings) rather than reject it, so copy the values, never invent them. Call `ads_get_ad_entities` with `level: "ad"` and that `adSetId`, skip ads whose `effectiveStatus` is `DELETED` or `ARCHIVED`, take the first one left, and read from its creative:
   - `pageId`: `objectStorySpec.page_id`
   - `instagramAccountId`: `objectStorySpec.instagram_actor_id`, or `instagram_user_id` when that is absent (both spellings occur)
