@@ -12182,7 +12182,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updatePassConfiguration",
       "domain": "passBuilder",
       "summary": "Save the wallet pass configuration.",
-      "description": "Save the wallet pass configuration. A full-document save, not a patch: anything omitted is dropped, so read the live configuration (queryData core.passConfiguration, order version DESC, limit 1), modify it, and send the whole document back. A change to sections, features, locations or passStyle re-pushes every pass already in a guest's wallet. Omit passStyle to keep the current style.",
+      "description": "Save the wallet pass configuration. A full-document save, not a patch: anything omitted is dropped, so read the live configuration (queryData core.passConfiguration, order version DESC, limit 1), modify it, and send the whole document back. A change to sections, features, locations or passStyle re-pushes every pass already in a guest's wallet. Omit passStyle to keep the current style. googleProgramName is the title on the Google Wallet pass (\"Members Program\" when unset); omit it to keep the current title, null to clear it. A change to it, the unconditional background color or the unconditional logo also updates the organization's Google Wallet class, which every member's Google pass shares.",
       "type": "mutation",
       "path": [
         "api",
@@ -13535,6 +13535,18 @@ export const CLI_MANIFEST: CliManifest = {
                   "generic",
                   "coupon"
                 ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "googleProgramName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
               },
               {
                 "type": "null"
