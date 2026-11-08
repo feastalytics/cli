@@ -11,11 +11,10 @@
 
 ## Steps only the owner can confirm
 
-Some steps happen in the restaurant and nothing records them: staff training, the visit QR code and signage going up, how staff will scan, a POS the owner doesn't have or will connect on a call. Ask the owner; once they confirm, call `completeOnboardingTask` with that step. Never complete one the owner hasn't confirmed to you.
+Some steps happen in the restaurant and nothing records them: the visit QR code and signage going up, how staff will scan, a POS the owner doesn't have or will connect on a call. Ask the owner; once they confirm, call `completeOnboardingTask` with that step. Never complete one the owner hasn't confirmed to you.
 
 | Step | `task` |
 |---|---|
-| Staff reviewed the scanner instructions / practiced | `{"type":"reviewScannerInstructions","reviewScannerInstructions":{}}` / `{"type":"practiceUsingScanner","practiceUsingScanner":{}}` |
 | Visit QR code is up | `{"type":"visitQrCode","visitQrCode":{}}` |
 | Signup signage is up | `{"type":"directSignup","directSignup":{}}` |
 | Team invited, or no one else needs access | `{"type":"inviteUsers","inviteUsers":{}}` |
