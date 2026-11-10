@@ -10,6 +10,7 @@ URL, so a vault placeholder works.
   geo          search Meta's location keys (cities, zips, regions)
   targeting    get / set an ad set's targeting (set reads, merges, writes)
   audience     lookalike, website, engagement, customer-list, status, delete
+  page         photos / posts on the restaurant's own Facebook Page (read-only)
 
 Run any command with --help for its flags.
 """
@@ -50,7 +51,7 @@ def token():
     return value
 
 
-def graph(method, path, params=None, body=None):
+def graph(method, path, params=None, body=None, access_token=None):
     url = f"{GRAPH}/{path.lstrip('/')}"
     if params:
         url += "?" + urllib.parse.urlencode(
@@ -62,7 +63,7 @@ def graph(method, path, params=None, body=None):
             {k: json.dumps(v) if isinstance(v, (dict, list)) else v for k, v in body.items()}
         ).encode()
     request = urllib.request.Request(
-        url, data=data, method=method, headers={"Authorization": f"Bearer {token()}"}
+        url, data=data, method=method, headers={"Authorization": f"Bearer {access_token or token()}"}
     )
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
@@ -495,6 +496,156 @@ def cmd_delete(args):
 
 
 
+PAGE_SCAN_LIMIT = 2000
+PHOTO_FIELDS = "id,name,created_time,link,images"
+POST_FIELDS = (
+    "id,message,created_time,permalink_url,full_picture,"
+    "attachments{media_type,media,target{id},subattachments{media,type,target{id}}}"
+)
+
+
+def page_token(page_id):
+    page = graph("GET", page_id, {"fields": "access_token"})
+    if not page.get("access_token"):
+        raise GraphError(
+            f"Meta returned no Page token for {page_id}. The connected Facebook user must have a role on "
+            "the Page. Take the Page id from ads_get_assets (include pages, usedByOrganization true)."
+        )
+    return page["access_token"]
+
+
+def matches(text, terms):
+    lowered = (text or "").lower()
+    return not terms or any(term.lower() in lowered for term in terms)
+
+
+def in_range(created, since, until):
+    day = (created or "")[:10]
+    return (not since or day >= since) and (not until or day <= until)
+
+
+def scan_page(path, fields, access_token, keep, limit, page_size, extra=None):
+    rows, scanned, after = [], 0, None
+    while True:
+        params = {"fields": fields, "limit": page_size, **(extra or {}), **({"after": after} if after else {})}
+        page = graph("GET", path, params, access_token=access_token)
+        for item in page.get("data", []):
+            scanned += 1
+            if keep(item):
+                rows.append(item)
+                if len(rows) >= limit:
+                    return rows, scanned, True
+        after = page.get("paging", {}).get("cursors", {}).get("after")
+        if not after or not page.get("paging", {}).get("next"):
+            return rows, scanned, False
+        if scanned >= PAGE_SCAN_LIMIT:
+            return rows, scanned, True
+
+
+def largest_image(images):
+    best = max(images or [], key=lambda i: (i.get("width") or 0) * (i.get("height") or 0), default=None)
+    return best or {}
+
+
+def cmd_page_photos(args):
+    rows, scanned, more = scan_page(
+        f"{args.album or args.page}/photos",
+        PHOTO_FIELDS,
+        page_token(args.page),
+        lambda p: matches(p.get("name"), args.search) and in_range(p.get("created_time"), args.since, args.until),
+        args.limit,
+        100,
+        {} if args.album else {"type": "uploaded"},
+    )
+    photos = []
+    for p in rows:
+        image = largest_image(p.get("images"))
+        photos.append(
+            {
+                "id": p.get("id"),
+                "createdTime": p.get("created_time"),
+                "caption": p.get("name"),
+                "imageUrl": image.get("source"),
+                "width": image.get("width"),
+                "height": image.get("height"),
+                "link": p.get("link"),
+            }
+        )
+    emit({"photos": photos, "scanned": scanned, "moreAvailable": more})
+
+
+def post_images(post):
+    images = []
+    for attachment in (post.get("attachments") or {}).get("data", []):
+        children = (attachment.get("subattachments") or {}).get("data", [])
+        for item in children or [attachment]:
+            image = (item.get("media") or {}).get("image") or {}
+            if not image.get("src"):
+                continue
+            is_photo = (item.get("type") or attachment.get("media_type")) == "photo"
+            images.append(
+                {
+                    "photoId": (item.get("target") or {}).get("id") if is_photo else None,
+                    "imageUrl": image["src"],
+                    "width": image.get("width"),
+                    "height": image.get("height"),
+                }
+            )
+    if not images and post.get("full_picture"):
+        images.append({"photoId": None, "imageUrl": post["full_picture"], "width": None, "height": None})
+    return images
+
+
+def with_full_size(posts, access_token):
+    ids = sorted({i["photoId"] for p in posts for i in p["images"] if i["photoId"]})
+    full = {}
+    for start in range(0, len(ids), 50):
+        try:
+            full.update(graph("GET", "", {"ids": ",".join(ids[start : start + 50]), "fields": "images"}, access_token=access_token))
+        except GraphError:
+            continue
+    for post in posts:
+        for image in post["images"]:
+            best = largest_image((full.get(image["photoId"]) or {}).get("images"))
+            if best.get("source"):
+                image.update({"imageUrl": best["source"], "width": best.get("width"), "height": best.get("height")})
+    return posts
+
+
+def post_kinds(post):
+    return sorted({a.get("media_type") for a in (post.get("attachments") or {}).get("data", []) if a.get("media_type")})
+
+
+def cmd_page_posts(args):
+    access_token = page_token(args.page)
+    rows, scanned, more = scan_page(
+        f"{args.page}/published_posts",
+        POST_FIELDS,
+        access_token,
+        lambda p: matches(p.get("message"), args.search) and in_range(p.get("created_time"), args.since, args.until),
+        args.limit,
+        50,
+    )
+    posts = [
+        {
+            "id": p.get("id"),
+            "createdTime": p.get("created_time"),
+            "message": p.get("message"),
+            "permalink": p.get("permalink_url"),
+            "mediaTypes": post_kinds(p),
+            "images": post_images(p),
+        }
+        for p in rows
+    ]
+    emit({"posts": with_full_size(posts, access_token), "scanned": scanned, "moreAvailable": more})
+
+
+def cmd_page_albums(args):
+    albums = get_all(f"{args.page}/albums", {"fields": "id,name,count,created_time", "limit": 50})
+    emit([{"id": a.get("id"), "name": a.get("name"), "photos": a.get("count"), "createdTime": a.get("created_time")} for a in albums])
+
+
+
 
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -599,6 +750,35 @@ def build_parser():
     delete = audience.add_parser("delete", help="delete audiences (cannot be undone)")
     delete.add_argument("audience_ids", nargs="+")
     delete.set_defaults(run=cmd_delete)
+
+    page = commands.add_parser("page", help="read the restaurant's own Facebook Page: photos, posts, albums").add_subparsers(dest="action", required=True)
+
+    def add_page_filters(sub, text):
+        sub.add_argument("--page", required=True, help="Facebook Page id from ads_get_assets")
+        sub.add_argument("--search", action="append", metavar="TEXT", help=f"keep only {text} containing TEXT (any case); repeatable, any one matches")
+        sub.add_argument("--since", metavar="YYYY-MM-DD")
+        sub.add_argument("--until", metavar="YYYY-MM-DD")
+        sub.add_argument("--limit", type=int, default=25, help="most results to return, newest first (default 25)")
+
+    photos = page.add_parser(
+        "photos",
+        help="photos the Page uploaded, newest first, with caption and a full-size image URL",
+        description=(
+            "imageUrl is a Facebook CDN link that expires within days and cannot be fetched from the sandbox. "
+            "Copy the ones you need into the organization's files with getMediaUploadUrl sourceUrl, then use the Feast url."
+        ),
+    )
+    add_page_filters(photos, "photos whose caption")
+    photos.add_argument("--album", help="read one album (id from `page albums`) instead of every uploaded photo")
+    photos.set_defaults(run=cmd_page_photos)
+
+    posts = page.add_parser("posts", help="the Page's published posts, newest first, with text, permalink and full-size image URLs")
+    add_page_filters(posts, "posts whose text")
+    posts.set_defaults(run=cmd_page_posts)
+
+    albums = page.add_parser("albums", help="the Page's photo albums and their sizes")
+    albums.add_argument("--page", required=True, help="Facebook Page id from ads_get_assets")
+    albums.set_defaults(run=cmd_page_albums)
     return parser
 
 

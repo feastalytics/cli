@@ -54,6 +54,7 @@ Workflow files carry the call order and the rules that make a result good, and n
 | Creator-recruitment ad copy (`recruitmentAdCopy`) | `references/workflows/ad-copy-creator.md` |
 | Publishing, pausing, budgeting or diagnosing Meta ads | `references/workflows/ads.md` |
 | Who a live ad set reaches; lookalike, website, engagement or customer-list audiences | `references/workflows/meta-targeting-audiences.md` |
+| Photos or posts from the restaurant's own Facebook Page ("use pictures from our Facebook") | `references/workflows/facebook-page-content.md` |
 | A video ad or organic video: generate, pick a story, edit, approve | `references/workflows/videos.md` |
 | Creator sourcing: applicants, content, creatives, payouts, reimbursements, texting a creator | `references/workflows/creators.md` |
 | Members-program rewards, granting one; the wallet pass configuration | `references/workflows/members-program.md` |
