@@ -156,7 +156,7 @@ On a board with `reimbursementEnabled`, the creator pays for the meal and upload
 
 ### Everything else: queryData
 
-The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorBoardConfig` (a location's program settings, above) and `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. It also exposes three **nosql** objects: `creativeStrategy` (creator briefs), `creatorAvailability` (booking windows) and `creatorSubmission` (content submissions). `describeData` marks them `"type": "nosql"`. They take only `filter` commands, and only on columns with `isFilterable: true`; `join`, `pivot` and `aggregate` are rejected, and they have no links, so reach a related object with a second `queryData` call on its id. `order`, `fields`, `limit` and `cursor` work as usual. Instagram stats (follower count, private and verified flags, profile picture) live in the `social` schema as `instagramAccount`, reached from `creator` by the `instagramAccount` link.
+The `creators` schema exposes `creatorVisitApplication` (one application/visit), `creator` (the person, one row shared across all their applications), `creatorBoardConfig` (a location's program settings, above), `creatorPayout` (one initiated bonus payout, joined to the visit on `visitEventId`) and `creatorPostLink` (one creator post tied to a visit, see *Views from the program's posts* below). Use it for anything the tools above don't answer: no-shows, per-location counts, repeat creators, follower counts, payout history. It also exposes three **nosql** objects: `creativeStrategy` (creator briefs), `creatorAvailability` (booking windows) and `creatorSubmission` (content submissions). `describeData` marks them `"type": "nosql"`. They take only `filter` commands, and only on columns with `isFilterable: true`; `join`, `pivot` and `aggregate` are rejected, and they have no links, so reach a related object with a second `queryData` call on its id. `order`, `fields`, `limit` and `cursor` work as usual. Instagram stats (follower count, private and verified flags, profile picture) live in the `social` schema as `instagramAccount`, reached from `creator` by the `instagramAccount` link.
 
 `creator` only returns creators who applied to this organization, and `social.instagramAccount` only their accounts and the organization's own. To go from an application to its creator, follow the `influencer` link, then the creator's `instagramAccount` link. Pivoting gives one creator row per visit, so count people with `COUNT_DISTINCT` on `influencerId`. A `join` returns the linked columns prefixed `dest_`.
 
@@ -224,5 +224,29 @@ How to read them:
 - **Views are reels only.** Instagram reports views for reels, not photos or carousels. A creator missing from the views result posted no reels in the window, or Instagram withheld their views; say their reach is unmeasured, not zero. Instagram's discovery API also misses reels that were never shared to the profile grid, so check the profile before saying a creator posts no reels.
 - **No posts at all** (missing from the first result) means Feast could not read the account: it is personal or private, or the handle is wrong. The follower count from the stats query may still be there.
 - `mediaId` in the results is the post count. The first query covers every post Feast has stored for the creator, which can reach back further than their latest few.
+
+### Views from the program's posts
+
+For "how many views did our creator posts get", start from `creators.creatorPostLink`, not from `socialPost` by username: a creator's username reaches every post they ever made, and this object holds only the posts tied to this organization's visits (every link a creator submitted, plus posts tied to a visit without a submission). It is the list the dashboard's creator Content card counts. Its views are on `interface.socialPost`, through a link per network: `instagramPost` for Instagram and `tiktokPost` for TikTok. **Filter `network` before pivoting**, or the other network's rows can match by accident. Run it once per network:
+
+```json
+{ "schemaName": "creators", "objectTypeName": "creatorPostLink",
+  "commands": [
+    { "type": "filter", "filter": { "$network": { "string": "instagram", "match": "EQ" } } },
+    { "type": "pivot", "name": "instagramPost" },
+    { "type": "aggregate", "aggregate": {
+      "aggregate": { "$viewCount": "SUM", "$organicViewCount": "SUM", "$mediaId": "COUNT" } } } ],
+  "args": { "limit": 10 } }
+```
+
+For TikTok, filter `"tiktok"` and pivot `tiktokPost`. Add `visitEventId`, `influencerId` or `linkedAt` to the first filter to narrow it to one visit, one creator or a time range; add `"groupBy": { "$username": "EXACT" }` for a per-creator split.
+
+How to read it:
+
+- **Two view numbers.** `viewCount` includes paid delivery when a post ran as an ad; `organicViewCount` is the organic-only count, set where the post looked boosted. Report organic reach as `organicViewCount` where set and `viewCount` otherwise, and never add the two together. When the sums differ a lot, say the gap is ad delivery.
+- A pivot returns each post once, so a post linked by two submissions is not double counted. `mediaId` in the result is the number of posts with a stored row.
+- **Missing posts.** A TikTok share link (`tiktok.com/t/...`) that Feast has not resolved yet reaches nothing until the nightly sync resolves it, and a private or deleted post never does. Compare against a plain count of `creatorPostLink` rows per network and say how many posts are not counted.
+- **Freshness.** Counts are the latest read (`fetchedAt` on `socialPost`). Instagram counts refresh about weekly while the creator has had a visit in the last 60 days, then stop. Views over time are `interface.socialPostSnapshot` filtered on the posts' `mediaId`.
+- Null views mean Instagram withheld them (photos, hidden counts), not zero.
 
 > **Not exposed:** marking a creator conversation read, setting or changing a visit's brief directly (the booked window sets it; see the windows section), the dashboard's launch-program button itself (its bookkeeping rides the recruitment publish effect, see above), and publishing a creator's submitted content as a partnership ad.
