@@ -23,6 +23,7 @@ Everything an authenticated user sees hangs off `https://feastalytics.com/<organ
 /settings/<tab>                          settings
 /chats                                   guest conversations
 /orders   /activity   /guest-journey
+/content-studio/formats                  the Formats page (catalog and your own formats)
 ```
 
 Campaign panels: `overview`, `funnel-v2`, `automations`, `promotions`, `metrics`, `ads`, `orders`, `reservations`, `subscriptions`, `creative-strategy`. With no `?panel=`, an unpublished campaign opens on `funnel-v2` and a published one on `overview`.
