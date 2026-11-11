@@ -20,15 +20,24 @@
     "com.openai": {
       "interface": {
         "displayName": "Feastalytics",
-        "shortDescription": "Run your restaurant's Feastalytics marketing from chat",
-        "longDescription": "Read and change a Feastalytics organization: campaigns, automations, funnels, the members program, the wallet pass, creator sourcing, Meta ads, texting, onboarding and data queries.",
+        "shortDescription": "Restaurant marketing in chat",
+        "longDescription": "Feastalytics is the marketing platform restaurants use to bring in new guests and bring them back. This plugin lets ChatGPT work in your Feastalytics account the way you would.\n\nAsk how a campaign is doing and it reads signups, visits, revenue and ad results. Have it draft a text automation for new members, check what it would send with a dry run, and save it when you're happy. Work your creator program: see who applied, approve the ones who fit your brand, and review the content they posted. Reply to a guest's text, update a promotion, or check your onboarding tasks.\n\nIt acts as you, with your role in each of your restaurants, and only through the actions it calls. Actions that reach the real world, such as texting a guest, publishing a campaign or turning on ads, are marked so ChatGPT asks before taking them. It cannot pay creators or buy phone numbers.\n\nYou need a Feastalytics account. Sign in with it when you connect.",
         "developerName": "Feastalytics",
         "category": "Productivity",
         "capabilities": [
           "Read",
           "Write"
         ],
+        "logo": "./icon.png",
+        "brandColor": "#FA8936",
+        "brandColorDark": "#FFAA45",
+        "defaultPrompt": [
+          "How are my campaigns doing this month?",
+          "Show me the creators waiting for approval at my restaurant.",
+          "Draft a text that welcomes new members a day after they sign up."
+        ],
         "websiteURL": "https://feastalytics.com",
+        "supportURL": "https://feastalytics.com/support",
         "privacyPolicyURL": "https://feastalytics.com/legal/privacy",
         "termsOfServiceURL": "https://feastalytics.com/legal/eula"
       }
