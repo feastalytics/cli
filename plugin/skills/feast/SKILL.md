@@ -56,6 +56,7 @@ Workflow files carry the call order and the rules that make a result good, and n
 | Who a live ad set reaches; lookalike, website, engagement or customer-list audiences | `references/workflows/meta-targeting-audiences.md` |
 | Photos or posts from the restaurant's own Facebook Page ("use pictures from our Facebook") | `references/workflows/facebook-page-content.md` |
 | A video ad or organic video: generate, pick a story, edit, approve | `references/workflows/videos.md` |
+| A format from an Instagram reel, post or carousel link ("make this a format", "one like this") | `references/workflows/formats.md` |
 | Creator sourcing: applicants, content, creatives, payouts, reimbursements, texting a creator | `references/workflows/creators.md` |
 | Members-program rewards, granting one; the wallet pass configuration | `references/workflows/members-program.md` |
 | The onboarding taskboard; brand identity (reading a restaurant's website with `inspectWebsite`); phone, media, invites, billing | `references/workflows/onboarding.md` |
