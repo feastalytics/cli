@@ -823,7 +823,6 @@ export const CLI_MANIFEST: CliManifest = {
                   }
                 },
                 "required": [
-                  "restaurantNeighborhood",
                   "differentiatorsText",
                   "mustTryItemsText"
                 ]
@@ -4422,6 +4421,38 @@ export const CLI_MANIFEST: CliManifest = {
                     "kind",
                     "set"
                   ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "sound"
+                    },
+                    "set": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "audioId": {
+                              "type": "string",
+                              "pattern": "^\\d{5,25}$"
+                            }
+                          },
+                          "required": [
+                            "audioId"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
                 }
               ]
             },
@@ -5089,8 +5120,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "setBoardRecipients",
       "domain": "creators",
-      "summary": "Replace who gets texted about a location's creator program, besides the approver.",
-      "description": "Replace who gets texted about a location's creator program, besides the approver. Creator texts go to the program's approverUserId (every kind, always) plus the members listed here with the matching flag on. An owner who is not the approver gets nothing unless they are listed with notifyUpcomingVisits, so when Feast is the approver add the owner and the managers here. Send the full intended list for the location: a row sent with the same flags is kept, changed flags are updated, members left out are removed, and an empty list removes everyone but the approver. Every userId must be a member of the organization with a role other than scanner; a person with no Feast account cannot be a recipient. The response is the full list after the write. queryData creators.creatorBoardConfig does not include recipients, so when unsure of the current list, send everyone who should be on it rather than a partial update.",
+      "summary": "Set who hears about a location's creator program, and by text or email.",
+      "description": "Set who hears about a location's creator program, and by text or email. Notifications go to the members listed here with the matching flag on, by each one's channel. The program's approverUserId may be listed too, to set the approver's own kinds and channel; an approver who is not listed gets every kind by text. An owner who is not the approver gets nothing unless listed with notifyUpcomingVisits, so when Feast is the approver add the owner and the managers here. Send the full intended list for the location: a row sent with the same flags and channel is kept, changed ones are updated, members left out are removed, and an empty list leaves only the approver with every kind by text. Every userId other than the approver must be a member of the organization with a role other than scanner; a person with no Feast account cannot be a recipient. The response is the full list after the write. queryData creators.creatorBoardConfig does not include recipients, so when unsure of the current list, send everyone who should be on it rather than a partial update.",
       "type": "mutation",
       "path": [
         "api",
@@ -5118,27 +5149,32 @@ export const CLI_MANIFEST: CliManifest = {
                 "notifyApplications": {
                   "type": "boolean",
                   "default": false,
-                  "description": "Morning digest with the applications waiting for review."
+                  "description": "New applications waiting for review, and the morning count."
                 },
                 "notifyUpcomingVisits": {
                   "type": "boolean",
                   "default": false,
-                  "description": "A text when a creator books, plus the morning-of list of visits."
+                  "description": "Bookings, reschedules and cancellations, plus the morning-of list of visits. On email this also sends Google Calendar invites."
                 },
                 "notifyEscalations": {
                   "type": "boolean",
                   "default": false,
-                  "description": "A text when the creator agent hands a conversation to a human."
+                  "description": "When the creator agent hands a conversation to a human, plus the morning count of ones nobody has replied to."
                 },
                 "notifyContentReview": {
                   "type": "boolean",
                   "default": false,
-                  "description": "A text when a creator submits content for review."
+                  "description": "When a creator submits content for review."
                 },
-                "notifyUnrepliedEscalations": {
-                  "type": "boolean",
-                  "default": false,
-                  "description": "Reminders about escalations nobody has replied to."
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "email",
+                    "both"
+                  ],
+                  "default": "text",
+                  "description": "How this person is told: text to their account's phone, email to their account's email, or both."
                 }
               },
               "required": [
@@ -10936,7 +10972,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
       "summary": "Create or update a location's creator program.",
-      "description": "Create or update a location's creator program. It is an upsert, one per locationId; omitted fields are left alone. Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. Read the current settings with queryData creators.creatorBoardConfig filtered on configId = locationId. locationId from queryData interface.location.",
+      "description": "Create or update a location's creator program. It is an upsert, one per locationId; omitted fields are left alone. Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. applicationsClosed: true stops the location taking new creator applications (the form leaves it out, or says it is not taking applications when it is the only one; invite links still work) without touching applications already in or booked visits. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. Read the current settings with queryData creators.creatorBoardConfig filtered on configId = locationId. locationId from queryData interface.location.",
       "type": "mutation",
       "path": [
         "api",
@@ -11092,6 +11128,10 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "agentPaused": {
             "type": "boolean"
+          },
+          "applicationsClosed": {
+            "type": "boolean",
+            "description": "true stops this location taking new creator applications; false opens it again. Applications already in, approved creators and booked visits are untouched, and invite links still work. Omit to preserve."
           },
           "identityHidden": {
             "type": "boolean",
@@ -11642,6 +11682,98 @@ export const CLI_MANIFEST: CliManifest = {
               "answers"
             ]
           },
+          "runMyMarketingIntake": {
+            "type": "object",
+            "properties": {
+              "schemaVersion": {
+                "type": "number",
+                "const": 1
+              },
+              "path": {
+                "type": "string",
+                "enum": [
+                  "start",
+                  "call"
+                ]
+              },
+              "answers": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "instagram": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "igBlock": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "influencers": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "infWhy": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "ads": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "worry": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "timing": {
+                    "$ref": "#/properties/runMyMarketingIntake/properties/answers/properties/role"
+                  },
+                  "restaurantName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "placeId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "placeAddress": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  }
+                }
+              },
+              "utm": {
+                "type": "object",
+                "properties": {
+                  "utm_source": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "utm_medium": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "utm_campaign": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "utm_content": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "utm_term": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                }
+              }
+            },
+            "required": [
+              "schemaVersion",
+              "path",
+              "answers"
+            ]
+          },
           "completionStatus": {
             "type": "object",
             "properties": {
@@ -11861,17 +11993,6 @@ export const CLI_MANIFEST: CliManifest = {
               }
             }
           },
-          "staffTraining": {
-            "type": "object",
-            "properties": {
-              "step1Complete": {
-                "type": "boolean"
-              },
-              "step2Complete": {
-                "type": "boolean"
-              }
-            }
-          },
           "directSignup": {
             "type": "object",
             "properties": {
@@ -11881,14 +12002,6 @@ export const CLI_MANIFEST: CliManifest = {
             }
           },
           "minimumSpend": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "visitQrCode": {
             "type": "object",
             "properties": {
               "isComplete": {
@@ -11919,6 +12032,48 @@ export const CLI_MANIFEST: CliManifest = {
                 "format": "date-time"
               }
             }
+          },
+          "setupChoice": {
+            "type": "object",
+            "properties": {
+              "choice": {
+                "type": "string",
+                "enum": [
+                  "call",
+                  "self"
+                ]
+              },
+              "chosenAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "choice",
+              "chosenAt"
+            ]
+          },
+          "metaAssetSharing": {
+            "type": "object",
+            "properties": {
+              "facebookPage": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "instagramHandle": {
+                "type": "string",
+                "maxLength": 60
+              },
+              "sharedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "facebookPage",
+              "instagramHandle",
+              "sharedAt"
+            ]
           },
           "dataAudit": {
             "type": "object",
