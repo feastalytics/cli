@@ -506,6 +506,273 @@ export const CLI_MANIFEST: CliManifest = {
       }
     },
     {
+      "id": "completeOnboardingTask",
+      "domain": "core",
+      "summary": "Complete an onboarding step that only the owner can confirm, once they confirm it to you.",
+      "description": "Complete an onboarding step that only the owner can confirm, once they confirm it to you. task is one of: directSignup (the signage is up), inviteUsers (the owner has invited the team or needs no one else), keepDefaultMinimumSpend (keep the $5 default; to set an amount use updateOrganization minimumSpendValue instead), skipMetaCapi (go without a Conversions API token), devices (ownPhones: staff use their own phones; ship: the addresses to ship scanning devices to, added to any already requested), and pos (manualEntry: no POS, orders are entered by hand, which creates the manual-entry location; connectLater: the owner will connect Square, Clover or Toast on a call). Never complete a step the owner has not confirmed: these steps happen in the restaurant and nothing else records them. Returns the task ids it completes; getTaskboard shows them done after the recompute, about 30 seconds later.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "onboarding",
+        "form",
+        "completeTask"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "directSignup"
+                  },
+                  "directSignup": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                },
+                "required": [
+                  "type",
+                  "directSignup"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "inviteUsers"
+                  },
+                  "inviteUsers": {
+                    "$ref": "#/properties/task/anyOf/0/properties/directSignup"
+                  }
+                },
+                "required": [
+                  "type",
+                  "inviteUsers"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "keepDefaultMinimumSpend"
+                  },
+                  "keepDefaultMinimumSpend": {
+                    "$ref": "#/properties/task/anyOf/0/properties/directSignup"
+                  }
+                },
+                "required": [
+                  "type",
+                  "keepDefaultMinimumSpend"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "skipMetaCapi"
+                  },
+                  "skipMetaCapi": {
+                    "$ref": "#/properties/task/anyOf/0/properties/directSignup"
+                  }
+                },
+                "required": [
+                  "type",
+                  "skipMetaCapi"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "devices"
+                  },
+                  "devices": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "ownPhones"
+                          },
+                          "ownPhones": {
+                            "$ref": "#/properties/task/anyOf/0/properties/directSignup"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "ownPhones"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "ship"
+                          },
+                          "ship": {
+                            "type": "object",
+                            "properties": {
+                              "addresses": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 200
+                                    },
+                                    "address": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 300
+                                    },
+                                    "city": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 100
+                                    },
+                                    "state": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 100
+                                    },
+                                    "zip": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 20
+                                    },
+                                    "country": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 100
+                                    },
+                                    "quantity": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 10
+                                    }
+                                  },
+                                  "required": [
+                                    "name",
+                                    "address",
+                                    "city",
+                                    "state",
+                                    "zip",
+                                    "country"
+                                  ]
+                                },
+                                "minItems": 1,
+                                "maxItems": 10
+                              }
+                            },
+                            "required": [
+                              "addresses"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "ship"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "devices"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "pos"
+                  },
+                  "pos": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "manualEntry"
+                          },
+                          "manualEntry": {
+                            "type": "object",
+                            "properties": {
+                              "description": {
+                                "type": "string",
+                                "maxLength": 500,
+                                "default": ""
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "manualEntry"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "connectLater"
+                          },
+                          "connectLater": {
+                            "type": "object",
+                            "properties": {
+                              "pos": {
+                                "type": "string",
+                                "enum": [
+                                  "square",
+                                  "clover",
+                                  "toast"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "pos"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "connectLater"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "pos"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
       "id": "createAutomationFlow",
       "domain": "automations",
       "summary": "Create an automation flow: the container grouping automations by a shared trigger.",
@@ -823,7 +1090,6 @@ export const CLI_MANIFEST: CliManifest = {
                   }
                 },
                 "required": [
-                  "restaurantNeighborhood",
                   "differentiatorsText",
                   "mustTryItemsText"
                 ]
@@ -911,7 +1177,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "createFormat",
       "domain": "content",
       "summary": "Write a post format of your own, with a recipe like the catalog's.",
-      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style and difficulty (easy, medium or hard) describe it; style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. sourceUrl is the Instagram or TikTok post it is based on, when there is one. extractionId is the fx_ id of your own ready formats.formatExtraction row when you are saving its draft (from extractFormatFromUrl): pass it so the pasted post's saved video or slides show as the format's example; the post must be the same kind as the format. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
+      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style and difficulty (easy, medium or hard) describe it; style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. sourceUrl is the Instagram or TikTok post it is based on, when there is one. extractionId is the fx_ id of your own ready formats.formatExtraction row when you are saving its draft (from extractFormatFromUrl): pass it so the pasted post's saved video or slides show as the format's example; the post must be the same kind as the format. A format is either a group (a reusable pattern several posts share) or a version of one group: the recipe for remaking one specific post in that group. parentFormatId names the group a version belongs to; leave it out or null for a group. The group must be a published organic format of the same kind that you can see, and it cannot itself be a version. When you save a pasted post whose match is a catalog format, make it a version of that format. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
       "type": "mutation",
       "path": [
         "api",
@@ -1282,6 +1548,18 @@ export const CLI_MANIFEST: CliManifest = {
             "default": false
           },
           "extractionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parentFormatId": {
             "anyOf": [
               {
                 "type": "string",
@@ -2704,20 +2982,6 @@ export const CLI_MANIFEST: CliManifest = {
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
-    },
-    {
-      "id": "getOnboardingForm",
-      "domain": "core",
-      "summary": "Read the self-reported answers on the onboarding form.",
-      "description": "Read the self-reported answers on the onboarding form. They back the onboarding tasks the system can't observe directly. Returns null when there is no form. Read this before updateOnboardingForm, which replaces nested step objects rather than merging them.",
-      "type": "query",
-      "path": [
-        "api",
-        "onboarding",
-        "form",
-        "get"
-      ],
-      "inputJsonSchema": null
     },
     {
       "id": "getOrganization",
@@ -4422,6 +4686,38 @@ export const CLI_MANIFEST: CliManifest = {
                     "kind",
                     "set"
                   ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "sound"
+                    },
+                    "set": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "audioId": {
+                              "type": "string",
+                              "pattern": "^\\d{5,25}$"
+                            }
+                          },
+                          "required": [
+                            "audioId"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "set"
+                  ]
                 }
               ]
             },
@@ -5089,8 +5385,8 @@ export const CLI_MANIFEST: CliManifest = {
     {
       "id": "setBoardRecipients",
       "domain": "creators",
-      "summary": "Replace who gets texted about a location's creator program, besides the approver.",
-      "description": "Replace who gets texted about a location's creator program, besides the approver. Creator texts go to the program's approverUserId (every kind, always) plus the members listed here with the matching flag on. An owner who is not the approver gets nothing unless they are listed with notifyUpcomingVisits, so when Feast is the approver add the owner and the managers here. Send the full intended list for the location: a row sent with the same flags is kept, changed flags are updated, members left out are removed, and an empty list removes everyone but the approver. Every userId must be a member of the organization with a role other than scanner; a person with no Feast account cannot be a recipient. The response is the full list after the write. queryData creators.creatorBoardConfig does not include recipients, so when unsure of the current list, send everyone who should be on it rather than a partial update.",
+      "summary": "Set who hears about a location's creator program, and by text or email.",
+      "description": "Set who hears about a location's creator program, and by text or email. Notifications go to the members listed here with the matching flag on, by each one's channel. The program's approverUserId may be listed too, to set the approver's own kinds and channel; an approver who is not listed gets every kind by text. An owner who is not the approver gets nothing unless listed with notifyUpcomingVisits, so when Feast is the approver add the owner and the managers here. Send the full intended list for the location: a row sent with the same flags and channel is kept, changed ones are updated, members left out are removed, and an empty list leaves only the approver with every kind by text. Every userId other than the approver must be a member of the organization with a role other than scanner; a person with no Feast account cannot be a recipient. The response is the full list after the write. queryData creators.creatorBoardConfig does not include recipients, so when unsure of the current list, send everyone who should be on it rather than a partial update.",
       "type": "mutation",
       "path": [
         "api",
@@ -5118,27 +5414,32 @@ export const CLI_MANIFEST: CliManifest = {
                 "notifyApplications": {
                   "type": "boolean",
                   "default": false,
-                  "description": "Morning digest with the applications waiting for review."
+                  "description": "New applications waiting for review, and the morning count."
                 },
                 "notifyUpcomingVisits": {
                   "type": "boolean",
                   "default": false,
-                  "description": "A text when a creator books, plus the morning-of list of visits."
+                  "description": "Bookings, reschedules and cancellations, plus the morning-of list of visits. On email this also sends Google Calendar invites."
                 },
                 "notifyEscalations": {
                   "type": "boolean",
                   "default": false,
-                  "description": "A text when the creator agent hands a conversation to a human."
+                  "description": "When the creator agent hands a conversation to a human, plus the morning count of ones nobody has replied to."
                 },
                 "notifyContentReview": {
                   "type": "boolean",
                   "default": false,
-                  "description": "A text when a creator submits content for review."
+                  "description": "When a creator submits content for review."
                 },
-                "notifyUnrepliedEscalations": {
-                  "type": "boolean",
-                  "default": false,
-                  "description": "Reminders about escalations nobody has replied to."
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "email",
+                    "both"
+                  ],
+                  "default": "text",
+                  "description": "How this person is told: text to their account's phone, email to their account's email, or both."
                 }
               },
               "required": [
@@ -10545,7 +10846,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateFormat",
       "domain": "content",
       "summary": "Change, share or retire a format you wrote with createFormat.",
-      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving). style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
+      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving) and parentFormatId (the group to make it a version of, or null to make it a group of its own; a format with versions cannot become a version). A format is either a group (a reusable pattern several posts share) or a version of one group: the recipe for remaking one specific post in that group. parentFormatId names the group a version belongs to; leave it out or null for a group. The group must be a published organic format of the same kind that you can see, and it cannot itself be a version. style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
       "type": "mutation",
       "path": [
         "api",
@@ -10921,6 +11222,18 @@ export const CLI_MANIFEST: CliManifest = {
                   "published",
                   "retired"
                 ]
+              },
+              "parentFormatId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -10936,7 +11249,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateInfluencerBoardConfig",
       "domain": "creators",
       "summary": "Create or update a location's creator program.",
-      "description": "Create or update a location's creator program. It is an upsert, one per locationId; omitted fields are left alone. Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. Read the current settings with queryData creators.creatorBoardConfig filtered on configId = locationId. locationId from queryData interface.location.",
+      "description": "Create or update a location's creator program. It is an upsert, one per locationId; omitted fields are left alone. Settings change what creators are promised and texted, so never set reimbursementEnabled unless the client asks. Changing maxCreatorsPerMonth can pause or restart the location's recruitment ads immediately. agentPaused: true stops the creator AI agent's texts. applicationsClosed: true stops the location taking new creator applications (the form leaves it out, or says it is not taking applications when it is the only one; invite links still work) without touching applications already in or booked visits. identityHidden: true keeps the restaurant's name, logo and address off the creator application page and the application, decline and denial texts until a creator is approved, showing \"a restaurant in <city>\" instead. Read the current settings with queryData creators.creatorBoardConfig filtered on configId = locationId. locationId from queryData interface.location.",
       "type": "mutation",
       "path": [
         "api",
@@ -11092,6 +11405,10 @@ export const CLI_MANIFEST: CliManifest = {
           },
           "agentPaused": {
             "type": "boolean"
+          },
+          "applicationsClosed": {
+            "type": "boolean",
+            "description": "true stops this location taking new creator applications; false opens it again. Applications already in, approved creators and booked visits are untouched, and invite links still work. Omit to preserve."
           },
           "identityHidden": {
             "type": "boolean",
@@ -11357,697 +11674,6 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "rewardId"
         ],
-        "$schema": "http://json-schema.org/draft-07/schema#"
-      }
-    },
-    {
-      "id": "updateOnboardingForm",
-      "domain": "core",
-      "summary": "Update the onboarding form (self-reported answers behind tasks the system can't observe).",
-      "description": "Update the onboarding form (self-reported answers behind tasks the system can't observe). Nested step objects are replaced, not merged: read getOnboardingForm first and send the whole step. pos.details.type \"other\" creates a manual-entry POS location.",
-      "type": "mutation",
-      "path": [
-        "api",
-        "onboarding",
-        "form",
-        "update"
-      ],
-      "inputJsonSchema": {
-        "type": "object",
-        "properties": {
-          "growthIntake": {
-            "type": "object",
-            "properties": {
-              "schemaVersion": {
-                "type": "number",
-                "const": 1
-              },
-              "sourceRevision": {
-                "type": "string",
-                "const": "0a3f55c75a60be768da05fca0313080baccfdfd3"
-              },
-              "funnel": {
-                "type": "string",
-                "enum": [
-                  "feast",
-                  "remy"
-                ]
-              },
-              "stepId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64,
-                "pattern": "^[a-zA-Z\\d_-]+$"
-              },
-              "answers": {
-                "type": "object",
-                "properties": {
-                  "website": {
-                    "allOf": [
-                      {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 2048
-                      },
-                      {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 2048,
-                        "format": "uri"
-                      }
-                    ]
-                  },
-                  "restaurantType": {
-                    "type": "string",
-                    "enum": [
-                      "qsr",
-                      "fast-casual",
-                      "full-service",
-                      "fine-dining"
-                    ]
-                  },
-                  "goal": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1000000
-                  },
-                  "benefits": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "analytics",
-                        "content",
-                        "ads"
-                      ]
-                    },
-                    "maxItems": 3
-                  },
-                  "growthBarrier": {
-                    "type": "string",
-                    "enum": [
-                      "time",
-                      "content",
-                      "roi",
-                      "results",
-                      "awareness",
-                      "direction",
-                      "scaling"
-                    ]
-                  },
-                  "check": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
-                  },
-                  "profitStatus": {
-                    "type": "string",
-                    "enum": [
-                      "losing",
-                      "break-even",
-                      "profitable",
-                      "unsure"
-                    ]
-                  },
-                  "cacStatus": {
-                    "type": "string",
-                    "enum": [
-                      "known",
-                      "unknown"
-                    ]
-                  },
-                  "cac": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
-                  },
-                  "focusMode": {
-                    "type": "string",
-                    "enum": [
-                      "specific",
-                      "business",
-                      "recommend"
-                    ]
-                  },
-                  "selectedDays": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "Mon",
-                        "Tue",
-                        "Wed",
-                        "Thu",
-                        "Fri",
-                        "Sat",
-                        "Sun"
-                      ]
-                    },
-                    "maxItems": 7
-                  },
-                  "session": {
-                    "type": "string",
-                    "enum": [
-                      "Breakfast",
-                      "Lunch",
-                      "Dinner",
-                      "Late night"
-                    ]
-                  },
-                  "offer": {
-                    "type": "string",
-                    "enum": [
-                      "all-offers",
-                      "mostly-offers",
-                      "both",
-                      "mostly-awareness",
-                      "none"
-                    ]
-                  },
-                  "contentReadiness": {
-                    "type": "string",
-                    "enum": [
-                      "plenty",
-                      "some",
-                      "social-only",
-                      "none",
-                      "unsure"
-                    ]
-                  },
-                  "reservations": {
-                    "type": "string",
-                    "enum": [
-                      "opentable",
-                      "other",
-                      "none"
-                    ]
-                  },
-                  "involvement": {
-                    "type": "string",
-                    "enum": [
-                      "lead",
-                      "together",
-                      "approve"
-                    ]
-                  },
-                  "budget": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
-                  },
-                  "originalAdBudget": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
-                  },
-                  "pos": {
-                    "type": "string",
-                    "enum": [
-                      "Toast",
-                      "Square",
-                      "Clover",
-                      "Other",
-                      "Unsure"
-                    ]
-                  },
-                  "creatorCoverage": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 4
-                  },
-                  "coverage": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/creatorCoverage"
-                  },
-                  "reason": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "More local awareness",
-                        "A steady stream of content",
-                        "Less coordination"
-                      ]
-                    },
-                    "maxItems": 3
-                  },
-                  "credit": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/goal"
-                  },
-                  "approval": {
-                    "type": "string",
-                    "enum": [
-                      "I’ll review them",
-                      "A teammate will review"
-                    ]
-                  },
-                  "menuUrl": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/website/allOf/1"
-                  },
-                  "assetsUrl": {
-                    "$ref": "#/properties/growthIntake/properties/answers/properties/website/allOf/1"
-                  }
-                }
-              },
-              "routing": {
-                "type": "object",
-                "properties": {
-                  "planRoute": {
-                    "type": "string",
-                    "enum": [
-                      "full",
-                      "remy",
-                      "analyzer"
-                    ]
-                  },
-                  "paidBudgetConfirmed": {
-                    "type": "boolean"
-                  },
-                  "requestedBenefits": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/properties/growthIntake/properties/answers/properties/benefits/items"
-                    },
-                    "maxItems": 3
-                  },
-                  "transferredFrom": {
-                    "type": "string",
-                    "enum": [
-                      "feast",
-                      "remy"
-                    ]
-                  },
-                  "paidRecruitmentNeedsConfirmation": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            },
-            "required": [
-              "schemaVersion",
-              "sourceRevision",
-              "funnel",
-              "stepId",
-              "answers"
-            ]
-          },
-          "completionStatus": {
-            "type": "object",
-            "properties": {
-              "postProductOnboardingComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "general": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "invite": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "isComplete"
-            ]
-          },
-          "devices": {
-            "type": "object",
-            "properties": {
-              "isSupplyingOwnPhones": {
-                "type": "boolean"
-              },
-              "addresses": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "address": {
-                      "type": "string"
-                    },
-                    "city": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string"
-                    },
-                    "zip": {
-                      "type": "string"
-                    },
-                    "country": {
-                      "type": "string"
-                    },
-                    "quantity": {
-                      "type": "number",
-                      "minimum": 1,
-                      "maximum": 10
-                    },
-                    "isShipped": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "address",
-                    "city",
-                    "state",
-                    "zip",
-                    "country"
-                  ]
-                }
-              },
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "pos": {
-            "type": "object",
-            "properties": {
-              "details": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "square"
-                      },
-                      "square": {
-                        "type": "object",
-                        "properties": {}
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "square"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "clover"
-                      },
-                      "clover": {
-                        "type": "object",
-                        "properties": {}
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "clover"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "toast"
-                      },
-                      "toast": {
-                        "type": "object",
-                        "properties": {
-                          "completeStepIds": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "setupConfirmed": {
-                            "type": "boolean"
-                          }
-                        }
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "toast"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "const": "other"
-                      },
-                      "other": {
-                        "type": "object",
-                        "properties": {
-                          "description": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "description"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "other"
-                    ]
-                  }
-                ]
-              },
-              "isComplete": {
-                "type": "boolean"
-              },
-              "skipped": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "details",
-              "isComplete"
-            ]
-          },
-          "metaCapi": {
-            "type": "object",
-            "properties": {
-              "skipAcknowledged": {
-                "type": "boolean"
-              }
-            }
-          },
-          "aiConnector": {
-            "type": "object",
-            "properties": {
-              "ai": {
-                "type": "string",
-                "maxLength": 60
-              },
-              "pos": {
-                "type": "string",
-                "maxLength": 60
-              },
-              "callFirst": {
-                "type": "boolean"
-              },
-              "website": {
-                "type": "string",
-                "maxLength": 200
-              },
-              "posDeferredAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "bookedCallAt": {
-                "type": "string"
-              }
-            }
-          },
-          "staffTraining": {
-            "type": "object",
-            "properties": {
-              "step1Complete": {
-                "type": "boolean"
-              },
-              "step2Complete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "directSignup": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "minimumSpend": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "visitQrCode": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              }
-            }
-          },
-          "contentLibrary": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
-              "completedAt": {
-                "type": "string",
-                "format": "date-time"
-              }
-            }
-          },
-          "welcomeDocument": {
-            "type": "object",
-            "properties": {
-              "isComplete": {
-                "type": "boolean"
-              },
-              "completedAt": {
-                "type": "string",
-                "format": "date-time"
-              }
-            }
-          },
-          "dataAudit": {
-            "type": "object",
-            "properties": {
-              "pos": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "square",
-                      "toast-api",
-                      "toast-csv",
-                      "spoton"
-                    ]
-                  },
-                  "isComplete": {
-                    "type": "boolean"
-                  },
-                  "toastCsvs": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "key": {
-                          "type": "string"
-                        },
-                        "uploadedAt": {
-                          "type": "string"
-                        },
-                        "firstDate": {
-                          "type": "string"
-                        },
-                        "lastDate": {
-                          "type": "string"
-                        },
-                        "dayCount": {
-                          "type": "number"
-                        },
-                        "missingNetSalesCents": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "fileName",
-                        "key",
-                        "uploadedAt"
-                      ]
-                    }
-                  },
-                  "salesCoverage": {
-                    "type": "object",
-                    "properties": {
-                      "firstDate": {
-                        "type": "string"
-                      },
-                      "lastDate": {
-                        "type": "string"
-                      },
-                      "dayCount": {
-                        "type": "number"
-                      },
-                      "gaps": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "start": {
-                              "type": "string"
-                            },
-                            "end": {
-                              "type": "string"
-                            },
-                            "days": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "start",
-                            "end",
-                            "days"
-                          ]
-                        }
-                      },
-                      "years": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "year": {
-                              "type": "number"
-                            },
-                            "dayCount": {
-                              "type": "number"
-                            },
-                            "months": {
-                              "type": "array",
-                              "items": {
-                                "type": "boolean"
-                              }
-                            }
-                          },
-                          "required": [
-                            "year",
-                            "dayCount",
-                            "months"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "firstDate",
-                      "lastDate",
-                      "dayCount",
-                      "gaps",
-                      "years"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ]
-              }
-            }
-          }
-        },
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
     },
