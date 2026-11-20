@@ -816,7 +816,10 @@ export const CLI_MANIFEST: CliManifest = {
                   "gotReferred",
                   "referred",
                   "subscriptionRenewal",
-                  "pickupDate"
+                  "pickupDate",
+                  "giftPurchased",
+                  "giftClaimed",
+                  "subscriptionEnd"
                 ]
               },
               {
@@ -1177,7 +1180,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "createFormat",
       "domain": "content",
       "summary": "Write a post format of your own, with a recipe like the catalog's.",
-      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style and difficulty (easy, medium or hard) describe it; style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. sourceUrl is the Instagram or TikTok post it is based on, when there is one. extractionId is the fx_ id of your own ready formats.formatExtraction row when you are saving its draft (from extractFormatFromUrl): pass it so the pasted post's saved video or slides show as the format's example; the post must be the same kind as the format. A format is either a group (a reusable pattern several posts share) or a version of one group: the recipe for remaking one specific post in that group. parentFormatId names the group a version belongs to; leave it out or null for a group. The group must be a published organic format of the same kind that you can see, and it cannot itself be a version. When you save a pasted post whose match is a catalog format, make it a version of that format. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
+      "description": "Write a post format of your own, with a recipe like the catalog's. kind is reel or static; name, an optional description, style and difficulty (easy, medium or hard) describe it; style is the format's category, which is how the pickers group formats. A reel takes one of on_screen_hook (the words carry the post, over any footage: a relatable line, an aesthetic line, a call to share or tag, or a guide with a label on each shot), trending_audio (the sound carries it: a song people know cut to its beats, a meme sound acted out, or a voiceover), staff_on_camera (the people are why it works: a skit, or someone talking to camera), events_news (an occasion carries it: an event, an opening, an offer, press or a giveaway), no_hook (the food or the place carries it, with or without a caption: a build, one great moment, a sizzle, a space tour), guests_story (real guests on camera, or the owner telling the story); a static takes one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists). A version always takes its group's category, so style only matters for a group. sourceUrl is the Instagram or TikTok post it is based on, when there is one. extractionId is the fx_ id of your own ready formats.formatExtraction row when you are saving its draft (from extractFormatFromUrl): pass it so the pasted post's saved video or slides show as the format's example; the post must be the same kind as the format. A format is either a group (a reusable pattern several posts share) or a version of one group: the recipe for remaking one specific post in that group. parentFormatId names the group a version belongs to; leave it out or null for a group. The group must be a published organic format of the same kind that you can see, and it cannot itself be a version. When you save a pasted post whose match is a catalog format, make it a version of that format. recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats. The format belongs to the person who wrote it and follows them to every organization they work in: they see it in formats.format, the Content Calendar's format browser and the Content Studio inspiration picker, and nobody else does. shareWithOrganization true (default false) also shares it with this organization's team, so teammates see it in those same places and can open it from a post or video made with it. Returns the format with its usr_ formatId, which addContentIdeas, updateContentPost and generateVideo's inspiration take. Change or retire it later with updateFormat.",
       "type": "mutation",
       "path": [
         "api",
@@ -1216,7 +1219,13 @@ export const CLI_MANIFEST: CliManifest = {
                   "news",
                   "community",
                   "fun",
-                  "story"
+                  "story",
+                  "on_screen_hook",
+                  "trending_audio",
+                  "staff_on_camera",
+                  "events_news",
+                  "no_hook",
+                  "guests_story"
                 ]
               },
               {
@@ -1307,6 +1316,11 @@ export const CLI_MANIFEST: CliManifest = {
                           },
                           "onScreenText": {
                             "$ref": "#/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                          },
+                          "textExample": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
                           },
                           "textPlan": {
                             "type": "object",
@@ -1526,6 +1540,69 @@ export const CLI_MANIFEST: CliManifest = {
               },
               "mistakes": {
                 "$ref": "#/properties/recipe/properties/needs"
+              },
+              "essence": {
+                "type": "object",
+                "properties": {
+                  "why": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  },
+                  "keep": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 400
+                    },
+                    "minItems": 1,
+                    "maxItems": 8
+                  },
+                  "swap": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/recipe/properties/essence/properties/keep/items"
+                    },
+                    "maxItems": 8
+                  },
+                  "sound": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "exact",
+                          "vibe",
+                          "anything"
+                        ]
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "role",
+                      "reason"
+                    ]
+                  },
+                  "requires": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/properties/recipe/properties/essence/properties/keep/items"
+                    },
+                    "maxItems": 5
+                  }
+                },
+                "required": [
+                  "why",
+                  "keep",
+                  "swap",
+                  "sound",
+                  "requires"
+                ]
               }
             },
             "required": [
@@ -2083,7 +2160,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "generateVideo",
       "domain": "videos",
       "summary": "Start a Video Editor 2 video: a campaign ad or an organic post.",
-      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) or playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with chooseVideoScript feedback if the human wants changes, and pick one with chooseVideoScript scriptId, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
+      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour) or label (black condensed capitals on a white rounded box behind each row, like Instagram's own caption text, readable over any footage); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with chooseVideoScript feedback if the human wants changes, and pick one with chooseVideoScript scriptId, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
       "type": "mutation",
       "path": [
         "api",
@@ -2202,7 +2279,8 @@ export const CLI_MANIFEST: CliManifest = {
             "enum": [
               "poppins",
               "dm-sans",
-              "playfair"
+              "playfair",
+              "label"
             ]
           },
           "headline": {
@@ -4091,7 +4169,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "requestVideoEdit",
       "domain": "videos",
       "summary": "Ask for a new version of a Video Editor 2 video, once its first version is ready.",
-      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change (reveal typewriter types a text or lineText overlay in word by word, null shows it whole), or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins, dm-sans or playfair, set.highlightColor #RRGGBB, and set.reveal typewriter or null for every text and lineText overlay at once; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again. restore (a versionId from editor.versions that finished rendering) makes that version current again as a new version, only re-rendered; send it on its own. asNewVideo makes the result a new video instead of a new version: {versionId (the version to start from, defaults to the current one), campaignId (null for an organic post, omitted keeps the source's), angleTitle}. With asNewVideo and no note or changes it is an exact copy that costs nothing. It returns the new video's projectId; poll getVideoEditor on it. To put a variation on the Content Calendar, use the calendar's tools instead.",
+      "description": "Ask for a new version of a Video Editor 2 video, once its first version is ready. Spends generation credits, so only with the human's explicit approval. Send changes, a note, or both. With both, the changes are applied first and the note is planned on top of the result, all in one version; if the note adds nothing, the version is made from the changes alone. Returns { projectId, generation: { runId, status, statusMessage, pollIntervalMs } }; runId is the new version's id, and getVideoEditor shows its renderStatus until ready or failed. changes are exact edits to the current timeline from getVideoEditor, applied in order: line (set text, highlight words or role of lineId; text may carry ElevenLabs v3 audio tags like [excited]), insertLine (after afterLineId, null for first, with segmentIds for its shots), removeLine, moveLine, shot (set segmentId, srcInSec or crop of shotId), addShot, removeShot, overlay (everything drawn over the footage, by overlayId from getVideoEditor's timeline.overlays: op add with a new overlay ({kind: text, rows (1 or 2, 40 characters each), from and to (lineIds, or end for the end card), optional maxSec, position top|middle|lower, size large|small, optional backdrop dim}, or {kind: lineText, lineId, position, size} to show a line's text on a video with no voiceover), op set with overlayId and the fields to change (reveal typewriter types a text or lineText overlay in word by word, null shows it whole), or op remove with overlayId; ov_headline is the headline and ov_endcard the end card, and setting rows on either when it is missing turns it back on; ov_captions are the voiceover's captions, which can be moved or resized but not removed; one overlay per position at a time and at most 2 text overlays on screen at once; only re-renders), textStyle (set.font poppins, dm-sans, playfair or label, set.highlightColor #RRGGBB, and set.reveal typewriter or null for every text and lineText overlay at once; only re-renders), voice (voiceId from listVideoVoices, or settings; set null turns the voiceover off so the lines become on-screen text, and a voiceId on a video with no voiceover turns it on and voices every line, so rewrite the lines as spoken sentences in the same request), pronunciation (written, a word or name as it appears in the lines, and spoken, how the voice should say it, like {written: \"Pho\", spoken: \"fuh\"}; spoken null removes it; it is saved for the whole organization, so every later voicing of every video says it that way, and it re-voices only the lines that use the word; never respell a line's text to fix how it is said) and music (set.prompt describes new background music, set.newTake asks for another version of the same music, set.gainDb its level from -40 to 0, or set null for no music; a music change only re-renders). Segment ids come from queryData videos.footage (current footage is retiredAt null). An unknown id or a broken limit is refused with the index of the change. A note alone (\"punchier hook\", \"more excited\") is turned into changes by Claude: small fixes (a word, delivery tags, how a word is said, trims, shots, overlays, music) are made directly, and a note asking for better or new copy, a new claim or a different structure is rewritten by the script writer with the brief and the restaurant's notes, recutting only the rewritten lines. scopeLineIds (lineIds from the current timeline) limits a note to those lines: nothing else in the timeline changes, even when the note talks about the whole ad. On a video with no voiceover (getVideoEditor timeline.voice null), lines are on-screen text and changing them only re-renders. Otherwise any change to a line's words or the voice re-voices the whole script as one take, and the video is re-rendered. To recut from the same story (new shots, chosen away from the current version's, and a new voice take, about $0.20), send recut: true on its own. recut: true also retries a first cut that failed (pipelineStatus failed after a story was chosen), cutting the chosen story again. restore (a versionId from editor.versions that finished rendering) makes that version current again as a new version, only re-rendered; send it on its own. asNewVideo makes the result a new video instead of a new version: {versionId (the version to start from, defaults to the current one), campaignId (null for an organic post, omitted keeps the source's), angleTitle}. With asNewVideo and no note or changes it is an exact copy that costs nothing. It returns the new video's projectId; poll getVideoEditor on it. To put a variation on the Content Calendar, use the calendar's tools instead.",
       "type": "mutation",
       "path": [
         "api",
@@ -4540,7 +4618,8 @@ export const CLI_MANIFEST: CliManifest = {
                           "enum": [
                             "poppins",
                             "dm-sans",
-                            "playfair"
+                            "playfair",
+                            "label"
                           ]
                         },
                         "highlightColor": {
@@ -4697,15 +4776,73 @@ export const CLI_MANIFEST: CliManifest = {
                     "set": {
                       "anyOf": [
                         {
-                          "type": "object",
-                          "properties": {
-                            "audioId": {
-                              "type": "string",
-                              "pattern": "^\\d{5,25}$"
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "library"
+                                    },
+                                    "library": {
+                                      "type": "object",
+                                      "properties": {
+                                        "audioId": {
+                                          "type": "string",
+                                          "pattern": "^\\d{5,25}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "audioId"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "library"
+                                  ]
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "reference"
+                                    },
+                                    "reference": {
+                                      "type": "object",
+                                      "properties": {
+                                        "extractionId": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 32
+                                        }
+                                      },
+                                      "required": [
+                                        "extractionId"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "reference"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "audioId": {
+                                  "$ref": "#/properties/changes/items/anyOf/12/properties/set/anyOf/0/anyOf/0/anyOf/0/properties/library/properties/audioId"
+                                }
+                              },
+                              "required": [
+                                "audioId"
+                              ]
                             }
-                          },
-                          "required": [
-                            "audioId"
                           ]
                         },
                         {
@@ -6299,6 +6436,66 @@ export const CLI_MANIFEST: CliManifest = {
                                             "required": [
                                               "type"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "giftPurchased"
+                                              },
+                                              "giftPurchased": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "giftClaimed"
+                                              },
+                                              "giftClaimed": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "type": {
+                                                "type": "string",
+                                                "const": "subscriptionEnd"
+                                              },
+                                              "subscriptionEnd": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "campaignId": {
+                                                    "type": "string"
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "required": [
+                                              "type"
+                                            ]
                                           }
                                         ]
                                       },
@@ -6625,6 +6822,18 @@ export const CLI_MANIFEST: CliManifest = {
                                   "type": {
                                     "type": "string",
                                     "const": "hasActiveSubscription"
+                                  },
+                                  "hasActiveSubscription": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "paid",
+                                          "gift"
+                                        ]
+                                      }
+                                    }
                                   }
                                 },
                                 "required": [
@@ -8264,6 +8473,10 @@ export const CLI_MANIFEST: CliManifest = {
                                           "properties": {
                                             "isOneTimePurchase": {
                                               "type": "boolean"
+                                            },
+                                            "isGift": {
+                                              "type": "boolean",
+                                              "description": "Sells the campaign's recurring offer as a prepaid gift, with the months picked from the offer's gift lengths, instead of a subscription. After paying, the buyer lands on the gift purchased page with the claim link, not confirmationScreenId."
                                             },
                                             "quantitySelection": {
                                               "type": "object",
@@ -10160,6 +10373,14 @@ export const CLI_MANIFEST: CliManifest = {
                               "overrideDate"
                             ]
                           }
+                        },
+                        "giftMonths": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 24
+                          }
                         }
                       },
                       "required": [
@@ -10846,7 +11067,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateFormat",
       "domain": "content",
       "summary": "Change, share or retire a format you wrote with createFormat.",
-      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving) and parentFormatId (the group to make it a version of, or null to make it a group of its own; a format with versions cannot become a version). A format is either a group (a reusable pattern several posts share) or a version of one group: the recipe for remaking one specific post in that group. parentFormatId names the group a version belongs to; leave it out or null for a group. The group must be a published organic format of the same kind that you can see, and it cannot itself be a version. style is the format's category, one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists); pick the one the post is mostly about, which is how the pickers group formats. Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
+      "description": "Change, share or retire a format you wrote with createFormat. formatId is its usr_ id; patch holds only the fields to change: name, description, style, difficulty, sourceUrl, recipe (the whole recipe, replacing the stored one; recipe is the same shape as a catalog format's template in formats.format: visual is { type: reel, reel: { length, hook, beats: [{ label, seconds, direction, line? }], onScreenText, audio, voice (voiceover, raw or none), onCamera } } or { type: static, static: { layout, slides: [{ label, direction }], textOnImage, photoStyle } }, with caption { opening, body, close, example }, shots [{ subject (food, drink, ambience, exterior, preparation, staff, signage or misc), what }], needs [] and mistakes []. Write it the way the catalog recipes read: concrete directions a person filming could follow, with timings on reel beats.), shareWithOrganization (true shares it with this organization's team, false makes it personal again) and status (retired removes it from every picker; posts and videos made from it keep resolving) and parentFormatId (the group to make it a version of, or null to make it a group of its own; a format with versions cannot become a version) and requiredSoundId (the audioId of the one sound this format only works with, because the song is the joke or the cuts are timed to it; videos made from it then always use that sound; null clears it). A format is either a group (a reusable pattern several posts share) or a version of one group: the recipe for remaking one specific post in that group. parentFormatId names the group a version belongs to; leave it out or null for a group. The group must be a published organic format of the same kind that you can see, and it cannot itself be a version. style is the format's category, which is how the pickers group formats. A reel takes one of on_screen_hook (the words carry the post, over any footage: a relatable line, an aesthetic line, a call to share or tag, or a guide with a label on each shot), trending_audio (the sound carries it: a song people know cut to its beats, a meme sound acted out, or a voiceover), staff_on_camera (the people are why it works: a skit, or someone talking to camera), events_news (an occasion carries it: an event, an opening, an offer, press or a giveaway), no_hook (the food or the place carries it, with or without a caption: a build, one great moment, a sizzle, a space tour), guests_story (real guests on camera, or the owner telling the story); a static takes one of food (the finished food or drink is the star), made (how a dish or drink is made, step by step), team (the staff and what they do), place (the room, the building and walking in), guests (guests, their reactions and their messages), news (openings, offers, giveaways, new items, milestones and press), community (events, recaps and the neighborhood), fun (memes, trends, skits and relatable posts), story (the owner's story and why the place exists). A version always takes its group's category, so style only matters for a group. Only the person who wrote a format can change it; catalog formats cannot be edited, so duplicate one with createFormat instead. Editing a format changes future briefs only, never a video already made from it. Returns the updated format.",
       "type": "mutation",
       "path": [
         "api",
@@ -10893,7 +11114,13 @@ export const CLI_MANIFEST: CliManifest = {
                       "news",
                       "community",
                       "fun",
-                      "story"
+                      "story",
+                      "on_screen_hook",
+                      "trending_audio",
+                      "staff_on_camera",
+                      "events_news",
+                      "no_hook",
+                      "guests_story"
                     ]
                   },
                   {
@@ -10984,6 +11211,11 @@ export const CLI_MANIFEST: CliManifest = {
                               },
                               "onScreenText": {
                                 "$ref": "#/properties/patch/properties/recipe/properties/visual/anyOf/0/properties/reel/properties/hook"
+                              },
+                              "textExample": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 500
                               },
                               "textPlan": {
                                 "type": "object",
@@ -11203,6 +11435,69 @@ export const CLI_MANIFEST: CliManifest = {
                   },
                   "mistakes": {
                     "$ref": "#/properties/patch/properties/recipe/properties/needs"
+                  },
+                  "essence": {
+                    "type": "object",
+                    "properties": {
+                      "why": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                      },
+                      "keep": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 400
+                        },
+                        "minItems": 1,
+                        "maxItems": 8
+                      },
+                      "swap": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/properties/patch/properties/recipe/properties/essence/properties/keep/items"
+                        },
+                        "maxItems": 8
+                      },
+                      "sound": {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string",
+                            "enum": [
+                              "exact",
+                              "vibe",
+                              "anything"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
+                          }
+                        },
+                        "required": [
+                          "role",
+                          "reason"
+                        ]
+                      },
+                      "requires": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/properties/patch/properties/recipe/properties/essence/properties/keep/items"
+                        },
+                        "maxItems": 5
+                      }
+                    },
+                    "required": [
+                      "why",
+                      "keep",
+                      "swap",
+                      "sound",
+                      "requires"
+                    ]
                   }
                 },
                 "required": [
@@ -11229,6 +11524,18 @@ export const CLI_MANIFEST: CliManifest = {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 32
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "requiredSoundId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
                   },
                   {
                     "type": "null"
@@ -12173,6 +12480,66 @@ export const CLI_MANIFEST: CliManifest = {
                                               "required": [
                                                 "type"
                                               ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "giftPurchased"
+                                                },
+                                                "giftPurchased": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "giftClaimed"
+                                                },
+                                                "giftClaimed": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ]
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "type": {
+                                                  "type": "string",
+                                                  "const": "subscriptionEnd"
+                                                },
+                                                "subscriptionEnd": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "campaignId": {
+                                                      "type": "string"
+                                                    }
+                                                  }
+                                                }
+                                              },
+                                              "required": [
+                                                "type"
+                                              ]
                                             }
                                           ]
                                         },
@@ -12499,6 +12866,18 @@ export const CLI_MANIFEST: CliManifest = {
                                     "type": {
                                       "type": "string",
                                       "const": "hasActiveSubscription"
+                                    },
+                                    "hasActiveSubscription": {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "enum": [
+                                            "paid",
+                                            "gift"
+                                          ]
+                                        }
+                                      }
                                     }
                                   },
                                   "required": [
