@@ -2195,7 +2195,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "generateVideo",
       "domain": "videos",
       "summary": "Start a Video Editor 2 video: a campaign ad or an organic post.",
-      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). soundId is the audioId of a sound from the library (queryData formats.sound) to put under the video from version 1, in place of the music and of any sound its format brings: a sound Instagram can attach (availability usable, no talking, music or used by 100 reels or more) is attached when the reel posts, and any other is mixed into the posted file. Change it later with requestVideoEdit (change kind sound). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour) or label (black condensed capitals on a white rounded box behind each row, like Instagram's own caption text, readable over any footage); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with chooseVideoScript feedback if the human wants changes, and pick one with chooseVideoScript scriptId, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
+      "description": "Start a Video Editor 2 video: a campaign ad or an organic post. It is cut from the organization's labelled b-roll. Spends generation credits, so only with the human's explicit approval. Returns { projectId, pipelineStatus } at once. campaignId is the campaign the ad is for, or null for an organic post for the restaurant's own Instagram and TikTok, with no offer and no call to click. prompt (up to 5000 characters) is the idea for this video: the hook, the story, what to show and the tone. Claude writes three story options from it, and already reads the campaign's creative brief (its offer and call to action), the restaurant's notes, menu and reviews and every labelled clip, so don't repeat the brief. To set part of it yourself, put a line with only Campaign, Concept or CTA above that part's text; a Campaign part replaces the brief. referrer is the brand (one of the organization's sites) an organic post is for: required with campaignId null when the organization has more than one site, and ignored for a campaign video, which takes its campaign's site. The footage is always every labelled clip of the video's brand plus footage shared with every brand: queryData videos.footage lists it scene by scene, and a video copied into creativeLibraryBroll with getMediaUploadUrl's sourceUrl is labelled and used a few minutes later. angleId (from videos.video) adds a version to an existing angle; otherwise angleTitle names a new one, or the angle is named from the prompt. voiceId is an ElevenLabs voice from listVideoVoices (omit it for the default voice). voiceover false makes a video with no voiceover: the stories are short lines of on-screen text (3 to 8 words each) shown over the footage while the music plays, timed to the cut instead of to a voice, so leave music on; voiceId is then ignored. music sets the background music: type auto (the default: the editor writes a music brief that fits the story and generates an instrumental), type prompt with prompt.text to describe it yourself, or type none for no music; change it on a later version with requestVideoEdit (change kind music). formatId is a reel format from the library (queryData formats.format, ideally a level template): the video is built from it the way a Content Calendar idea with that format is: the editor reads its recipe, its examples and its required sound itself, and its voice decides voiceover when voiceover is not sent. Pass only the reference: write prompt as the idea for this restaurant (the dish, the angle, any extra details) and never copy the format's text into it. soundId is the audioId of a sound from the library (queryData formats.sound) to put under the video from version 1, in place of the music and of any sound its format brings: a sound Instagram can attach (availability usable, no talking, music or used by 100 reels or more) is attached when the reel posts, and any other is mixed into the posted file. Change it later with requestVideoEdit (change kind sound). font picks the typeface for the headline, captions and end card: dm-sans (the default, a soft, clean white sans in normal case with no outline and no highlight colour), poppins (a heavy rounded sans in capitals with a black outline and highlighted words) playfair (Playfair Display, a bold, elegant serif in normal case with no outline and no highlight colour) or label (black condensed capitals on a white rounded box behind each row, like Instagram's own caption text, readable over any footage); change it later with requestVideoEdit (change kind textStyle). headline false makes the video with no headline at the start, and endCard false with no end card (the video then ends when the last line does); both are on by default, and requestVideoEdit overlay changes remove them (op remove, overlayId ov_headline or ov_endcard) or bring them back (op set with rows) later. pipelineStatus goes scripting, then choosingScript: read the stories with getVideoEditor, rewrite them with chooseVideoScript feedback if the human wants changes, and pick one with chooseVideoScript scriptId, which cuts, voices and renders version 1 (cutting, then ready). With voiceover false there is no pick: the first story is cut straight away, so pipelineStatus goes scripting, cutting, ready. Poll about every 30 seconds with queryData on videos.video filtered on projectId until pipelineStatus is choosingScript, ready, or failed (pipelineStatusMessage says why); getVideoEditor then returns the stories, the versions and the MP4 links. Later edits go through requestVideoEdit. Refused for an organization without Video Editor 2.",
       "type": "mutation",
       "path": [
         "api",
@@ -2236,6 +2236,11 @@ export const CLI_MANIFEST: CliManifest = {
             "minLength": 1,
             "maxLength": 5000,
             "description": "The idea for this video, up to 5000 characters."
+          },
+          "formatId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           },
           "voiceId": {
             "type": "string",
@@ -4836,6 +4841,11 @@ export const CLI_MANIFEST: CliManifest = {
                                       "required": [
                                         "audioId"
                                       ]
+                                    },
+                                    "startSec": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 300
                                     }
                                   },
                                   "required": [
@@ -4862,6 +4872,9 @@ export const CLI_MANIFEST: CliManifest = {
                                       "required": [
                                         "extractionId"
                                       ]
+                                    },
+                                    "startSec": {
+                                      "$ref": "#/properties/changes/items/anyOf/12/properties/set/anyOf/0/anyOf/0/anyOf/0/properties/startSec"
                                     }
                                   },
                                   "required": [
@@ -5628,6 +5641,69 @@ export const CLI_MANIFEST: CliManifest = {
         "required": [
           "locationId",
           "recipients"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "id": "setContentCadence",
+      "domain": "content",
+      "summary": "Replace a Content Calendar account's weekly posting schedule.",
+      "description": "Replace a Content Calendar account's weekly posting schedule. accountId is a content.instagramAccount from queryData. Read the current slots first with queryData content.cadenceSlot filtered on accountId, then send the full intended list: slots sent with their slotId keep it (and are changed if their day, time or kind differ), slots left out are deleted along with their skipped dates, slots without a slotId are created, and an empty list clears the schedule. weekday is 0 = Sunday through 6 = Saturday; localTime is a 24-hour HH:MM wall-clock time in the organization's time zone; kind is reel, static or trial_reel. Every queued post of the account is planned again into the new slots right away. Returns the account's slots.",
+      "type": "mutation",
+      "path": [
+        "api",
+        "contentCalendar",
+        "setSlots"
+      ],
+      "inputJsonSchema": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The content.instagramAccount accountId from queryData."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slotId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "weekday": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 6
+                },
+                "localTime": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "reel",
+                    "static",
+                    "trial_reel"
+                  ]
+                }
+              },
+              "required": [
+                "weekday",
+                "localTime",
+                "kind"
+              ]
+            },
+            "maxItems": 70,
+            "description": "The account's whole weekly schedule. Slots left out are deleted."
+          }
+        },
+        "required": [
+          "accountId",
+          "slots"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
@@ -10605,7 +10681,7 @@ export const CLI_MANIFEST: CliManifest = {
       "id": "updateContentPost",
       "domain": "content",
       "summary": "Change a Content Calendar post, or push an idea into the queue.",
-      "description": "Change a Content Calendar post, or push an idea into the queue. postId is a content.post from queryData; patch holds only the fields to change. stage moves it: idea (ideas list), draft (being made, off the calendar) or ready (approved to post: queued and dated by the planner). A post that has left the ideas list cannot go back to idea (archive it and add a new idea instead), and its kind can then only switch between reel and trial_reel. Moving to ready, or saving a post that is ready, approves it as you: approvedAt, approvedBy and, for a post made in Content Studio (projectId set), approvedVersionId, the version that will be posted. A Content Studio post needs a finished version and no mediaUrls; any other post needs mediaUrls that fit the kind (one video for a reel or trial reel, one image for a static, two to ten for a carousel), files in this organization's library or Content Studio, public or private. Without stage, a draft whose content is complete moves to ready on its own when the account auto-approves its kind (approvedBy auto). A post leaving the ideas list joins the end of its kind's queue. scheduledAt pins it to that future UTC instant (scheduledBy manual); scheduledAt null unpins it. Editing a reel or trial reel idea or draft with no project and no media pushes its automatic send to Content Studio back to five minutes from now. Once a post has a Content Studio project its formatId and brief are fixed. A publishing, published or archived post cannot be edited. Returns the post.",
+      "description": "Change a Content Calendar post, or push an idea into the queue. postId is a content.post from queryData; patch holds only the fields to change. stage moves it: idea (ideas list), draft (being made, off the calendar) or ready (approved to post: queued and dated by the planner). A post that has left the ideas list cannot go back to idea (archive it and add a new idea instead), and its kind can then only switch between reel and trial_reel. Moving to ready, or saving a post that is ready, approves it as you: approvedAt, approvedBy and, for a post made in Content Studio (projectId set), approvedVersionId, the version that will be posted. A Content Studio post needs a finished version and no mediaUrls; any other post needs mediaUrls that fit the kind (one video for a reel or trial reel, one image for a static, two to ten for a carousel), files in this organization's library or Content Studio, public or private. Without stage, a draft whose content is complete moves to ready on its own when the account auto-approves its kind (approvedBy auto). A post leaving the ideas list joins the end of its kind's queue. scheduledAt pins it to that future UTC instant (scheduledBy manual); scheduledAt null unpins it. Editing a reel or trial reel idea or draft with no project and no media pushes its automatic send to Content Studio back to five minutes from now. Once a post has a Content Studio project its formatId and brief are fixed. archive: true (with no patch) archives the post: it leaves the ideas list, queue and calendar and its slot goes to the next post; a published post stays on Instagram and is marked cancelled instead; a post that is publishing right now is refused. A publishing, published or archived post cannot otherwise be edited. Returns the post.",
       "type": "mutation",
       "path": [
         "api",
@@ -10697,12 +10773,16 @@ export const CLI_MANIFEST: CliManifest = {
                   }
                 ]
               }
-            }
+            },
+            "default": {}
+          },
+          "archive": {
+            "type": "boolean",
+            "const": true
           }
         },
         "required": [
-          "postId",
-          "patch"
+          "postId"
         ],
         "$schema": "http://json-schema.org/draft-07/schema#"
       }
